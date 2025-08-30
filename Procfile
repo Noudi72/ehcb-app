@@ -1,3 +1,2 @@
-# Railway Backend Start
-# Railway Backend Start
+node server.cjs
 node server.cjs
