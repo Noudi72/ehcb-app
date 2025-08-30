@@ -13,11 +13,26 @@ const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const server = jsonServer.create();
-const router = jsonServer.router('db.json');
+// Support konfigurierbaren DB-Pfad (z. B. für persistente Disks auf Render)
+const DEFAULT_DB_FILE = path.join(__dirname, 'db.json');
+const DB_FILE = process.env.DB_FILE || DEFAULT_DB_FILE;
+// Falls ein externer DB_PATH gesetzt ist und die Datei nicht existiert, versuche initial zu seed'en
+try {
+  const targetDir = path.dirname(DB_FILE);
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true });
+  }
+  if (!fs.existsSync(DB_FILE) && fs.existsSync(DEFAULT_DB_FILE)) {
+    fs.copyFileSync(DEFAULT_DB_FILE, DB_FILE);
+  }
+} catch (e) {
+  console.warn('Warnung beim Initialisieren der DB-Datei:', e.message);
+}
+const router = jsonServer.router(DB_FILE);
 const middlewares = jsonServer.defaults({ static: 'public' });
 
 // Verzeichnisse für Uploads erstellen, falls sie nicht existieren
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
+const uploadsDir = process.env.UPLOAD_DIR || path.join(__dirname, 'public', 'uploads');
 const pdfDir = path.join(uploadsDir, 'pdf');
 const videoDir = path.join(uploadsDir, 'video');
 const imageDir = path.join(uploadsDir, 'images');
@@ -43,7 +58,11 @@ server.use((req, res, next) => {
   next();
 });
 
-// JSON Body Parser - using json-server defaults
+// JSON Body Parser
+// Wichtig: json-server parst den Body nicht per defaults();
+// Wir aktivieren daher den Body-Parser, damit req.body in Custom-Routen verfügbar ist.
+server.use(jsonServer.bodyParser);
+// Optional: Falls du lieber Express-Parser nutzen willst, auskommentieren:
 // server.use(express.json());
 // server.use(express.urlencoded({ extended: true }));
 
@@ -62,7 +81,10 @@ server.post('/api/translate', async (req, res) => {
       return res.status(400).json({ error: 'Text and target language are required' });
     }
 
-    const deeplApiKey = '294179f7-bc8d-489c-8b9f-20dd859001bc:fx';
+    const deeplApiKey = process.env.DEEPL_API_KEY;
+    if (!deeplApiKey) {
+      return res.status(503).json({ error: 'DeepL API key not configured on server' });
+    }
     const deeplBaseUrl = 'https://api-free.deepl.com/v2/translate';
 
     // DeepL verwendet andere Sprachcodes
@@ -313,7 +335,7 @@ server.post('/api/upload/image', (req, res) => {
 });
 
 // Statisches Verzeichnis für Uploads
-server.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+server.use('/uploads', express.static(uploadsDir));
 
 // DELETE-Endpunkt für Survey-Responses (VOR dem Router!)
 server.delete('/survey-responses/:id', (req, res) => {

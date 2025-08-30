@@ -4,8 +4,9 @@ const CACHE_NAME = 'ehc-spirit-v1';
 // Dynamische Base URL für GitHub Pages Support
 const getBaseUrl = () => {
   const url = new URL(self.location);
-  // Für GitHub Pages wird der Pfad /ehcb-app/ verwendet
-  if (url.hostname === 'noudi72.github.io' && url.pathname.startsWith('/ehcb-app/')) {
+  // Für GitHub Pages mit Projektseiten wird der Pfad /ehcb-app/ verwendet
+  // Host-unabhängig, nur am Pfad ausrichten
+  if (url.pathname.startsWith('/ehcb-app/')) {
     return '/ehcb-app';
   }
   return '';

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: ehcb-backend
+    env: node
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: npm ci
+    startCommand: node server.cjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_FILE
+        value: /data/db.json
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      - key: DEEPL_API_KEY
+        sync: false
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1

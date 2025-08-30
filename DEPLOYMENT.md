@@ -1,15 +1,24 @@
 # EHC Biel-Bienne App Deployment Guide
 
-## Frontend Deployment (Vercel)
+## Frontend Deployment (GitHub Pages oder Vercel)
 
-### Vorbereitung:
-1. GitHub Repository erstellen und Code pushen
-2. Bei Vercel anmelden: https://vercel.com
-3. Repository mit Vercel verknüpfen
+### GitHub Pages (empfohlen für dieses Frontend)
+1. GitHub Actions ist vorbereitet: `.github/workflows/deploy.yml`
+2. Projekt-Basis ist für Pages konfiguriert (`vite.config.js: base`, `App.jsx: basename`)
+3. Setze in Repo Settings → Secrets → Actions:
+   - `VITE_API_BASE_URL` = URL deines Backends (z. B. Render)
+4. Push auf `main` triggert den Build und Pages-Deploy
+
+Öffnen: `https://<github-username>.github.io/ehcb-app/`
+
+### Vercel (Alternative)
+1. Bei Vercel anmelden: https://vercel.com
+2. Repository verknüpfen
+3. Build-Settings wie unten
 
 ### Environment Variables für Vercel:
 ```
-VITE_API_BASE_URL=https://your-backend-url.railway.app
+VITE_API_BASE_URL=https://<dein-backend-host>
 ```
 
 ### Build-Befehle:
@@ -17,7 +26,37 @@ VITE_API_BASE_URL=https://your-backend-url.railway.app
 - Output Directory: `dist`
 - Install Command: `npm install`
 
-## Backend Deployment (Railway)
+## Backend Deployment (Render – empfohlen)
+
+Render eignet sich besser als serverlose Plattformen für einen dauerhaften Node/Express-Server mit Uploads und einer JSON-DB.
+
+### Blueprint-Deployment
+Dieses Repo enthält `render.yaml`. Schritte:
+1. In Render → New → Blueprint → GitHub-Repo wählen
+2. Service erstellt sich automatisch
+3. Unter Environment Variablen setzen:
+   - `NODE_ENV=production`
+   - `DB_FILE=/data/db.json` (kommt aus `render.yaml`)
+   - `UPLOAD_DIR=/data/uploads` (kommt aus `render.yaml`)
+   - `DEEPL_API_KEY=<dein_secret>`
+4. Deploy starten
+
+### Was die App erwartet
+- Der Server liest:
+  - `DB_FILE` (Standard: `db.json` im Repo; wird bei erstem Start in `/data/db.json` kopiert)
+  - `UPLOAD_DIR` (Standard: `public/uploads`; auf Render: `/data/uploads`)
+  - `DEEPL_API_KEY` (Pflicht für Live-Übersetzungen)
+- Static Uploads werden über `/uploads` ausgeliefert
+
+### Start- und Build-Befehle
+- Build: `npm ci`
+- Start: `node server.cjs`
+
+### Persistenz
+- Eine Disk `data` ist in `render.yaml` konfiguriert (1 GB)
+- Pfad: `/data` (für DB und Uploads)
+
+## Backend Deployment (Railway – optional)
 
 ### Vorbereitung:
 1. Bei Railway anmelden: https://railway.app
@@ -27,7 +66,7 @@ VITE_API_BASE_URL=https://your-backend-url.railway.app
 ### Environment Variables für Railway:
 ```
 NODE_ENV=production
-PORT=3001
+# PORT wird von Railway gesetzt; nicht überschreiben
 ```
 
 ### Start-Befehl:
@@ -40,8 +79,8 @@ node server.cjs
 ### Custom Domain (Optional):
 1. Domain bei einem Provider kaufen (z.B. Namecheap, GoDaddy)
 2. DNS-Einstellungen:
-   - Frontend: CNAME zu Vercel
-   - Backend: CNAME zu Railway
+   - Frontend: GitHub Pages (benutzername.github.io) oder CNAME zu Vercel
+   - Backend: CNAME zu Render (oder Railway)
 3. SSL wird automatisch konfiguriert
 
 ### Kostenlose Domains:
@@ -81,8 +120,9 @@ node server.cjs
 ## Kosten Übersicht:
 
 ### Kostenlose Tier:
-- Vercel: Unlimited personal projects
-- Railway: $5/Monat (100GB egress, 512MB RAM)
+- GitHub Pages: kostenlos
+- Render Free: kostenlos (Sleep möglich)
+- Railway Free: limitiert/kostenpflichtig je nach Kontingent
 
 ### Pro Tier (wenn nötig):
 - Vercel Pro: $20/Monat
