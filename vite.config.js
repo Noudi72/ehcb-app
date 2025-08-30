@@ -4,7 +4,9 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  // For GitHub Pages project site: https://<user>.github.io/ehcb-app/
+  // Set base to the repository name so assets resolve correctly.
+  base: '/ehcb-app/',
   server: {
     open: true,
     host: true, // Host auf '0.0.0.0' setzen, um alle Netzwerkschnittstellen zu öffnen
