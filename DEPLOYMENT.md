@@ -126,7 +126,8 @@ NODE_ENV=production
 
 ### Start-Befehl:
 ```
-node server.cjs
+Start Command: `npm start` (aus `package.json`).
+Runtime/Node: 20 LTS (Repos enthält `engines` und `.nvmrc`).
 ```
 
 ## Domain Setup
