@@ -1,0 +1,304 @@
+/* Mobile-First PWA Optimierungen für EHC Biel App */
+
+/* Touch-optimierte Buttons */
+.touch-button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Swipe-Gesten aktivieren */
+.swipeable {
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Verbesserte Scroll-Performance */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* PWA App-ähnliches Verhalten */
+body.pwa-mode {
+  /* Verhindert Zoom bei Double-Tap */
+  touch-action: manipulation;
+  /* Verhindert Auswahl von Text */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Entfernt native iOS-Scroll-Bounce */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* App-Installation-Banner */
+.install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  padding: 16px;
+  text-align: center;
+  z-index: 1000;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.install-banner.show {
+  transform: translateY(0);
+}
+
+.install-banner button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin: 0 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.install-banner button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Offline-Indikator */
+.offline-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #f59e0b;
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+  z-index: 1001;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.offline-indicator.show {
+  transform: translateY(0);
+}
+
+/* Notification-Styles für PWA */
+.notification-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 300px;
+  z-index: 1002;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  border-left: 4px solid #1e40af;
+}
+
+.notification-toast.show {
+  transform: translateX(0);
+}
+
+.notification-toast.dark {
+  background: #374151;
+  color: white;
+  border-left-color: #60a5fa;
+}
+
+/* Pull-to-Refresh Animation */
+.pull-to-refresh {
+  position: relative;
+  overflow: hidden;
+}
+
+.pull-indicator {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1e40af;
+  color: white;
+  transition: top 0.2s ease;
+}
+
+.pull-indicator.active {
+  top: 10px;
+}
+
+/* Mobile-optimierte Form-Styles */
+.mobile-form input,
+.mobile-form textarea,
+.mobile-form select {
+  min-height: 44px;
+  font-size: 16px; /* Verhindert Zoom auf iOS */
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  padding: 12px 16px;
+  transition: border-color 0.2s ease;
+}
+
+.mobile-form input:focus,
+.mobile-form textarea:focus,
+.mobile-form select:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+/* Dark Mode PWA Optimierungen */
+@media (prefers-color-scheme: dark) {
+  .install-banner {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  }
+  
+  .offline-indicator {
+    background: #dc2626;
+  }
+  
+  .notification-toast {
+    background: #374151;
+    color: white;
+    border-left-color: #60a5fa;
+  }
+}
+
+/* iOS Safe Area Unterstützung */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+/* Haptic Feedback für Touch-Interaktionen */
+.haptic-light {
+  transition: transform 0.1s ease;
+}
+
+.haptic-light:active {
+  transform: scale(0.98);
+}
+
+.haptic-medium {
+  transition: transform 0.15s ease;
+}
+
+.haptic-medium:active {
+  transform: scale(0.95);
+}
+
+/* Performance-Optimierungen */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Loading-Spinner für PWA */
+.pwa-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Badge-Styles für Notifications */
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc2626;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive Breakpoints für PWA */
+@media (max-width: 480px) {
+  .mobile-container {
+    padding: 12px;
+  }
+  
+  .mobile-text {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  .mobile-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+}
+
+/* Tab-Navigation für Mobile */
+.mobile-tabs {
+  display: flex;
+  background: white;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-weight: 500;
+}
+
+.mobile-tab.active {
+  background: #1e40af;
+  color: white;
+}
+
+.mobile-tab:not(.active):hover {
+  background: #f3f4f6;
+}

@@ -1,0 +1,150 @@
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
+
+export default function Header() {
+  const { isCoach, logout, isAuthenticated, user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setMenuOpen(false);
+    navigate('/');
+  };
+
+  return (
+    <header className="bg-[#0a2240] px-4 py-4 rounded-b-3xl shadow-md">
+      {/* Komplette Neustrukturierung mit separater Titelzeile */}
+      {/* Erste Zeile: Titel zentriert */}
+      <div className="text-center mb-2">
+        <div className="text-white font-semibold text-base leading-none">
+          EHC BIEL-BIENNE
+        </div>
+        <div className="text-[#ffd342] text-2xl font-bold leading-tight tracking-tight">
+          U18-ELIT
+        </div>
+      </div>
+      
+      {/* Zweite Zeile: Logo links, Controls rechts */}
+      <div className="flex items-center justify-between">
+        {/* Logo auf der linken Seite */}
+        <Link to="/" className="flex items-center">
+          <img
+            src="/ehcb_logo.png"
+            alt="EHCB Logo"
+            className="h-10 w-10 object-contain" 
+          />
+        </Link>
+        
+        {/* Rechte Seite mit Controls */}
+        <div className="flex items-center">
+          {/* Login-Status anzeigen */}
+          {isCoach && (
+            <div className="mr-3 text-white text-xs py-1 px-2 bg-green-600 rounded-lg">
+              Coach-Modus
+            </div>
+          )}
+          
+          {/* Benachrichtigungen für alle anzeigen */}
+          <div className="mr-4 text-white">
+            <NotificationBell />
+          </div>
+          
+          {/* Hamburger */}
+          <button 
+            onClick={toggleMenu}
+            className="focus:outline-none"
+          >
+            <svg width="32" height="32" fill="none">
+              <rect y="7" width="32" height="3" rx="1.5" fill="#fff"/>
+              <rect y="15" width="32" height="3" rx="1.5" fill="#fff"/>
+              <rect y="23" width="32" height="3" rx="1.5" fill="#fff"/>
+            </svg>
+          </button>
+        </div>
+        
+        {/* Mobile Menü */}
+        {menuOpen && (
+          <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-50">
+            <div className="py-1">
+              <Link
+                to="/"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => setMenuOpen(false)}
+              >
+                Startseite
+              </Link>
+              
+              {isAuthenticated && (
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={handleLogout}
+                >
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                  </div>
+                </button>
+              )}
+              
+              {isCoach && (
+                <>
+                  <Link
+                    to="/coach/reflexionen"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Reflexionen Dashboard
+                  </Link>
+                  <Link
+                    to="/coach/statistics"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Statistiken & Trends
+                  </Link>
+                  <Link
+                    to="/coach/surveys"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Umfrage-Übersicht
+                  </Link>
+                  <Link
+                    to="/coach/survey-editor"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Umfrage-Editor
+                  </Link>
+                  <Link
+                    to="/coach/sportfood"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Sport Food Manager
+                  </Link>
+                  <Link
+                    to="/coach/news-manager"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    News Manager
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}

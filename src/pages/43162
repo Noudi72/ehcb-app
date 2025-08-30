@@ -1,0 +1,309 @@
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import Header from "../components/Header";
+import BackButton from "../components/BackButton";
+import { API_BASE_URL } from "../config/api";
+
+export default function UserManager() {
+  const { user, isCoach } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("all"); // all, active, inactive, pending, approved
+
+  useEffect(() => {
+    fetchUsers();
+    fetchTeams();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users`);
+      const data = await response.json();
+      setUsers(data.filter(u => u.role === "player")); // Nur Spieler anzeigen
+    } catch (err) {
+      setError("Fehler beim Laden der Benutzer");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTeams = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/teams`);
+      const data = await response.json();
+      setTeams(data);
+    } catch (err) {
+      console.error("Fehler beim Laden der Teams:", err);
+    }
+  };
+
+  const toggleUserActive = async (userId, currentStatus) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          active: !currentStatus
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Fehler beim Aktualisieren des Benutzers");
+      }
+
+      // Aktualisiere die lokale Liste
+      setUsers(users.map(u => 
+        u.id === userId ? { ...u, active: !currentStatus } : u
+      ));
+    } catch (err) {
+      setError("Fehler beim Aktualisieren des Benutzerstatus: " + err.message);
+    }
+  };
+
+  const deleteUser = async (userId, userName) => {
+    if (!window.confirm(`Bist du sicher, dass du den Benutzer "${userName}" dauerhaft löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: "DELETE"
+      });
+
+      if (!response.ok) {
+        throw new Error("Fehler beim Löschen des Benutzers");
+      }
+
+      // Entferne den Benutzer aus der lokalen Liste
+      setUsers(users.filter(u => u.id !== userId));
+      setError(""); // Clear any previous errors
+    } catch (err) {
+      setError("Fehler beim Löschen des Benutzers: " + err.message);
+    }
+  };
+
+  const getTeamNames = (teamIds) => {
+    if (!teamIds || !Array.isArray(teamIds)) {
+      // Backward compatibility - falls noch das alte single team format verwendet wird
+      if (typeof teamIds === 'string') {
+        const team = teams.find(t => t.id === teamIds);
+        return team ? team.name : teamIds;
+      }
+      return "-";
+    }
+    
+    return teamIds.map(teamId => {
+      const team = teams.find(t => t.id === teamId);
+      return team ? team.name : teamId;
+    }).join(", ");
+  };
+
+  const filteredUsers = users.filter(user => {
+    if (filter === "active") return user.active && user.status === "approved";
+    if (filter === "inactive") return !user.active || user.status === "rejected";
+    if (filter === "pending") return user.status === "pending";
+    if (filter === "approved") return user.status === "approved";
+    return true;
+  });
+
+  if (!user || !isCoach) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-3xl bg-white rounded-lg shadow p-6 text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Zugriff verweigert</h1>
+            <p className="mb-4">Du musst als Coach angemeldet sein, um auf diese Seite zuzugreifen.</p>
+          </div>
+        </main>
+        
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+      <Header />
+      
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-[#0a2240]">Benutzer-Verwaltung</h1>
+            <BackButton to="/coach/dashboard" />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          {/* Filter */}
+          <div className="mb-6">
+            <div className="flex flex-wrap space-x-2 gap-y-2">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  filter === "all" 
+                    ? "bg-blue-600 text-white" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Alle ({users.length})
+              </button>
+              <button
+                onClick={() => setFilter("pending")}
+                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  filter === "pending" 
+                    ? "bg-yellow-600 text-white" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Ausstehend ({users.filter(u => u.status === "pending").length})
+              </button>
+              <button
+                onClick={() => setFilter("approved")}
+                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  filter === "approved" 
+                    ? "bg-green-600 text-white" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Genehmigt ({users.filter(u => u.status === "approved").length})
+              </button>
+              <button
+                onClick={() => setFilter("active")}
+                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  filter === "active" 
+                    ? "bg-green-600 text-white" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Aktiv ({users.filter(u => u.active && u.status === "approved").length})
+              </button>
+              <button
+                onClick={() => setFilter("inactive")}
+                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  filter === "inactive" 
+                    ? "bg-red-600 text-white" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Inaktiv ({users.filter(u => !u.active || u.status === "rejected").length})
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-10">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0a2240] mx-auto"></div>
+              <p className="mt-3 text-gray-600">Lade Benutzer...</p>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-gray-600">Keine Benutzer gefunden.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Teams
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Trikotnummer
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Registriert
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Aktionen
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredUsers.map((user) => {
+                    const rowColor = user.status === "pending" ? "bg-yellow-50" : 
+                                   user.status === "rejected" ? "bg-red-50" : 
+                                   !user.active ? "bg-gray-50" : "";
+                    
+                    return (
+                      <tr key={user.id} className={rowColor}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {user.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {getTeamNames(user.teams || user.team) || (user.status === "pending" ? "Noch nicht zugewiesen" : "-")}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {user.playerNumber || "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.status === "pending" 
+                              ? "bg-yellow-100 text-yellow-800" 
+                              : user.status === "approved" && user.active
+                              ? "bg-green-100 text-green-800" 
+                              : user.status === "rejected"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {user.status === "pending" ? "Ausstehend" : 
+                             user.status === "approved" && user.active ? "Aktiv" :
+                             user.status === "rejected" ? "Abgelehnt" :
+                             user.active ? "Aktiv" : "Deaktiviert"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {user.status === "pending" ? (
+                            <span className="text-gray-500">Warten auf Genehmigung</span>
+                          ) : (
+                            <div className="flex flex-col space-y-1">
+                              <button
+                                onClick={() => toggleUserActive(user.id, user.active)}
+                                className={`${
+                                  user.active 
+                                    ? "text-red-600 hover:text-red-900" 
+                                    : "text-green-600 hover:text-green-900"
+                                } hover:underline text-left`}
+                              >
+                                {user.active ? "Deaktivieren" : "Aktivieren"}
+                              </button>
+                              <button
+                                onClick={() => deleteUser(user.id, user.name)}
+                                className="text-red-600 hover:text-red-900 hover:underline font-medium text-left"
+                                title="Benutzer dauerhaft löschen"
+                              >
+                                Löschen
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </main>
+      
+      
+    </div>
+  );
+}

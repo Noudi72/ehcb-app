@@ -1,0 +1,332 @@
+{
+  "sport-food-categories": [
+    {
+      "id": "cat1",
+      "name": "Vor dem Training",
+      "description": "Empfohlene Nahrungsmittel vor dem Training"
+    },
+    {
+      "id": "cat2",
+      "name": "Während dem Training",
+      "description": "Empfohlene Nahrungsmittel während dem Training"
+    },
+    {
+      "id": "cat3",
+      "name": "Nach dem Training",
+      "description": "Empfohlene Nahrungsmittel nach dem Training"
+    },
+    {
+      "id": "cat4",
+      "name": "Vor dem Spiel",
+      "description": "Empfohlene Nahrungsmittel vor dem Spiel"
+    },
+    {
+      "id": "cat5",
+      "name": "Nach dem Spiel",
+      "description": "Empfohlene Nahrungsmittel nach dem Spiel"
+    }
+  ],
+  "sport-food-items": [
+    {
+      "id": "item1",
+      "categoryId": "cat1",
+      "name": "Banane",
+      "description": "Reich an Kohlenhydraten und Kalium für schnelle Energie",
+      "benefits": "Liefert schnelle Energie und ist leicht verdaulich"
+    },
+    {
+      "id": "item2",
+      "categoryId": "cat1",
+      "name": "Haferflocken mit Beeren",
+      "description": "Komplexe Kohlenhydrate mit Antioxidantien",
+      "benefits": "Langanhaltende Energie und antioxidative Wirkung"
+    },
+    {
+      "id": "item3",
+      "categoryId": "cat2",
+      "name": "Sportgetränk",
+      "description": "Isotonisches Getränk mit Elektrolyten",
+      "benefits": "Verhindert Dehydrierung und Elektrolytverlust"
+    },
+    {
+      "id": "item4",
+      "categoryId": "cat3",
+      "name": "Proteinshake",
+      "description": "20-30g Protein mit Wasser oder Milch",
+      "benefits": "Unterstützt die Muskelregeneration nach dem Training"
+    },
+    {
+      "id": "item5",
+      "categoryId": "cat3",
+      "name": "Griechischer Joghurt mit Honig",
+      "description": "Protein-reiches Milchprodukt mit natürlichem Zucker",
+      "benefits": "Liefert Protein und schnell verfügbare Kohlenhydrate"
+    },
+    {
+      "id": "item6",
+      "categoryId": "cat4",
+      "name": "Vollkornpasta mit magerem Protein",
+      "description": "Komplexe Kohlenhydrate mit Proteinen",
+      "benefits": "Langanhaltende Energie für das Spiel"
+    },
+    {
+      "id": "item7",
+      "categoryId": "cat5",
+      "name": "Süsskartoffel mit gegrilltem Hähnchen",
+      "description": "Komplexe Kohlenhydrate mit hochwertigem Protein",
+      "benefits": "Ideal zur Auffüllung der Glykogenspeicher und Muskelregeneration"
+    }
+  ],
+  "reflections": [],
+  "users": [
+    {
+      "id": "1",
+      "username": "coach",
+      "password": "Coach7274",
+      "role": "coach",
+      "active": true
+    },
+    {
+      "username": "noëlguyaz",
+      "name": "Noël Guyaz ",
+      "teams": [
+        "u18-elit"
+      ],
+      "playerNumber": "72",
+      "role": "player",
+      "active": true,
+      "createdAt": "2025-08-27T00:35:16.558Z",
+      "id": "EvzwV06"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Wie fühlst du dich zur Zeit?",
+      "type": "options",
+      "options": [
+        "Sehr gut",
+        "Gut",
+        "Neutral",
+        "Müde",
+        "Erschöpft"
+      ],
+      "required": true,
+      "updatedAt": "2025-08-25T19:15:48.672Z"
+    },
+    {
+      "question": "Was sollten wir Coaches deiner Meinung nach im Training verbessern?",
+      "type": "textarea",
+      "options": [
+        ""
+      ],
+      "placeholder": "",
+      "min": 0,
+      "max": 10,
+      "id": "9vCULv5"
+    },
+    {
+      "question": "Was machst du, um dich optimal auf das Spiel vorzubereiten?",
+      "type": "checkbox",
+      "required": false,
+      "options": [
+        "Mentales Training.",
+        "Fokussiere mich erst kurz vor dem Spiel.",
+        "Gehe meine persönliche Rituale durch vor dem Spiel.",
+        "Mache nichts besonderes."
+      ],
+      "id": "xeIFtVQ",
+      "updatedAt": "2025-08-27T09:13:26.695Z",
+      "placeholder": "",
+      "min": 0,
+      "max": 100,
+      "resultsVisibleToPlayers": false
+    },
+    {
+      "id": "WmTc0mb",
+      "question": "Was möchtest du, dass wir Coaches im Training ändern?",
+      "type": "checkbox",
+      "required": false,
+      "options": [
+        "Mehr Small Games",
+        "Mehr Skills Training",
+        "Mehr Taktische Elemente",
+        "Mehr konditionelle Übungen",
+        "Mehr technische Übungen"
+      ]
+    },
+    {
+      "question": "In welchen Bereichen möchtest du dich verbessern?",
+      "type": "checkbox",
+      "options": [
+        "Schuss",
+        "Skating",
+        "Zweikämpfe",
+        "Taktik",
+        "Kondition"
+      ],
+      "required": false,
+      "placeholder": "",
+      "min": 0,
+      "max": 10,
+      "resultsVisibleToPlayers": false,
+      "updatedAt": "2025-08-27T08:45:57.652Z",
+      "id": "q2"
+    }
+  ],
+  "survey-responses": [
+    {
+      "playerName": "Testspieler",
+      "answers": {
+        "q1": "Sehr gut",
+        "q2": [
+          "Taktik",
+          "Kondition"
+        ],
+        "9vCULv5": "Wir sollten mehr Skills Übungen in die Trainings integrieren."
+      },
+      "submittedAt": "2025-08-24T12:02:27.379Z",
+      "id": 3
+    }
+  ],
+  "surveys": [
+    {
+      "active": false,
+      "id": "survey1"
+    },
+    {
+      "title": "Trainings Wünsche",
+      "description": "Feedback zu unseren Trainingsmethoden und -inhalten.",
+      "questions": [
+        "WmTc0mb"
+      ],
+      "active": false,
+      "resultsVisibleToPlayers": false,
+      "anonymous": false,
+      "targetTeams": [
+        "u18-elit"
+      ],
+      "createdAt": "2025-08-24T12:23:53.742Z",
+      "id": "UmbTheg"
+    },
+    {
+      "title": "Game Day",
+      "description": "Was machst du, um dich optimal auf das Spiel vorzubereiten?",
+      "questions": [
+        "xeIFtVQ"
+      ],
+      "createdAt": "2025-08-24T12:38:02.878Z",
+      "active": false,
+      "id": "7rI-2R9",
+      "updatedAt": "2025-08-26T13:29:04.586Z"
+    },
+    {
+      "title": "Spielvorbereitung",
+      "description": "Verbesserung der Spielvorbereitung und -performance.",
+      "questions": [
+        "xeIFtVQ"
+      ],
+      "createdAt": "2025-08-24T13:08:22.815Z",
+      "active": false,
+      "id": "yx-GhGT",
+      "updatedAt": "2025-08-29T19:07:28.069Z",
+      "resultsVisibleToPlayers": false,
+      "anonymous": false,
+      "targetTeams": [
+        "u18-elit"
+      ]
+    },
+    {
+      "title": "Training improvment",
+      "description": "Training improvment",
+      "questions": [
+        "q2"
+      ],
+      "createdAt": "2025-08-24T14:00:24.994Z",
+      "active": false,
+      "id": "PiqBqjJ",
+      "updatedAt": "2025-08-26T13:28:59.670Z"
+    }
+  ],
+  "notifications": [],
+  "news": [],
+  "teams": [
+    {
+      "id": "u16-elit",
+      "name": "U16-Elit"
+    },
+    {
+      "id": "u18-elit",
+      "name": "U18-Elit"
+    },
+    {
+      "id": "u21-elit",
+      "name": "U21-Elit"
+    }
+  ],
+  "cardio-programs": [
+    {
+      "id": 1,
+      "title": "Grundlagenausdauer",
+      "description": "Aufbau der aeroben Ausdauer mit langen Einheiten",
+      "workouts": [
+        {
+          "id": 1,
+          "name": "Dauerlauf",
+          "instruction": "30-45 Minuten kontinuierlicher Lauf in gemäßigtem Tempo",
+          "intensity": "60-70% der max. Herzfrequenz",
+          "frequency": "2-3x pro Woche"
+        },
+        {
+          "id": 2,
+          "name": "Fahrrad-Training",
+          "instruction": "45-60 Minuten Radfahren in kontinuierlichem Tempo",
+          "intensity": "60-70% der max. Herzfrequenz",
+          "frequency": "1-2x pro Woche"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Intervalltraining",
+      "description": "Verbesserung der anaeroben Schwelle und Erholungsfähigkeit",
+      "workouts": [
+        {
+          "id": 3,
+          "name": "Sprint-Intervalle",
+          "instruction": "10x 30 Sekunden Sprint, 90 Sekunden Erholung",
+          "intensity": "90-100% Intensität in Sprints, langsames Joggen in Pausen",
+          "frequency": "1-2x pro Woche"
+        },
+        {
+          "id": 4,
+          "name": "Tabata-Training",
+          "instruction": "4 Sets à 8 Runden: 20 Sekunden maximale Anstrengung, 10 Sekunden Pause",
+          "intensity": "Nahezu maximale Intensität",
+          "frequency": "1x pro Woche"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Eishockey-spezifische Ausdauer",
+      "description": "Simulation von Spielsituationen zur Verbesserung der Erholungsfähigkeit",
+      "workouts": [
+        {
+          "id": 5,
+          "name": "Wechsel-Simulation",
+          "instruction": "45 Sekunden hohe Intensität (Sprints, Richtungswechsel), 90 Sekunden aktive Erholung, 10-12 Wiederholungen",
+          "intensity": "85-95% während der Arbeitsphase, 50-60% während der Erholung",
+          "frequency": "1-2x pro Woche"
+        },
+        {
+          "id": 6,
+          "name": "Agilitäts-Parcours",
+          "instruction": "Durchlaufen eines Parcours mit Richtungswechseln, Sprüngen und kurzen Sprints, 6-8 Durchgänge",
+          "intensity": "85-90% der maximalen Intensität",
+          "frequency": "1x pro Woche"
+        }
+      ]
+    }
+  ]
+}

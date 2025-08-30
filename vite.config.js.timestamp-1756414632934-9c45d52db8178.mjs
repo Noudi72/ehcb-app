@@ -1,0 +1,23 @@
+// vite.config.js
+import { defineConfig } from "file:///Users/noelguyaz/Library/Mobile%20Documents/com~apple~CloudDocs/APPs%20ng72/ehcb-app/node_modules/vite/dist/node/index.js";
+import react from "file:///Users/noelguyaz/Library/Mobile%20Documents/com~apple~CloudDocs/APPs%20ng72/ehcb-app/node_modules/@vitejs/plugin-react/dist/index.mjs";
+var vite_config_default = defineConfig({
+  plugins: [react()],
+  server: {
+    open: true,
+    host: true,
+    // Host auf '0.0.0.0' setzen, um alle Netzwerkschnittstellen zu öffnen
+    port: 5173,
+    // Standardport festlegen
+    strictPort: false
+    // Falls 5173 besetzt ist, einen anderen Port verwenden
+  },
+  build: {
+    outDir: "dist",
+    sourcemap: true
+  }
+});
+export {
+  vite_config_default as default
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidml0ZS5jb25maWcuanMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbImNvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9kaXJuYW1lID0gXCIvVXNlcnMvbm9lbGd1eWF6L0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9jb21+YXBwbGV+Q2xvdWREb2NzL0FQUHMgbmc3Mi9laGNiLWFwcFwiO2NvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9maWxlbmFtZSA9IFwiL1VzZXJzL25vZWxndXlhei9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvY29tfmFwcGxlfkNsb3VkRG9jcy9BUFBzIG5nNzIvZWhjYi1hcHAvdml0ZS5jb25maWcuanNcIjtjb25zdCBfX3ZpdGVfaW5qZWN0ZWRfb3JpZ2luYWxfaW1wb3J0X21ldGFfdXJsID0gXCJmaWxlOi8vL1VzZXJzL25vZWxndXlhei9MaWJyYXJ5L01vYmlsZSUyMERvY3VtZW50cy9jb21+YXBwbGV+Q2xvdWREb2NzL0FQUHMlMjBuZzcyL2VoY2ItYXBwL3ZpdGUuY29uZmlnLmpzXCI7aW1wb3J0IHsgZGVmaW5lQ29uZmlnIH0gZnJvbSAndml0ZSdcbmltcG9ydCByZWFjdCBmcm9tICdAdml0ZWpzL3BsdWdpbi1yZWFjdCdcblxuLy8gaHR0cHM6Ly92aXRlanMuZGV2L2NvbmZpZy9cbmV4cG9ydCBkZWZhdWx0IGRlZmluZUNvbmZpZyh7XG4gIHBsdWdpbnM6IFtyZWFjdCgpXSxcbiAgc2VydmVyOiB7XG4gICAgb3BlbjogdHJ1ZSxcbiAgICBob3N0OiB0cnVlLCAvLyBIb3N0IGF1ZiAnMC4wLjAuMCcgc2V0emVuLCB1bSBhbGxlIE5ldHp3ZXJrc2Nobml0dHN0ZWxsZW4genUgXHUwMEY2ZmZuZW5cbiAgICBwb3J0OiA1MTczLCAvLyBTdGFuZGFyZHBvcnQgZmVzdGxlZ2VuXG4gICAgc3RyaWN0UG9ydDogZmFsc2UsIC8vIEZhbGxzIDUxNzMgYmVzZXR6dCBpc3QsIGVpbmVuIGFuZGVyZW4gUG9ydCB2ZXJ3ZW5kZW5cbiAgfSxcbiAgYnVpbGQ6IHtcbiAgICBvdXREaXI6ICdkaXN0JyxcbiAgICBzb3VyY2VtYXA6IHRydWVcbiAgfVxufSlcbiJdLAogICJtYXBwaW5ncyI6ICI7QUFBc2EsU0FBUyxvQkFBb0I7QUFDbmMsT0FBTyxXQUFXO0FBR2xCLElBQU8sc0JBQVEsYUFBYTtBQUFBLEVBQzFCLFNBQVMsQ0FBQyxNQUFNLENBQUM7QUFBQSxFQUNqQixRQUFRO0FBQUEsSUFDTixNQUFNO0FBQUEsSUFDTixNQUFNO0FBQUE7QUFBQSxJQUNOLE1BQU07QUFBQTtBQUFBLElBQ04sWUFBWTtBQUFBO0FBQUEsRUFDZDtBQUFBLEVBQ0EsT0FBTztBQUFBLElBQ0wsUUFBUTtBQUFBLElBQ1IsV0FBVztBQUFBLEVBQ2I7QUFDRixDQUFDOyIsCiAgIm5hbWVzIjogW10KfQo=
