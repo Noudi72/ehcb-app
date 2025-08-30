@@ -4,12 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "backend": "node server.cjs",
-    "vercel-build": "npm run build"
+  "dev": "vite",
+  "build": "vite build",
+  "lint": "eslint .",
+  "preview": "vite preview",
+  "start": "node server.cjs",
+  "backend": "node server.cjs",
+  "vercel-build": "npm run build"
   },
   "dependencies": {
     "axios": "^1.11.0",
