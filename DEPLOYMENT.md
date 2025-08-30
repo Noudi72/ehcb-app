@@ -36,8 +36,6 @@ Dieses Repo enthält `render.yaml`. Schritte:
 2. Service erstellt sich automatisch
 3. Unter Environment Variablen setzen:
    - `NODE_ENV=production`
-   - `DB_FILE=/data/db.json` (kommt aus `render.yaml`)
-   - `UPLOAD_DIR=/data/uploads` (kommt aus `render.yaml`)
    - `DEEPL_API_KEY=<dein_secret>`
 4. Deploy starten
 
@@ -52,9 +50,12 @@ Dieses Repo enthält `render.yaml`. Schritte:
 - Build: `npm ci`
 - Start: `node server.cjs`
 
-### Persistenz
-- Eine Disk `data` ist in `render.yaml` konfiguriert (1 GB)
-- Pfad: `/data` (für DB und Uploads)
+### Persistenz (Free Tier Hinweis)
+- Der Render Free-Plan unterstützt keine Disks. Ohne Disk sind Uploads und DB-Änderungen NICHT dauerhaft (gehen bei Redeploy/Neustart verloren).
+- Optionen:
+  - Upgrade auf Starter-Plan und eine Disk mounten (empfohlen für Persistenz)
+  - Externer Speicher für Uploads (z. B. Cloudinary, S3/R2) und externe DB (z. B. Supabase/Postgres)
+  - Für Tests/Prototyping: Free ohne Persistenz nutzen
 
 ## Backend Deployment (Railway – optional)
 
