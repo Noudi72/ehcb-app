@@ -94,6 +94,14 @@ server.get('/', (req, res) => {
   });
 });
 
+// Additional health endpoints for platforms/readiness probes
+server.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+server.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // JSON Body Parser
 // Wichtig: json-server parst den Body nicht per defaults();
 // Wir aktivieren daher den Body-Parser, damit req.body in Custom-Routen verfügbar ist.
@@ -460,8 +468,8 @@ server.delete('/survey-responses/:id', (req, res) => {
 server.use(router);
 
 // Server starten
-server.listen(PORT, () => {
-  console.log(`🚀 Server läuft auf http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server läuft auf http://0.0.0.0:${PORT}`);
   console.log(`📁 Upload-Verzeichnisse: ${uploadsDir}`);
   console.log(`🌍 Environment: ${NODE_ENV}`);
 });
