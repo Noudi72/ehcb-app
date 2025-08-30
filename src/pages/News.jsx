@@ -29,8 +29,8 @@ export default function News() {
   const handleDownloadPDF = (item) => {
     // Wenn eine hochgeladene Datei vorhanden ist
     if (item.filePath) {
-      // Vollständigen Pfad zusammenbauen
-      const fullPath = `${API_BASE_URL}${item.filePath}`;
+      const isAbsolute = /^https?:\/\//i.test(item.filePath);
+      const fullPath = isAbsolute ? item.filePath : `${API_BASE_URL}${item.filePath}`;
       window.open(fullPath, '_blank');
       return;
     }
@@ -71,8 +71,8 @@ export default function News() {
   const handleOpenVideo = (item) => {
     // Wenn eine hochgeladene Datei vorhanden ist
     if (item.filePath) {
-      // Vollständigen Pfad zusammenbauen
-      const fullPath = `${API_BASE_URL}${item.filePath}`;
+      const isAbsolute = /^https?:\/\//i.test(item.filePath);
+      const fullPath = isAbsolute ? item.filePath : `${API_BASE_URL}${item.filePath}`;
       window.open(fullPath, '_blank');
       return;
     }
@@ -85,8 +85,8 @@ export default function News() {
   const handleViewImage = (item) => {
     // Wenn eine hochgeladene Datei vorhanden ist
     if (item.filePath) {
-      // Vollständigen Pfad zusammenbauen
-      const fullPath = `${API_BASE_URL}${item.filePath}`;
+      const isAbsolute = /^https?:\/\//i.test(item.filePath);
+      const fullPath = isAbsolute ? item.filePath : `${API_BASE_URL}${item.filePath}`;
       window.open(fullPath, '_blank');
       return;
     }

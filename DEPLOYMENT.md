@@ -1,6 +1,42 @@
 # EHC Biel-Bienne App Deployment Guide
 
-## Frontend Deployment (GitHub Pages oder Vercel)
+## Deployment auf Vercel (Frontend + API)
+
+Empfohlen: Alles in einem Projekt auf Vercel. Das Frontend wird als statische Seite gebaut, die API-Endpunkte laufen als Vercel Functions unter `/api/*`.
+
+### Vorbereitung
+1. Repo auf GitHub pushen
+2. Vercel Account erstellen und GitHub verbinden
+3. In Vercel: New Project → Importiere dieses Repo
+
+### Environment Variables (Vercel → Project → Settings → Environment Variables)
+- `DEEPL_API_KEY` = dein DeepL-Schlüssel (Required für Übersetzungen)
+- Optional für Cloudinary (falls du es statt Vercel Blob verwenden willst):
+  - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_FOLDER`
+
+### Storage für Uploads
+- Standard: Vercel Blob wird verwendet. Aktiviere unter Project → Storage → Blob und vergib Lese/Schreibrechte.
+- Die Upload-Endpunkte sind:
+  - `POST /api/upload/image`
+  - `POST /api/upload/video`
+  - `POST /api/upload/pdf`
+  → Response enthält `url` der hochgeladenen Datei.
+
+### Build Settings
+- Framework Preset: Vite
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+
+### Start
+- Push auf `main` → Vercel baut und deployed automatisch.
+- Projekt-URL öffnen (z. B. `https://<projekt>.vercel.app`).
+
+Hinweis: Die App nutzt in Production relative API-URLs (gleiche Domain). In Development weiterhin `http://localhost:3001` aus `src/config/api.js`.
+
+---
+
+## Frontend Deployment (GitHub Pages) – Alternative
 
 ### GitHub Pages (empfohlen für dieses Frontend)
 1. GitHub Actions ist vorbereitet: `.github/workflows/deploy.yml`
@@ -45,6 +81,24 @@ Dieses Repo enthält `render.yaml`. Schritte:
   - `UPLOAD_DIR` (Standard: `public/uploads`; auf Render: `/data/uploads`)
   - `DEEPL_API_KEY` (Pflicht für Live-Übersetzungen)
 - Static Uploads werden über `/uploads` ausgeliefert
+
+### Optional: Cloudinary für Uploads (Free-freundlich)
+Um im Free-Plan ohne Disks trotzdem persistente Uploads zu haben, nutze Cloudinary.
+
+1. Konto erstellen: https://cloudinary.com/
+2. Im Dashboard die Credentials kopieren: Cloud Name, API Key, API Secret
+3. In Render beim Backend-Service als Environment Variablen setzen:
+   - `CLOUDINARY_CLOUD_NAME=<dein_name>`
+   - `CLOUDINARY_API_KEY=<dein_key>`
+   - `CLOUDINARY_API_SECRET=<dein_secret>`
+   - Optional: `CLOUDINARY_FOLDER=ehcb-app`
+4. Redeploy. Ab jetzt speichern die Endpunkte:
+   - `POST /api/upload/image` → Cloudinary `resource_type=image`
+   - `POST /api/upload/video` → `resource_type=video`
+   - `POST /api/upload/pdf` → `resource_type=raw`
+5. Response enthält `url` (Cloudinary `secure_url`). Die App kann diese URLs direkt anzeigen/verlinken.
+
+Hinweis: Lokal ohne Cloudinary-Env fallen die Uploads automatisch auf den lokalen Speicher zurück.
 
 ### Start- und Build-Befehle
 - Build: `npm ci`

@@ -46,7 +46,7 @@ export default function App() {
               <SportFoodProvider>
                 <NewsProvider>
                   <NotificationProvider>
-                    <Router basename={import.meta.env.PROD ? '/ehcb-app' : ''}>
+                    <Router>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/reflexion" element={<Reflexion />} />

@@ -1,8 +1,8 @@
 // API Configuration für Production Deployment
 const isDevelopment = import.meta.env.MODE === 'development';
 
-// Production API URL (nach Domain-Setup zu aktualisieren)
-const PRODUCTION_API_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.ehcb-spirit.ch';
+// Production API URL: auf Vercel relativ, damit Frontend & API unter derselben Domain laufen
+const PRODUCTION_API_URL = import.meta.env.VITE_API_BASE_URL || '';
 const DEVELOPMENT_API_URL = 'http://localhost:3001';
 
 export const API_BASE_URL = isDevelopment ? DEVELOPMENT_API_URL : PRODUCTION_API_URL;

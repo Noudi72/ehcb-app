@@ -7,6 +7,7 @@ const http = require('http');
 const { URLSearchParams } = require('url');
 const path = require('path');
 const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 
 // Environment variables
 const PORT = process.env.PORT || 3001;
@@ -31,7 +32,7 @@ try {
 const router = jsonServer.router(DB_FILE);
 const middlewares = jsonServer.defaults({ static: 'public' });
 
-// Verzeichnisse für Uploads erstellen, falls sie nicht existieren
+// Verzeichnisse für Uploads erstellen, falls sie nicht existieren (lokaler Fallback)
 const uploadsDir = process.env.UPLOAD_DIR || path.join(__dirname, 'public', 'uploads');
 const pdfDir = path.join(uploadsDir, 'pdf');
 const videoDir = path.join(uploadsDir, 'video');
@@ -48,6 +49,25 @@ if (!fs.existsSync(videoDir)) {
 }
 if (!fs.existsSync(imageDir)) {
   fs.mkdirSync(imageDir, { recursive: true });
+}
+
+// Cloudinary Konfiguration (für Uploads ohne lokale Disk)
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || 'ehcb-app';
+
+let cloudinaryEnabled = false;
+if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET,
+  });
+  cloudinaryEnabled = true;
+  console.log('☁️  Cloudinary Uploads aktiviert (Folder:', CLOUDINARY_FOLDER, ')');
+} else {
+  console.log('💾 Lokaler Upload-Fallback aktiv (Cloudinary nicht konfiguriert)');
 }
 
 // CORS-Middleware
@@ -71,6 +91,17 @@ server.use(fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB Größenbeschränkung
   createParentPath: true
 }));
+
+// Helper: Upload nach Cloudinary (Buffer)
+function uploadBufferToCloudinary(file, options) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+    stream.end(file.data);
+  });
+}
 
 // DeepL Translation Proxy
 server.post('/api/translate', async (req, res) => {
@@ -245,93 +276,131 @@ server.post('/api/broadcast-notification', (req, res) => {
 // Standard-Middleware
 server.use(middlewares);
 
-// Upload-Endpunkte
-server.post('/api/upload/pdf', (req, res) => {
-  if (!req.files || Object.keys(req.files).length === 0) {
-    return res.status(400).json({ error: 'Keine Dateien hochgeladen' });
-  }
+// Upload-Endpunkte (Cloudinary, mit lokalem Fallback)
+server.post('/api/upload/pdf', async (req, res) => {
+  try {
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: 'Keine Dateien hochgeladen' });
+    }
+    const pdfFile = req.files.file;
 
-  const pdfFile = req.files.file;
-  const fileName = Date.now() + '_' + pdfFile.name;
-  const uploadPath = path.join(pdfDir, fileName);
-
-  pdfFile.mv(uploadPath, err => {
-    if (err) {
-      console.error('Fehler beim Speichern der PDF:', err);
-      return res.status(500).json({ error: 'Fehler beim Hochladen' });
+    if (cloudinaryEnabled) {
+      const result = await uploadBufferToCloudinary(pdfFile, {
+        folder: `${CLOUDINARY_FOLDER}/pdf`,
+        resource_type: 'raw',
+        use_filename: true,
+        unique_filename: true,
+      });
+      return res.json({
+        success: true,
+        provider: 'cloudinary',
+        fileName: result.public_id,
+        url: result.secure_url,
+        resource_type: result.resource_type,
+      });
     }
 
-    res.json({ 
-      success: true, 
-      fileName: fileName,
-      filePath: `/uploads/pdf/${fileName}` 
+    const fileName = Date.now() + '_' + pdfFile.name;
+    const uploadPath = path.join(pdfDir, fileName);
+    pdfFile.mv(uploadPath, err => {
+      if (err) {
+        console.error('Fehler beim Speichern der PDF:', err);
+        return res.status(500).json({ error: 'Fehler beim Hochladen' });
+      }
+      res.json({ success: true, provider: 'local', fileName, filePath: `/uploads/pdf/${fileName}` });
     });
-  });
+  } catch (error) {
+    console.error('PDF Upload Fehler:', error);
+    res.status(500).json({ error: 'Fehler beim Hochladen', details: error.message });
+  }
 });
 
-// Route für Video-Upload
-server.post('/api/upload/video', (req, res) => {
-  if (!req.files || Object.keys(req.files).length === 0) {
-    return res.status(400).json({ error: 'Keine Dateien hochgeladen' });
-  }
+server.post('/api/upload/video', async (req, res) => {
+  try {
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: 'Keine Dateien hochgeladen' });
+    }
+    const videoFile = req.files.file;
 
-  const videoFile = req.files.file;
-  const fileName = Date.now() + '_' + videoFile.name;
-  const uploadPath = path.join(videoDir, fileName);
-
-  videoFile.mv(uploadPath, err => {
-    if (err) {
-      console.error('Fehler beim Speichern des Videos:', err);
-      return res.status(500).json({ error: 'Fehler beim Hochladen' });
+    if (cloudinaryEnabled) {
+      const result = await uploadBufferToCloudinary(videoFile, {
+        folder: `${CLOUDINARY_FOLDER}/video`,
+        resource_type: 'video',
+        use_filename: true,
+        unique_filename: true,
+      });
+      return res.json({
+        success: true,
+        provider: 'cloudinary',
+        fileName: result.public_id,
+        url: result.secure_url,
+        resource_type: result.resource_type,
+      });
     }
 
-    res.json({ 
-      success: true, 
-      fileName: fileName,
-      filePath: `/uploads/video/${fileName}` 
+    const fileName = Date.now() + '_' + videoFile.name;
+    const uploadPath = path.join(videoDir, fileName);
+    videoFile.mv(uploadPath, err => {
+      if (err) {
+        console.error('Fehler beim Speichern des Videos:', err);
+        return res.status(500).json({ error: 'Fehler beim Hochladen' });
+      }
+      res.json({ success: true, provider: 'local', fileName, filePath: `/uploads/video/${fileName}` });
     });
-  });
+  } catch (error) {
+    console.error('Video Upload Fehler:', error);
+    res.status(500).json({ error: 'Fehler beim Hochladen', details: error.message });
+  }
 });
 
-// Route für Image-Upload
-server.post('/api/upload/image', (req, res) => {
-  if (!req.files || Object.keys(req.files).length === 0) {
-    return res.status(400).json({ error: 'Keine Dateien hochgeladen' });
-  }
+server.post('/api/upload/image', async (req, res) => {
+  try {
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: 'Keine Dateien hochgeladen' });
+    }
+    const imageFile = req.files.file;
 
-  const imageFile = req.files.file;
-  
-  // Überprüfe den Dateityp
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(imageFile.mimetype)) {
-    return res.status(400).json({ 
-      error: 'Ungültiger Dateityp. Nur JPEG, PNG und WebP sind erlaubt.' 
-    });
-  }
-  
-  // Überprüfe die Dateigröße (max 10MB)
-  const maxSize = 10 * 1024 * 1024; // 10MB
-  if (imageFile.size > maxSize) {
-    return res.status(400).json({ 
-      error: 'Datei zu groß. Maximum 10MB erlaubt.' 
-    });
-  }
-
-  const fileName = Date.now() + '_' + imageFile.name;
-  const uploadPath = path.join(imageDir, fileName);
-
-  imageFile.mv(uploadPath, err => {
-    if (err) {
-      console.error('Fehler beim Speichern des Bildes:', err);
-      return res.status(500).json({ error: 'Fehler beim Hochladen' });
+    // Dateityp prüfen
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(imageFile.mimetype)) {
+      return res.status(400).json({ error: 'Ungültiger Dateityp. Nur JPEG, PNG und WebP sind erlaubt.' });
+    }
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (imageFile.size > maxSize) {
+      return res.status(400).json({ error: 'Datei zu groß. Maximum 10MB erlaubt.' });
     }
 
-    res.json({ 
-      success: true, 
-      fileName: fileName,
-      filePath: `/uploads/images/${fileName}` 
+    if (cloudinaryEnabled) {
+      const result = await uploadBufferToCloudinary(imageFile, {
+        folder: `${CLOUDINARY_FOLDER}/images`,
+        resource_type: 'image',
+        use_filename: true,
+        unique_filename: true,
+      });
+      return res.json({
+        success: true,
+        provider: 'cloudinary',
+        fileName: result.public_id,
+        url: result.secure_url,
+        width: result.width,
+        height: result.height,
+        format: result.format,
+      });
+    }
+
+    const fileName = Date.now() + '_' + imageFile.name;
+    const uploadPath = path.join(imageDir, fileName);
+    imageFile.mv(uploadPath, err => {
+      if (err) {
+        console.error('Fehler beim Speichern des Bildes:', err);
+        return res.status(500).json({ error: 'Fehler beim Hochladen' });
+      }
+      res.json({ success: true, provider: 'local', fileName, filePath: `/uploads/images/${fileName}` });
     });
-  });
+  } catch (error) {
+    console.error('Image Upload Fehler:', error);
+    res.status(500).json({ error: 'Fehler beim Hochladen', details: error.message });
+  }
 });
 
 // Statisches Verzeichnis für Uploads

@@ -95,9 +95,10 @@ export default function NewsManager() {
       setIsUploading(false);
       
       if (response.data.success) {
+        const urlOrPath = response.data.url || response.data.filePath || '';
         return {
           fileName: response.data.fileName,
-          filePath: response.data.filePath
+          filePath: urlOrPath
         };
       }
     } catch (error) {

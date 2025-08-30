@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: process.env.NODE_ENV === 'production' ? '/ehcb-app/' : '/',
+  base: '/',
   server: {
     open: true,
     host: true, // Host auf '0.0.0.0' setzen, um alle Netzwerkschnittstellen zu öffnen
