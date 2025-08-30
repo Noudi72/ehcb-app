@@ -1,9 +1,22 @@
 // Vereinfachter Service Worker für EHC Biel Spirit App
 const CACHE_NAME = 'ehc-spirit-v1';
+
+// Dynamische Base URL für GitHub Pages Support
+const getBaseUrl = () => {
+  const url = new URL(self.location);
+  // Für GitHub Pages wird der Pfad /ehcb-app/ verwendet
+  if (url.hostname === 'noudi72.github.io' && url.pathname.startsWith('/ehcb-app/')) {
+    return '/ehcb-app';
+  }
+  return '';
+};
+
+const BASE_URL = getBaseUrl();
+
 const urlsToCache = [
-  '/',
-  '/manifest.json',
-  '/u18-team_app-icon.png'
+  `${BASE_URL}/`,
+  `${BASE_URL}/manifest.json`,
+  `${BASE_URL}/u18-team_app-icon.png`
 ];
 
 // Installation des Service Workers
@@ -73,8 +86,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: 'Neue Benachrichtigung von EHC Biel Spirit 🏒',
-    icon: '/u18-team_app-icon.png',
-    badge: '/u18-team_app-icon.png',
+    icon: `${BASE_URL}/u18-team_app-icon.png`,
+    badge: `${BASE_URL}/u18-team_app-icon.png`,
     vibrate: [200, 100, 200],
     data: {
       dateOfArrival: Date.now(),
@@ -117,7 +130,7 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action === 'explore' || event.action === '') {
     // App öffnen
     event.waitUntil(
-      clients.openWindow(event.notification.data?.url || '/')
+      clients.openWindow(event.notification.data?.url || `${BASE_URL}/`)
     );
   }
   // Bei 'close' nichts tun
