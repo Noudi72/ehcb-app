@@ -78,6 +78,15 @@ server.use((req, res, next) => {
   next();
 });
 
+// Simple health/root route so '/' doesn't return 404
+server.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'ehcb-app api',
+    time: new Date().toISOString(),
+  });
+});
+
 // JSON Body Parser
 // Wichtig: json-server parst den Body nicht per defaults();
 // Wir aktivieren daher den Body-Parser, damit req.body in Custom-Routen verfügbar ist.
@@ -170,6 +179,11 @@ server.get('/api/translate', (req, res) => {
     status: 'API is running',
     message: 'Use POST request with { text, targetLanguage, sourceLanguage } to translate'
   });
+});
+
+// Optional: Stub endpoint for notifications to avoid 404s in the client
+server.get('/notifications', (req, res) => {
+  res.json([]);
 });
 
 // Helper function für HTTPS requests
