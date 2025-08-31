@@ -13,7 +13,8 @@ function Header() {
   // Responsive Banner Selection
   const getBannerImage = () => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth >= 768 ? '/banner_ehcb_desktop.png' : '/banner_ehcb_spirit.png';
+  const base = import.meta.env.BASE_URL || '/';
+  return window.innerWidth >= 768 ? `${base}banner_ehcb_desktop.png` : `${base}banner_ehcb_spirit.png`;
     }
     return '/banner_ehcb_spirit.png'; // fallback
   };
