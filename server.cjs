@@ -70,6 +70,39 @@ if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
   console.log('💾 Lokaler Upload-Fallback aktiv (Cloudinary nicht konfiguriert)');
 }
 
+// Einfacher In-Memory LRU-Cache für Übersetzungen
+const CACHE_TTL_MS = parseInt(process.env.TRANSLATION_CACHE_TTL_MS || `${7 * 24 * 60 * 60 * 1000}`, 10); // 7 Tage
+const CACHE_MAX = parseInt(process.env.TRANSLATION_CACHE_MAX || '3000', 10);
+const translationCache = new Map(); // key -> { value, ts }
+const inflightMap = new Map(); // key -> Promise
+
+function makeCacheKey({ text, sourceLanguage, targetLanguage }) {
+  return `${text.trim()}__${sourceLanguage}->${targetLanguage}`;
+}
+
+function cacheGet(key) {
+  const entry = translationCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) {
+    translationCache.delete(key);
+    return null;
+  }
+  // LRU: refresh order
+  translationCache.delete(key);
+  translationCache.set(key, entry);
+  return entry.value;
+}
+
+function cacheSet(key, value) {
+  if (translationCache.has(key)) translationCache.delete(key);
+  translationCache.set(key, { value, ts: Date.now() });
+  // LRU Eviction
+  while (translationCache.size > CACHE_MAX) {
+    const oldestKey = translationCache.keys().next().value;
+    translationCache.delete(oldestKey);
+  }
+}
+
 // CORS-Middleware (mit Preflight-Handling)
 server.use((req, res, next) => {
   const origin = req.headers.origin || '*';
@@ -140,7 +173,14 @@ server.post('/api/translate', async (req, res) => {
     if (!deeplApiKey) {
       return res.status(503).json({ error: 'DeepL API key not configured on server' });
     }
-  // Free-Keys (":fx") nutzen den Free-Endpunkt, sonst Pro
+    // Cache-Check (vor DeepL)
+    const cacheKey = makeCacheKey({ text, sourceLanguage, targetLanguage });
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      return res.json({ translatedText: cached, sourceLanguage, targetLanguage, cached: true });
+    }
+
+    // Free-Keys (":fx") nutzen den Free-Endpunkt, sonst Pro
   const isFreeKey = deeplApiKey.endsWith(':fx');
   const deeplBaseUrl = isFreeKey ? 'https://api-free.deepl.com/v2/translate' : 'https://api.deepl.com/v2/translate';
 
@@ -183,7 +223,19 @@ server.post('/api/translate', async (req, res) => {
       }
     }
 
-    const result = await requestWithRetry(1);
+    // In-Flight-Deduplizierung
+    let result;
+    if (inflightMap.has(cacheKey)) {
+      result = await inflightMap.get(cacheKey);
+    } else {
+      const p = requestWithRetry(1);
+      inflightMap.set(cacheKey, p);
+      try {
+        result = await p;
+      } finally {
+        inflightMap.delete(cacheKey);
+      }
+    }
     if (!result.ok) {
       const status = result.status || 500;
       console.error('DeepL API Fehler:', { status, body: result.body?.slice?.(0, 500) });
@@ -193,8 +245,10 @@ server.post('/api/translate', async (req, res) => {
     console.log('DeepL API Response OK');
 
     if (data.translations && data.translations[0]) {
+      const translatedText = data.translations[0].text;
+      cacheSet(cacheKey, translatedText);
       res.json({ 
-        translatedText: data.translations[0].text,
+        translatedText,
         sourceLanguage: sourceLanguage,
         targetLanguage: targetLanguage
       });

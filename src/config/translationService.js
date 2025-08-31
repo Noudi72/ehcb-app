@@ -4,6 +4,34 @@
 // Einheitliche Backend-URL über zentrale API-Konfiguration
 import { API_BASE_URL } from './api';
 
+// Client-seitiges Throttling für Backend-Requests (max. 2 parallel, kleiner Jitter)
+const MAX_CONCURRENT = 2;
+let activeCount = 0;
+const queue = [];
+const inFlight = new Map(); // Key -> Promise
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function runWithThrottle(task) {
+  // optionaler Jitter 100-200ms, um Bursts zu glätten
+  const jitter = 100 + Math.floor(Math.random() * 100);
+  await sleep(jitter);
+
+  if (activeCount >= MAX_CONCURRENT) {
+    await new Promise(resolve => queue.push(resolve));
+  }
+  activeCount++;
+  try {
+    return await task();
+  } finally {
+    activeCount--;
+    const next = queue.shift();
+    if (next) next();
+  }
+}
+
 // Cache für Übersetzungen
 const translationCache = new Map();
 
@@ -221,7 +249,9 @@ export const translateText = async (text, targetLanguage, sourceLanguage = 'de')
       console.log(`🌐 Versuche Backend-Übersetzung:`, { text, sourceLanguage, targetLanguage });
 
       const base = API_BASE_URL || '';
-      const response = await fetch(`${base}/api/translate`, {
+      const key = `${text}__${sourceLanguage}->${targetLanguage}`;
+      // In-Flight-Deduplizierung
+      const doRequest = () => fetch(`${base}/api/translate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -232,6 +262,19 @@ export const translateText = async (text, targetLanguage, sourceLanguage = 'de')
           sourceLanguage: sourceLanguage
         })
       });
+
+      let response;
+      if (inFlight.has(key)) {
+        response = await inFlight.get(key);
+      } else {
+        const p = runWithThrottle(doRequest);
+        inFlight.set(key, p);
+        try {
+          response = await p;
+        } finally {
+          inFlight.delete(key);
+        }
+      }
 
       if (response.ok) {
         const data = await response.json();
