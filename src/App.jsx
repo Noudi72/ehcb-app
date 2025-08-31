@@ -64,7 +64,7 @@ export default function App() {
                       <div className="bg-[#0a2240] px-4 py-4 flex items-center justify-between rounded-b-3xl shadow-md">
                         <div className="flex items-center space-x-3">
                           <img
-                            src="/u18-team_app-icon.png"
+                            src={`${import.meta.env.BASE_URL}u18-team_app-icon.png`}
                             alt="EHCB Logo"
                             className="h-12 w-12 object-contain"
                           />

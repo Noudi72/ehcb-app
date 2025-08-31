@@ -49,7 +49,7 @@ const InstallPrompt = () => {
             {/* App Icon */}
             <div className="flex-shrink-0">
               <img 
-                src="/u18-team_app-icon.png" 
+                src={`${import.meta.env.BASE_URL}u18-team_app-icon.png`} 
                 alt="EHC Biel Spirit" 
                 className="w-12 h-12 rounded-lg"
               />
