@@ -136,11 +136,13 @@ server.post('/api/translate', async (req, res) => {
       return res.status(400).json({ error: 'Text and target language are required' });
     }
 
-    const deeplApiKey = process.env.DEEPL_API_KEY;
+  const deeplApiKey = process.env.DEEPL_API_KEY;
     if (!deeplApiKey) {
       return res.status(503).json({ error: 'DeepL API key not configured on server' });
     }
-    const deeplBaseUrl = 'https://api-free.deepl.com/v2/translate';
+  // Free-Keys (":fx") nutzen den Free-Endpunkt, sonst Pro
+  const isFreeKey = deeplApiKey.endsWith(':fx');
+  const deeplBaseUrl = isFreeKey ? 'https://api-free.deepl.com/v2/translate' : 'https://api.deepl.com/v2/translate';
 
     // DeepL verwendet andere Sprachcodes
     const deeplLanguages = {
@@ -155,19 +157,40 @@ server.post('/api/translate', async (req, res) => {
     formData.append('target_lang', deeplLanguages[targetLanguage] || 'EN');
     formData.append('auth_key', deeplApiKey);
 
-    console.log('DeepL API Request:', { text, sourceLanguage, targetLanguage });
+    console.log('DeepL API Request:', { sourceLanguage, targetLanguage, endpoint: deeplBaseUrl.includes('api-free') ? 'free' : 'pro' });
 
-    // Native Node.js HTTPS request
-    const data = await makeHttpsRequest(deeplBaseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': Buffer.byteLength(formData.toString())
-      },
-      body: formData.toString()
-    });
+    async function requestWithRetry(maxRetries = 1) {
+      try {
+        const data = await makeHttpsRequest(deeplBaseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(formData.toString())
+          },
+          body: formData.toString()
+        });
+        return { ok: true, data };
+      } catch (err) {
+        // Versuche HTTP-Status zu extrahieren
+        const match = /^HTTP\s(\d{3}):\s([\s\S]*)/.exec(err.message || '');
+        const status = match ? parseInt(match[1], 10) : 500;
+        const body = match ? match[2] : err.message;
+        if (maxRetries > 0 && (status === 429 || status >= 500)) {
+          await new Promise(r => setTimeout(r, 400));
+          return requestWithRetry(maxRetries - 1);
+        }
+        return { ok: false, status, body };
+      }
+    }
 
-    console.log('DeepL API Response:', data);
+    const result = await requestWithRetry(1);
+    if (!result.ok) {
+      const status = result.status || 500;
+      console.error('DeepL API Fehler:', { status, body: result.body?.slice?.(0, 500) });
+      return res.status(status).json({ error: 'DeepL proxy error', details: result.body });
+    }
+    const data = result.data;
+    console.log('DeepL API Response OK');
 
     if (data.translations && data.translations[0]) {
       res.json({ 
@@ -181,10 +204,10 @@ server.post('/api/translate', async (req, res) => {
 
   } catch (error) {
     console.error('Translation proxy error:', error);
-    res.status(500).json({ 
-      error: 'Translation failed', 
-      details: error.message 
-    });
+    const match = /^HTTP\s(\d{3}):\s([\s\S]*)/.exec(error.message || '');
+    const status = match ? parseInt(match[1], 10) : 500;
+    const details = match ? match[2] : error.message;
+    res.status(status).json({ error: 'Translation failed', details });
   }
 });
 
