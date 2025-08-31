@@ -12,7 +12,7 @@ const usePWA = () => {
     // Service Worker registrieren
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL || '/'}sw.js`)
           .then((registration) => {
             console.log('SW registered: ', registration);
             
@@ -99,8 +99,8 @@ const usePWA = () => {
           // Einfache Browser-Notification
           new Notification('EHC Biel Spirit', {
             body: 'Test-Benachrichtigung erfolgreich! 🏒',
-            icon: '/ehcb_logo.png',
-            badge: '/ehcb_logo.png'
+            icon: `${import.meta.env.BASE_URL || '/'}ehcb_logo.png`,
+            badge: `${import.meta.env.BASE_URL || '/'}ehcb_logo.png`
           });
         } else {
           alert('Push-Benachrichtigungen sind nicht erlaubt');

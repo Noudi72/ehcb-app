@@ -7,7 +7,7 @@ import { ToastProvider } from './context/ToastContext';
 // Service Worker Registrierung für PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swPath = '/sw.js';
+  const swPath = `${import.meta.env.BASE_URL || '/'}sw.js`;
     navigator.serviceWorker.register(swPath)
       .then((registration) => {
         console.log('SW registered: ', registration);
