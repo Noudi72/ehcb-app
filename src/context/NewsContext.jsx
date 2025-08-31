@@ -1,4 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { sendNewsNotification } from '../utils/pushNotifications';
 
 // Erstellen eines Kontexts für News-Daten
@@ -9,23 +11,37 @@ export const NewsProvider = ({ children }) => {
   const [newsItems, setNewsItems] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // News aus localStorage laden
-  const loadNews = () => {
+  // News laden (Server-First, Local Fallback)
+  const loadNews = async () => {
+    setLoading(true);
     try {
-      const stored = localStorage.getItem('ehcb-news');
-      if (stored) {
-        const parsedNews = JSON.parse(stored);
-        setNewsItems(parsedNews);
-      }
+      const res = await axios.get(`${API_BASE_URL}/news`);
+      const items = Array.isArray(res.data) ? res.data : [];
+      // Nach Datum sortieren (neu zuerst), falls kein Server-Sort
+      items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      setNewsItems(items);
+      saveNewsLocal(items);
     } catch (error) {
-      console.error('Fehler beim Laden der News aus localStorage:', error);
+      console.warn('Konnte News nicht vom Server laden, nutze lokalen Cache:', error?.message || error);
+      try {
+        const stored = localStorage.getItem('ehcb-news');
+        if (stored) {
+          const parsedNews = JSON.parse(stored);
+          setNewsItems(parsedNews);
+        } else {
+          setNewsItems([]);
+        }
+      } catch (e) {
+        console.error('Fehler beim Laden der News aus localStorage:', e);
+        setNewsItems([]);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   // News in localStorage speichern
-  const saveNews = (newsArray) => {
+  const saveNewsLocal = (newsArray) => {
     try {
       localStorage.setItem('ehcb-news', JSON.stringify(newsArray));
     } catch (error) {
@@ -40,65 +56,67 @@ export const NewsProvider = ({ children }) => {
   
   // Funktion zum Hinzufügen eines News-Items
   const addNewsItem = async (newItem) => {
+    const payload = {
+      ...newItem,
+      createdAt: new Date().toISOString(),
+    };
     try {
-      const newsWithId = {
-        ...newItem,
-        id: Date.now(), // Eindeutige ID generieren
-        createdAt: new Date().toISOString()
-      };
-      
-      const updatedNews = [newsWithId, ...newsItems];
+      const res = await axios.post(`${API_BASE_URL}/news`, payload, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const saved = res.data || payload;
+      const updatedNews = [saved, ...newsItems];
       setNewsItems(updatedNews);
-      saveNews(updatedNews);
-      
-      // Push-Benachrichtigung für neue News senden (nur für Spieler wichtig)
+      saveNewsLocal(updatedNews);
       try {
-        await sendNewsNotification(
-          newsWithId.title, 
-          newsWithId.content || newsWithId.description || ''
-        );
+        await sendNewsNotification(saved.title, saved.content || saved.description || '');
       } catch (error) {
         console.warn('Push-Benachrichtigung für News konnte nicht gesendet werden:', error);
       }
-      
-      return newsWithId;
+      return saved;
     } catch (error) {
-      console.error('Fehler beim Hinzufügen der News:', error);
-      throw error;
+      console.warn('Server-POST fehlgeschlagen, speichere lokal:', error?.message || error);
+      const local = { ...payload, id: Date.now() };
+      const updatedNews = [local, ...newsItems];
+      setNewsItems(updatedNews);
+      saveNewsLocal(updatedNews);
+      return local;
     }
   };
   
   // Funktion zum Aktualisieren eines News-Items
   const updateNewsItem = async (updatedItem) => {
+    const payload = { ...updatedItem, updatedAt: new Date().toISOString() };
     try {
-      const updatedNews = newsItems.map(item => 
-        item.id === updatedItem.id ? { ...updatedItem, updatedAt: new Date().toISOString() } : item
-      );
-      setNewsItems(updatedNews);
-      saveNews(updatedNews);
-      return updatedItem;
+      await axios.patch(`${API_BASE_URL}/news/${updatedItem.id}`, payload, {
+        headers: { 'Content-Type': 'application/json' }
+      });
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der News:', error);
-      throw error;
+      console.warn('Server-PATCH fehlgeschlagen, aktualisiere nur lokal:', error?.message || error);
     }
+    const updatedNews = newsItems.map(item => item.id === updatedItem.id ? payload : item);
+    setNewsItems(updatedNews);
+    saveNewsLocal(updatedNews);
+    return payload;
   };
   
   // Funktion zum Löschen eines News-Items
   const deleteNewsItem = async (itemId) => {
     try {
-      const updatedNews = newsItems.filter(item => item.id !== itemId);
-      setNewsItems(updatedNews);
-      saveNews(updatedNews);
+      await axios.delete(`${API_BASE_URL}/news/${itemId}`);
     } catch (error) {
-      console.error('Fehler beim Löschen der News:', error);
-      throw error;
+      console.warn('Server-DELETE fehlgeschlagen, lösche nur lokal:', error?.message || error);
     }
+    const updatedNews = newsItems.filter(item => item.id !== itemId);
+    setNewsItems(updatedNews);
+    saveNewsLocal(updatedNews);
   };
 
   // Funktion zum Löschen aller News (für Testing)
-  const clearAllNews = () => {
+  const clearAllNews = async () => {
+    // Nur lokal leeren; optional: alle IDs sammeln und am Server löschen
     setNewsItems([]);
-    saveNews([]);
+    saveNewsLocal([]);
   };
 
   return (
@@ -107,11 +125,11 @@ export const NewsProvider = ({ children }) => {
       addNewsItem, 
       updateNewsItem, 
       deleteNewsItem,
-      clearAllNews,
-      loading,
-      // Alias: beide anbieten, damit bestehende Seiten funktionieren
-      refreshNews: loadNews,
-      fetchNews: loadNews
+  clearAllNews,
+  loading,
+  // Alias: beide anbieten, damit bestehende Seiten funktionieren
+  refreshNews: loadNews,
+  fetchNews: loadNews
     }}>
       {children}
     </NewsContext.Provider>
