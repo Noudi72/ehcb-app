@@ -109,7 +109,9 @@ export const NewsProvider = ({ children }) => {
       deleteNewsItem,
       clearAllNews,
       loading,
-      refreshNews: loadNews
+      // Alias: beide anbieten, damit bestehende Seiten funktionieren
+      refreshNews: loadNews,
+      fetchNews: loadNews
     }}>
       {children}
     </NewsContext.Provider>
