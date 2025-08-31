@@ -1,5 +1,7 @@
 // Vereinfachter Service Worker für EHC Biel Spirit App
-const CACHE_NAME = 'ehc-spirit-v1';
+// Versionierung: erhöhe diese Zahl oder nutze Datum, um Caches bei Deploys zu invalidieren
+const CACHE_VERSION = new Date().toISOString().split('T')[0].replace(/-/g, ''); // e.g. 20250831
+const CACHE_NAME = `ehc-spirit-${CACHE_VERSION}`;
 
 // Dynamische Base URL für GitHub Pages Support
 const getBaseUrl = () => {
@@ -26,7 +28,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Cache geöffnet');
+        console.log('Cache geöffnet:', CACHE_NAME);
         return cache.addAll(urlsToCache).catch((error) => {
           console.log('Cache-Fehler (ignoriert):', error);
           return Promise.resolve(); // Ignoriere Cache-Fehler
@@ -45,7 +47,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('Service Worker aktiviert');
   event.waitUntil(
-    // Alte Caches löschen
+    // Alte Caches löschen (ausser aktuelle Version)
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
@@ -53,6 +55,7 @@ self.addEventListener('activate', (event) => {
             console.log('Lösche alten Cache:', cacheName);
             return caches.delete(cacheName);
           }
+          return null;
         })
       );
     })
