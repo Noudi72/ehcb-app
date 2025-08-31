@@ -1,8 +1,8 @@
 // Translation Service für EHC Biel-Bienne Spirit App
 // Vereinfachte Mock-Implementation für Tests
 
-// Backend-URL für Translation-Proxy
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+// Einheitliche Backend-URL über zentrale API-Konfiguration
+import { API_BASE_URL } from './api';
 
 // Cache für Übersetzungen
 const translationCache = new Map();
@@ -222,7 +222,8 @@ export const translateText = async (text, targetLanguage, sourceLanguage = 'de')
       try {
         console.log(`🌐 Versuche Backend-Übersetzung:`, { text, sourceLanguage, targetLanguage });
         
-        const response = await fetch(`${BACKEND_URL}/api/translate`, {
+  const base = API_BASE_URL || '';
+  const response = await fetch(`${base}/api/translate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -332,7 +333,8 @@ export const checkAPIAvailability = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 Sekunden Timeout
 
-    const response = await fetch(`${BACKEND_URL}/api/translate`, {
+  const base = API_BASE_URL || '';
+  const response = await fetch(`${base}/api/translate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -355,8 +357,6 @@ export const checkAPIAvailability = async () => {
     };
 
     console.log('Translation API availability:', availability);
-    return availability;
-  console.log('Translation API availability:', availability);
     return availability;
   } catch (error) {
     console.error('Backend not available, using mock translations:', error.message);
