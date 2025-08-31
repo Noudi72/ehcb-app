@@ -16,30 +16,6 @@ export default function Umfrage() {
   const [activeSurveys, setActiveSurveys] = useState([]);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   
-  // Standardfragen für den Fall, dass keine aktiven Umfragen vorhanden sind
-  const defaultQuestions = [
-    {
-      id: "q1",
-      question: "Wie fühlst du dich nach dem letzten Training?",
-      type: "options",
-      options: ["Sehr gut", "Gut", "Neutral", "Müde", "Erschöpft"]
-    },
-    {
-      id: "q2",
-      question: "Welche Bereiche möchtest du im Training verbessern?",
-      type: "checkbox",
-      options: ["Schuss", "Skating", "Taktik", "Kondition", "Zweikämpfe"]
-    },
-    {
-      id: "q3",
-      question: "Wie lange hast du gestern geschlafen?",
-      type: "number",
-      placeholder: "Stunden",
-      min: 0,
-      max: 24
-    }
-  ];
-
   // Lade aktive Umfragen mit ihren Fragen (übersetzt)
   useEffect(() => {
     const loadTranslatedSurveys = async () => {
@@ -66,22 +42,14 @@ export default function Umfrage() {
             console.log("Übersetzte Fragen für ausgewählte Umfrage:", latestSurvey.questions);
             setCurrentQuestions(latestSurvey.questions);
           } else {
-            // Übersetze auch die Standardfragen
-            try {
-              const translatedDefaults = await getTranslatedQuestions(defaultQuestions, language);
-              setCurrentQuestions(translatedDefaults);
-            } catch (err) {
-              setCurrentQuestions(defaultQuestions);
-            }
+            // Keine Fragen in der aktiven Umfrage — lege currentQuestions leer fest
+            setCurrentQuestions([]);
           }
         } else {
-          // Übersetze die Standardfragen wenn keine Umfragen vorhanden
-          try {
-            const translatedDefaults = await getTranslatedQuestions(defaultQuestions, language);
-            setCurrentQuestions(translatedDefaults);
-          } catch (err) {
-            setCurrentQuestions(defaultQuestions);
-          }
+          // Keine aktiven Umfragen vorhanden: zeige keine Default‑Fragen mehr, sondern eine Info im UI
+          setActiveSurveys([]);
+          setSelectedSurvey(null);
+          setCurrentQuestions([]);
         }
       } catch (error) {
         console.error("Fehler beim Laden der übersetzten Umfragen:", error);
@@ -99,10 +67,10 @@ export default function Umfrage() {
           if (latestSurvey.questions && Array.isArray(latestSurvey.questions) && latestSurvey.questions.length > 0) {
             setCurrentQuestions(latestSurvey.questions);
           } else {
-            setCurrentQuestions(defaultQuestions);
+            setCurrentQuestions([]);
           }
         } else {
-          setCurrentQuestions(defaultQuestions);
+          setCurrentQuestions([]);
         }
       }
     };
@@ -405,9 +373,21 @@ export default function Umfrage() {
             )}
             
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('survey.title')}</h1>
-            
+
+            {/* Wenn keine aktiven Umfragen vorhanden sind, zeige eine Info-Box statt Default-Fragen */}
+            {activeSurveys.length === 0 && (
+              <div className="mb-6 p-4 rounded-lg border border-gray-200 bg-yellow-50 text-gray-800">
+                <strong>Zurzeit sind keine Umfragen aktiv.</strong>
+                <p className="mt-2 text-sm text-gray-700">Wenn du Trainer bist, kannst du Umfragen im Coach‑Dashboard > Aktive Umfragen aktivieren.</p>
+                <div className="mt-3 flex space-x-2">
+                  <button onClick={() => window.location.href = '/'} className="px-4 py-2 bg-[#0a2240] text-white rounded">Zur Startseite</button>
+                  <button onClick={() => window.location.href = '/coach-login'} className="px-4 py-2 bg-blue-100 text-blue-800 rounded">Coach Login</button>
+                </div>
+              </div>
+            )}
+
             {/* Survey Auswahl mit Cards */}
-            {activeSurveys.length > 1 && !selectedSurvey && (
+            {activeSurveys.length > 0 && activeSurveys.length > 1 && !selectedSurvey && (
               <div className="mb-6">
                 <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">
                   {t('survey.chooseSurvey')}
