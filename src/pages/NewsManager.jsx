@@ -531,6 +531,11 @@ export default function NewsManager() {
               
               {formData.type === "video" && (
                 <>
+                  <div className={`mb-4 p-3 rounded-md border ${
+                    isDarkMode ? 'bg-yellow-900 text-yellow-100 border-yellow-700' : 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                  }`}>
+                    Hinweis: In der Live-Version werden Videos nicht direkt gespeichert. Bitte eine Video-URL angeben (z. B. OneDrive, YouTube oder Vimeo).
+                  </div>
                   <div className={`mb-4 border p-4 rounded-lg ${
                     isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'
                   }`}>
