@@ -216,45 +216,40 @@ export const translateText = async (text, targetLanguage, sourceLanguage = 'de')
       return translatedText;
     }
 
-    // 2. Backend-Proxy versuchen (aber nur wenn verfügbar)
-    const availability = await checkAPIAvailability();
-    if (availability.backend) {
-      try {
-        console.log(`🌐 Versuche Backend-Übersetzung:`, { text, sourceLanguage, targetLanguage });
-        
-  const base = API_BASE_URL || '';
-  const response = await fetch(`${base}/api/translate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: text,
-            targetLanguage: targetLanguage,
-            sourceLanguage: sourceLanguage
-          })
-        });
+    // 2. Backend-Proxy direkt versuchen (kein zusätzlicher Availability-Call pro Anfrage)
+    try {
+      console.log(`🌐 Versuche Backend-Übersetzung:`, { text, sourceLanguage, targetLanguage });
 
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.translatedText) {
-            const translatedText = data.translatedText;
-            console.log(`🚀 Backend-Übersetzung erfolgreich: "${text}" -> "${translatedText}"`);
-            
-            // Im Cache speichern
-            translationCache.set(cacheKey, translatedText);
-            
-            return translatedText;
-          }
-        } else {
-          console.log(`⚠️ Backend-Response nicht OK (${response.status}), verwende Mock-Übersetzung`);
+      const base = API_BASE_URL || '';
+      const response = await fetch(`${base}/api/translate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text,
+          targetLanguage: targetLanguage,
+          sourceLanguage: sourceLanguage
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.translatedText) {
+          const translatedText = data.translatedText;
+          console.log(`🚀 Backend-Übersetzung erfolgreich: "${text}" -> "${translatedText}"`);
+
+          // Im Cache speichern
+          translationCache.set(cacheKey, translatedText);
+
+          return translatedText;
         }
-      } catch (backendError) {
-        console.log(`⚠️ Backend-Fehler (${backendError.message}), verwende Mock-Übersetzung`);
+      } else {
+        console.log(`⚠️ Backend-Response nicht OK (${response.status}), verwende Mock-Übersetzung`);
       }
-    } else {
-      console.log(`ℹ️ Backend nicht verfügbar, verwende Mock-Übersetzung`);
+    } catch (backendError) {
+      console.log(`⚠️ Backend-Fehler (${backendError.message}), verwende Mock-Übersetzung`);
     }
 
     // 3. Intelligente Wort-für-Wort Mock-Übersetzung
