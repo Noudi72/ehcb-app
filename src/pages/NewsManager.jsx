@@ -164,20 +164,16 @@ export default function NewsManager() {
     };
     
     if (editingItem === null) {
-      // Neues Item hinzufügen
-      const newItem = {
-        ...updatedFormData,
-        id: Date.now()
-      };
-      addNewsItem(newItem);
+      // Neues Item hinzufügen – ID vom Context vergeben lassen
+      const savedItem = await addNewsItem({ ...updatedFormData });
 
       // Push-Nachricht für neue News senden
       try {
-        await sendNotificationToTeams(newItem.targetTeams, {
-          title: `📰 Neue News: ${newItem.title}`,
-          message: newItem.preview || `Neue Nachricht vom ${newItem.date}`,
+        await sendNotificationToTeams(savedItem.targetTeams || [], {
+          title: `📰 Neue News: ${savedItem.title}`,
+          message: savedItem.preview || `Neue Nachricht vom ${savedItem.date}`,
           type: 'news',
-          contentId: newItem.id
+          contentId: savedItem.id
         });
       } catch (error) {
         console.error('Fehler beim Senden der Push-Nachricht:', error);
@@ -808,6 +804,22 @@ export default function NewsManager() {
                       <div className={`text-sm truncate max-w-xs ${
                         isDarkMode ? 'text-gray-400' : 'text-gray-500'
                       }`}>{item.preview}</div>
+                      {(item.filePath || item.url) && (
+                        <button
+                          onClick={() => {
+                            const isAbsolute = item.filePath && /^https?:\/{2}/i.test(item.filePath);
+                            if (item.filePath) {
+                              const full = isAbsolute ? item.filePath : `${API_BASE_URL || ''}${item.filePath}`;
+                              window.open(full, '_blank');
+                            } else if (item.url) {
+                              window.open(item.url, '_blank');
+                            }
+                          }}
+                          className={`mt-1 text-xs underline ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}
+                        >
+                          {item.type === 'pdf' ? 'PDF öffnen' : item.type === 'video' ? 'Video ansehen' : item.type === 'image' ? 'Bild ansehen' : 'Link öffnen'}
+                        </button>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className={`text-sm ${
@@ -817,10 +829,14 @@ export default function NewsManager() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         item.type === 'pdf' 
-                          ? isDarkMode ? 'bg-red-800 text-red-200' : 'bg-red-100 text-red-800'
-                          : isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-800'
+                          ? (isDarkMode ? 'bg-red-800 text-red-200' : 'bg-red-100 text-red-800')
+                          : item.type === 'video'
+                          ? (isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-800')
+                          : item.type === 'image'
+                          ? (isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800')
+                          : (isDarkMode ? 'bg-purple-800 text-purple-200' : 'bg-purple-100 text-purple-800')
                       }`}>
-                        {item.type === 'pdf' ? 'PDF' : 'Video'}
+                        {item.type === 'pdf' ? 'PDF' : item.type === 'video' ? 'Video' : item.type === 'image' ? 'Bild' : 'Link'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
