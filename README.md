@@ -1,63 +1,45 @@
-# EHC Biel-Bienne Spirit Team App
+# EHC Biel-Bienne Spirit Team-App
 
-🏒 Progressive Web App für das EHC Biel-Bienne U18-Elite Team
+Kurze Übersicht und Betriebsanleitung (Deutsch).
 
-## 🌟 Features
+## Live
+- Frontend (GitHub Pages): https://noudi72.github.io/ehcb-app/
+- Backend (Railway): https://ehcb-app-production.up.railway.app/
 
-- 📱 **Progressive Web App** - Installierbar auf allen Geräten
-- 📰 **News & Downloads** - Team-Updates mit PDF/Video-Support
-- 📊 **Umfragen & Statistiken** - Team-Feedback und Auswertungen
-- 🔔 **Push Notifications** - Automatische Benachrichtigungen
-- 🌐 **Mehrsprachig** - Deutsch, Französisch, Englisch
-- 🎨 **Modern UI** - Responsive Design mit Dark Mode
-- ⚡ **Quick Actions** - Keyboard Shortcuts für Power-User
+## Entwicklung (Lokal)
+- Frontend starten: npm run dev
+- Backend starten: npm run backend
+- Production Build: npm run build
 
-## 🚀 Live Demo
+## Deployment
+- Frontend wird automatisch via GitHub Actions nach main → GitHub Pages deployed.
+- Vite-Base ist auf /ehcb-app/ gesetzt (Projektseite). Service Worker und Router nutzen BASE_URL korrekt.
+- Backend läuft auf Railway (Node 20), bindet 0.0.0.0 und hat Health-Endpoints (/healthz, /api/health).
 
-**Frontend:** [https://noelguyaz.github.io/ehcb-app](https://noelguyaz.github.io/ehcb-app)  
-**Backend:** [Railway Backend](https://ehcb-backend.railway.app)
+## API-Basis (Frontend)
+- Automatik: In Produktion auf github.io wird die Railway-URL genutzt.
+- Override (ohne Rebuild):
+	- Setzen: localStorage.setItem('API_BASE_URL', 'https://deine-api.example.com')
+	- Entfernen: localStorage.removeItem('API_BASE_URL')
 
-## 🛠 Development
+## Übersetzung (DeepL)
+- Client nutzt DeepL via Backend-Proxy (/api/translate). Bei Fehlern automatischer Mock-Fallback.
+- Client-Seite: Throttling (max. 2 parallele Requests, kleiner Jitter) + In-Flight-Dedupe.
+- Server-Seite: In-Memory LRU-Cache (TTL 7 Tage, Standard max. 3000 Einträge) + Dedupe + Retry bei 429/5xx.
+- Railway-Variable: DEEPL_API_KEY (Free-Key → api-free.deepl.com, Pro-Key → api.deepl.com wird automatisch erkannt).
+- Optional anpassbar (Env): TRANSLATION_CACHE_TTL_MS, TRANSLATION_CACHE_MAX.
 
-```bash
-# Frontend starten
-npm run dev
+## PWA
+- Service Worker unter /ehcb-app/sw.js, automatische Registrierung.
+- Installierbar über Browser (Install-Prompt) und Homescreen.
 
-# Backend starten  
-npm run backend
+## Tech-Stack
+- Frontend: React, Vite, Tailwind CSS
+- Backend: Node.js (Express + JSON Server)
+- Deployment: GitHub Pages, Railway
 
-# Production Build
-npm run build
-```
+## Support
+Fragen/Probleme: nguyaz@ehcb.ch
 
-## 📱 PWA Installation
-
-1. Öffne die App im Browser
-2. Klicke auf "Installieren" oder Browser-Menü
-3. App wird zum Homescreen hinzugefügt
-
-## 🔧 Tech Stack
-
-- **Frontend:** React + Vite + Tailwind CSS
-- **Backend:** Node.js + Express + JSON Server
-- **Deployment:** GitHub Pages + Railway
-- **PWA:** Service Worker + Web App Manifest
-
-## 📞 Support
-
-Bei Fragen oder Problemen: [nguyaz@ehcb.ch](mailto:nguyaz@ehcb.ch)
-
----
-
-**EHC Biel-Bienne** - Get stronger every day! 🏒+ Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+—
+EHC Biel-Bienne – Get stronger every day! 🏒

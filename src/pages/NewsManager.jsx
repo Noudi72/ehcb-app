@@ -16,6 +16,7 @@ export default function NewsManager() {
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isCreating, setIsCreating] = useState(false);
 
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
@@ -40,6 +41,7 @@ export default function NewsManager() {
 
   // Formular für neuen Eintrag vorbereiten
   const handleAddNew = () => {
+  setIsCreating(true);
     setEditingItem(null);
     setFormData({
       title: "",
@@ -111,6 +113,7 @@ export default function NewsManager() {
 
   // Bestehendes Item zum Bearbeiten laden
   const handleEdit = (item) => {
+  setIsCreating(true);
     setEditingItem(item.id);
     setFormData({...item});
   };
@@ -184,8 +187,9 @@ export default function NewsManager() {
       updateNewsItem({ ...updatedFormData, id: editingItem });
     }
     
-    // Reset form
+  // Reset form
     setEditingItem(null);
+  setIsCreating(false);
     setFormData({
       title: "",
       date: new Date().toLocaleDateString('de-CH'),
@@ -301,7 +305,7 @@ export default function NewsManager() {
           </div>
 
           {/* Formular für neues/bearbeitetes Item */}
-          {editingItem !== null || formData.title !== "" ? (
+          {isCreating ? (
             <div className={`p-6 rounded-lg shadow-md mb-8 ${
               isDarkMode ? 'bg-gray-800' : 'bg-white'
             }`}>
@@ -731,6 +735,7 @@ export default function NewsManager() {
               <div className="flex justify-end space-x-4">
                 <button 
                   onClick={() => {
+                    setIsCreating(false);
                     setEditingItem(null);
                     setFormData({
                       title: "",
