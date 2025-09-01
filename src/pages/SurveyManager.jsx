@@ -1,4 +1,5 @@
 import React from "react";
+import SurveyManagerOverview from "./SurveyManagerOverview";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -24,6 +25,7 @@ export default function SurveyManager() {
       </div>
     );
   }
+
 
   return (
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#f8fafc]'} font-sans`}>
@@ -199,6 +201,7 @@ export default function SurveyManager() {
         </div>
       </main>
       
+      <SurveyManagerOverview />
     </div>
   );
 }
