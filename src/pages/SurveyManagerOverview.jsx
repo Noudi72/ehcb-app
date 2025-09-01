@@ -55,31 +55,33 @@ export default function SurveyManagerOverview() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Umfrageverwaltung</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {surveys.map(survey => (
-          <div key={survey.id} className="rounded-lg shadow-md p-6 bg-white border-b-4 border-transparent hover:border-blue-500 transition-all">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-semibold flex items-center">
-                {survey.title}
-                <span className="ml-2"><StatusBadge status={survey.status} /></span>
-              </h2>
-            </div>
-            {survey.description && (
-              <p className="mb-3 text-gray-600 text-sm">{survey.description}</p>
-            )}
-            <div className="flex flex-wrap gap-2 mt-4">
-              <SurveyActions 
-                survey={survey} 
-                onEdit={handleEdit} 
-                onPublish={handlePublish} 
-                onArchive={handleArchive} 
-                onViewResults={handleViewResults}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+      <h1 className="text-2xl font-bold mb-4">Umfrageverwaltung</h1>
+      <table className="w-full border">
+        <thead>
+          <tr>
+            <th className="text-left p-2">Titel</th>
+            <th className="text-left p-2">Status</th>
+            <th className="text-left p-2">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {surveys.map(survey => (
+            <tr key={survey.id} className="border-t">
+              <td className="p-2">{survey.title}</td>
+              <td className="p-2"><StatusBadge status={survey.status} /></td>
+              <td className="p-2">
+                <SurveyActions 
+                  survey={survey} 
+                  onEdit={handleEdit} 
+                  onPublish={handlePublish} 
+                  onArchive={handleArchive} 
+                  onViewResults={handleViewResults}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
