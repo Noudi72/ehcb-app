@@ -902,7 +902,7 @@ export default function QuestionManager() {
                 onClick={handleForceRefresh}
                 className="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
                 disabled={loading}
-                title="Einfachklick: Aktualisieren | Doppelklick: Nuclear Reset (alle Caches löschen)"
+                title="🔄 Einfachklick: Aktualisieren | 💥 Doppelklick: Nuclear Reset (alle Caches löschen)"
               >
                 🔄 {loading ? 'Lädt...' : 'Aktualisieren'}
               </button>
