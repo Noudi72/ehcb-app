@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Database - Don't track changes to local dev database
+db.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

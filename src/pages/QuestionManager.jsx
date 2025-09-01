@@ -66,7 +66,8 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
       </div>
 
       {/* Mobile-friendly Action Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 gap-2 md:hidden">
+        {/* Mobile: 2 Spalten Layout */}
         <button
           onClick={() => onToggleStatus(survey)}
           className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -77,7 +78,20 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
           title={status === 'active' ? 'Offline stellen' : 'Online stellen'}
         >
           <span className="mr-1">{status === 'active' ? '⏸️' : '▶️'}</span>
-          <span className="hidden sm:inline">{status === 'active' ? 'Offline' : 'Online'}</span>
+          <span>{status === 'active' ? 'Offline' : 'Online'}</span>
+        </button>
+        
+        <button
+          onClick={() => onEdit(survey)}
+          className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            isDarkMode 
+              ? 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800' 
+              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+          }`}
+          title="Bearbeiten"
+        >
+          <span className="mr-1">✏️</span>
+          <span>Bearbeiten</span>
         </button>
         
         {status === 'active' && (
@@ -91,7 +105,7 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
             title="Benachrichtigung senden"
           >
             <span className="mr-1">📱</span>
-            <span className="hidden sm:inline">Push</span>
+            <span>Push</span>
           </button>
         )}
         
@@ -105,20 +119,7 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
           title="Ergebnisse anzeigen"
         >
           <span className="mr-1">📊</span>
-          <span className="hidden sm:inline">Ergebnisse</span>
-        </button>
-        
-        <button
-          onClick={() => onEdit(survey)}
-          className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-            isDarkMode 
-              ? 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800' 
-              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-          }`}
-          title="Bearbeiten"
-        >
-          <span className="mr-1">✏️</span>
-          <span className="hidden sm:inline">Bearbeiten</span>
+          <span>Ergebnisse</span>
         </button>
         
         <button
@@ -127,11 +128,81 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
             isDarkMode 
               ? 'bg-red-900 text-red-300 hover:bg-red-800' 
               : 'bg-red-100 text-red-800 hover:bg-red-200'
-          }`}
+          } ${status === 'active' ? '' : 'col-span-1'}`}
           title="Löschen"
         >
           <span className="mr-1">🗑️</span>
-          <span className="hidden sm:inline">Löschen</span>
+          <span>Löschen</span>
+        </button>
+      </div>
+
+      {/* Desktop: Horizontal Action Buttons */}
+      <div className="hidden md:flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => onToggleStatus(survey)}
+          className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            status === 'active'
+              ? (isDarkMode ? 'bg-orange-900 text-orange-300 hover:bg-orange-800' : 'bg-orange-100 text-orange-800 hover:bg-orange-200')
+              : (isDarkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-800 hover:bg-green-200')
+          }`}
+          title={status === 'active' ? 'Offline stellen' : 'Online stellen'}
+        >
+          <span className="mr-1">{status === 'active' ? '⏸️' : '▶️'}</span>
+          {status === 'active' ? 'Offline stellen' : 'Online stellen'}
+        </button>
+        
+        {status === 'active' && (
+          <button
+            onClick={() => onSendNotification(survey)}
+            className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              isDarkMode 
+                ? 'bg-purple-900 text-purple-300 hover:bg-purple-800' 
+                : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+            }`}
+            title="Benachrichtigung senden"
+          >
+            <span className="mr-1">📱</span>
+            Push-Benachrichtigung
+          </button>
+        )}
+        
+        <button
+          onClick={handleViewResults}
+          className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            isDarkMode 
+              ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' 
+              : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+          }`}
+          title="Ergebnisse anzeigen"
+        >
+          <span className="mr-1">�</span>
+          Ergebnisse anzeigen
+        </button>
+        
+        <button
+          onClick={() => onEdit(survey)}
+          className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            isDarkMode 
+              ? 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800' 
+              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+          }`}
+          title="Umfrage bearbeiten"
+        >
+          <span className="mr-1">✏️</span>
+          Bearbeiten
+        </button>
+        
+        <button
+          onClick={() => onDelete(survey)}
+          className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            isDarkMode 
+              ? 'bg-red-900 text-red-300 hover:bg-red-800' 
+              : 'bg-red-100 text-red-800 hover:bg-red-200'
+          }`}
+          title="Umfrage löschen"
+        >
+          <span className="mr-1">🗑️</span>
+          Löschen
         </button>
       </div>
 

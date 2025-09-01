@@ -1,0 +1,118 @@
+{
+  "sport-food-categories": [
+    {
+      "id": "cat1",
+      "name": "Vor dem Training",
+      "description": "Empfohlene Nahrungsmittel vor dem Training"
+    },
+    {
+      "id": "cat2",
+      "name": "Während dem Training",
+      "description": "Empfohlene Nahrungsmittel während dem Training"
+    },
+    {
+      "id": "cat3",
+      "name": "Nach dem Training",
+      "description": "Empfohlene Nahrungsmittel nach dem Training"
+    },
+    {
+      "id": "cat4",
+      "name": "Vor dem Spiel",
+      "description": "Empfohlene Nahrungsmittel vor dem Spiel"
+    },
+    {
+      "id": "cat5",
+      "name": "Nach dem Spiel",
+      "description": "Empfohlene Nahrungsmittel nach dem Spiel"
+    }
+  ],
+  "sport-food-items": [
+    {
+      "id": "item1",
+      "categoryId": "cat1",
+      "name": "Banane",
+      "description": "Reich an Kohlenhydraten und Kalium für schnelle Energie",
+      "benefits": "Liefert schnelle Energie und ist leicht verdaulich"
+    },
+    {
+      "id": "item2",
+      "categoryId": "cat1",
+      "name": "Haferflocken mit Beeren",
+      "description": "Komplexe Kohlenhydrate mit Antioxidantien",
+      "benefits": "Langanhaltende Energie und antioxidative Wirkung"
+    },
+    {
+      "id": "item3",
+      "categoryId": "cat2",
+      "name": "Sportgetränk",
+      "description": "Isotonisches Getränk mit Elektrolyten",
+      "benefits": "Verhindert Dehydrierung und Elektrolytverlust"
+    },
+    {
+      "id": "item4",
+      "categoryId": "cat3",
+      "name": "Proteinshake",
+      "description": "Protein für Muskelregeneration",
+      "benefits": "Unterstützt die Muskelregeneration und den Muskelaufbau"
+    },
+    {
+      "id": "item5",
+      "categoryId": "cat4",
+      "name": "Vollkorntoast mit Honig",
+      "description": "Leicht verdauliche Kohlenhydrate",
+      "benefits": "Gibt schnelle Energie ohne zu belasten"
+    },
+    {
+      "id": "item6",
+      "categoryId": "cat5",
+      "name": "Schokoladenmilch",
+      "description": "Kombination aus Kohlenhydraten und Protein",
+      "benefits": "Optimale Regeneration nach dem Spiel"
+    }
+  ],
+  "questions": [
+    {
+      "id": "WmTc0mb",
+      "text": "Welche Trainingsmethoden findest du am effektivsten?",
+      "type": "multiple-choice",
+      "options": [
+        "Intervalltraining",
+        "Krafttraining",
+        "Ausdauertraining",
+        "Koordinationstraining",
+        "Taktiktraining"
+      ],
+      "createdAt": "2025-08-24T12:23:17.296Z"
+    },
+    {
+      "id": "xeIFtVQ",
+      "text": "Wie bereitest du dich mental auf wichtige Spiele vor?",
+      "type": "multiple-choice",
+      "options": [
+        "Visualisierung",
+        "Entspannungsübungen", 
+        "Musik hören",
+        "Mit dem Team sprechen",
+        "Alleine reflektieren"
+      ],
+      "createdAt": "2025-08-24T12:37:01.432Z"
+    }
+  ],
+  "surveys": [],
+  "survey-responses": [],
+  "notifications": [],
+  "users": [
+    {
+      "id": "coach1",
+      "username": "coach",
+      "password": "coach123",
+      "role": "coach",
+      "name": "Trainer",
+      "active": true,
+      "teams": ["u18-elit"]
+    }
+  ],
+  "reflexion-entries": [],
+  "news": [],
+  "cardio-programs": []
+}
