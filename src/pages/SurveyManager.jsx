@@ -201,7 +201,6 @@ export default function SurveyManager() {
         </div>
       </main>
       
-      <SurveyManagerOverview />
     </div>
   );
 }

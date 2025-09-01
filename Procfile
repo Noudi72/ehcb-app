@@ -1,4 +1,4 @@
 
-node server.cjs
-node server.cjs
+web: node server.cjs
+
 
