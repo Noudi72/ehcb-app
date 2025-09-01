@@ -125,7 +125,7 @@ export default function App() {
                   } />
                   <Route path="/coach/active-surveys" element={
                     <ProtectedRoute coachOnly={true}>
-                      <UmfrageHub />
+                      <QuestionManager />
                     </ProtectedRoute>
                   } />
                   <Route path="/coach/user-manager" element={

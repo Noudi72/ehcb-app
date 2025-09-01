@@ -2,10 +2,235 @@ import React, { useState, useEffect } from "react";
 import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useNotification } from "../context/NotificationContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
+import { useNavigate } from "react-router-dom";
 
-// Question Type Icons
+// Survey Card Component
+function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSendNotification }) {
+  const [showActions, setShowActions] = useState(false);
+  const navigate = useNavigate();
+
+  const handleViewResults = () => {
+    navigate(`/coach/survey-results/${survey.id}`);
+  };
+
+  // Bestimme Status
+  const status = survey.status || (survey.active ? 'active' : 'inactive');
+  const title = survey.title || 'Unbenannte Umfrage';
+
+  return (
+    <div 
+      className={`rounded-xl border p-6 transition-all hover:shadow-lg ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700 hover:border-gray-600' 
+          : 'bg-white border-gray-200 hover:border-gray-300'
+      }`}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1 pr-4">
+          <div className="flex items-center gap-3 mb-2">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+              status === 'active' 
+                ? (isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800')
+                : (isDarkMode ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-800')
+            }`}>
+              {status === 'active' ? '🟢 Online' : '⚫ Offline'}
+            </span>
+            {survey.anonymous && (
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                isDarkMode ? 'bg-yellow-900 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                🔒 Anonym
+              </span>
+            )}
+          </div>
+          
+          <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            {title}
+          </h3>
+          
+          {survey.description && (
+            <p className={`text-sm mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {survey.description}
+            </p>
+          )}
+
+          <div className="flex items-center gap-4 text-xs text-gray-500">
+            <span>📊 {survey.questions?.length || 0} Fragen</span>
+            <span>👥 {survey.responses?.length || 0} Antworten</span>
+            <span>📅 {new Date(survey.createdAt || Date.now()).toLocaleDateString('de-DE')}</span>
+          </div>
+        </div>
+        
+        {showActions && (
+          <div className="flex flex-col space-y-1 min-w-0 flex-shrink-0">
+            <button
+              onClick={() => onToggleStatus(survey)}
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                status === 'active'
+                  ? (isDarkMode ? 'bg-orange-900 text-orange-300 hover:bg-orange-800' : 'bg-orange-100 text-orange-800 hover:bg-orange-200')
+                  : (isDarkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-800 hover:bg-green-200')
+              }`}
+              title={status === 'active' ? 'Offline stellen' : 'Online stellen'}
+            >
+              {status === 'active' ? '⏸️' : '▶️'}
+            </button>
+            
+            {status === 'active' && (
+              <button
+                onClick={() => onSendNotification(survey)}
+                className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                  isDarkMode 
+                    ? 'bg-purple-900 text-purple-300 hover:bg-purple-800' 
+                    : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+                }`}
+                title="Benachrichtigung senden"
+              >
+                📱
+              </button>
+            )}
+            
+            <button
+              onClick={handleViewResults}
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                isDarkMode 
+                  ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' 
+                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+              }`}
+              title="Ergebnisse"
+            >
+              📊
+            </button>
+            
+            <button
+              onClick={() => onEdit(survey)}
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                isDarkMode 
+                  ? 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800' 
+                  : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+              }`}
+              title="Bearbeiten"
+            >
+              ✏️
+            </button>
+            
+            <button
+              onClick={() => onDelete(survey)}
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                isDarkMode 
+                  ? 'bg-red-900 text-red-300 hover:bg-red-800' 
+                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+              }`}
+              title="Löschen"
+            >
+              🗑️
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Survey Questions Preview */}
+      {survey.questions && survey.questions.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <p className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Verwendete Fragen:
+          </p>
+          <div className="text-xs text-gray-500">
+            {survey.questions.length} Fragen zugeordnet
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+// Push Notification Modal Component
+function PushNotificationModal({ survey, isOpen, onClose, onSend, isDarkMode }) {
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (survey && isOpen) {
+      setMessage(`📋 Neue Umfrage "${survey.title || 'Umfrage'}" ist verfügbar! Bitte fülle sie aus.`);
+    }
+  }, [survey, isOpen]);
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    
+    setSending(true);
+    try {
+      await onSend(survey, message);
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Senden der Benachrichtigung:', error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (!isOpen || !survey) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className={`max-w-md w-full rounded-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            📱 Push-Benachrichtigung senden
+          </h3>
+          <button
+            onClick={onClose}
+            className={`p-1 rounded ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            ❌
+          </button>
+        </div>
+        
+        <div className="mb-4">
+          <p className={`text-sm mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Umfrage: <strong>{survey.title || 'Unbenannte Umfrage'}</strong>
+          </p>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={4}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              isDarkMode 
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+            }`}
+            placeholder="Benachrichtigungstext eingeben..."
+          />
+        </div>
+        
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={onClose}
+            className={`px-4 py-2 text-sm font-medium rounded-lg ${
+              isDarkMode 
+                ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+            disabled={sending}
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={sending || !message.trim()}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {sending ? '📤 Wird gesendet...' : '📱 Senden'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const QuestionTypeIcon = ({ type, className = "w-5 h-5" }) => {
   const icons = {
     text: "📝",
@@ -388,9 +613,21 @@ function QuestionFormModal({ question, isOpen, onClose, onSave, isDarkMode }) {
 }
 
 export default function QuestionManager() {
-  const { questions = [], createQuestion, updateQuestion, deleteQuestion, fetchQuestions } = useUmfrage();
+  const { 
+    questions = [], 
+    surveys = [], 
+    fetchQuestions, 
+    fetchSurveys, 
+    createQuestion, 
+    updateQuestion, 
+    deleteQuestion,
+    deleteSurvey,
+    updateSurvey
+  } = useUmfrage();
   const { user, isCoach } = useAuth();
   const { isDarkMode } = useTheme();
+  const { sendNotificationToTeam } = useNotification();
+  const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -398,14 +635,17 @@ export default function QuestionManager() {
   const [filterType, setFilterType] = useState("all");
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("questions"); // "questions" or "surveys"
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [selectedSurvey, setSelectedSurvey] = useState(null);
 
   useEffect(() => {
-    const loadQuestions = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        await fetchQuestions();
+        await Promise.all([fetchQuestions(), fetchSurveys()]);
       } catch (err) {
-        setError("Fehler beim Laden der Fragen");
+        setError("Fehler beim Laden der Daten");
         console.error(err);
       } finally {
         setLoading(false);
@@ -413,14 +653,16 @@ export default function QuestionManager() {
     };
 
     if (isCoach) {
-      loadQuestions();
+      loadData();
     }
-  }, [isCoach, fetchQuestions]);
+  }, [isCoach, fetchQuestions, fetchSurveys]);
 
-  // Filter und Suche
+  // Filter und Suche für Fragen
   const filteredQuestions = questions.filter(question => {
-    const matchesSearch = question.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (question.description && question.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const questionText = question.question || '';
+    const description = question.description || '';
+    const matchesSearch = questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         description.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (!matchesSearch) return false;
     
@@ -428,14 +670,43 @@ export default function QuestionManager() {
     return question.type === filterType;
   });
 
+  // Filter und Suche für Umfragen
+  const filteredSurveys = surveys.filter(survey => {
+    const title = survey.title || 'Unbenannte Umfrage';
+    const description = survey.description || '';
+    const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    
+    if (filterType === "all") return true;
+    if (filterType === "active") {
+      const status = survey.status || (survey.active ? 'active' : 'inactive');
+      return status === 'active';
+    }
+    if (filterType === "inactive") {
+      const status = survey.status || (survey.active ? 'active' : 'inactive');
+      return status === 'inactive';
+    }
+    return true;
+  });
+
   const handleCreateQuestion = () => {
     setSelectedQuestion(null);
     setShowModal(true);
   };
 
+  const handleCreateSurvey = () => {
+    navigate('/coach/survey-editor');
+  };
+
   const handleEditQuestion = (question) => {
     setSelectedQuestion(question);
     setShowModal(true);
+  };
+
+  const handleEditSurvey = (survey) => {
+    navigate(`/coach/survey-editor/${survey.id}`);
   };
 
   const handleDuplicateQuestion = (question) => {
@@ -456,6 +727,63 @@ export default function QuestionManager() {
         setError("Fehler beim Löschen der Frage");
         console.error(err);
       }
+    }
+  };
+
+  const handleDeleteSurvey = async (survey) => {
+    const title = survey.title || 'Unbenannte Umfrage';
+    if (window.confirm(`Möchtest du die Umfrage "${title}" wirklich löschen?`)) {
+      try {
+        await deleteSurvey(survey.id);
+        await fetchSurveys();
+      } catch (err) {
+        setError("Fehler beim Löschen der Umfrage");
+        console.error(err);
+      }
+    }
+  };
+
+  const handleToggleSurveyStatus = async (survey) => {
+    try {
+      const currentStatus = survey.status || (survey.active ? 'active' : 'inactive');
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      
+      const updatedSurvey = {
+        ...survey,
+        status: newStatus,
+        active: newStatus === 'active'
+      };
+      
+      await updateSurvey(survey.id, updatedSurvey);
+      await fetchSurveys();
+    } catch (err) {
+      setError("Fehler beim Ändern des Status");
+      console.error(err);
+    }
+  };
+
+  const handleSendNotification = (survey) => {
+    setSelectedSurvey(survey);
+    setShowNotificationModal(true);
+  };
+
+  const handleSendPushNotification = async (survey, message) => {
+    try {
+      // Verwende das Team aus der Umfrage oder 'all' als Fallback
+      const targetTeams = survey.targetTeams || ['all'];
+      
+      await sendNotificationToTeam(targetTeams, {
+        title: "📋 Umfrage-Erinnerung",
+        message: message,
+        type: "survey",
+        contentId: survey.id
+      });
+      
+      setError(""); // Clear any previous errors
+      // Optional: Success feedback could be added here
+    } catch (error) {
+      setError("Fehler beim Senden der Benachrichtigung");
+      console.error('Fehler beim Senden der Push-Benachrichtigung:', error);
     }
   };
 
@@ -499,71 +827,167 @@ export default function QuestionManager() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                📚 Fragen-Bibliothek
+                📚 Fragen & Umfragen Management
               </h1>
               <p className={`mt-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Verwalte und organisiere deine Umfrage-Fragen
+                Verwalte deine Fragen, Umfragen und deren Status an einem Ort
               </p>
             </div>
             
             <button
-              onClick={handleCreateQuestion}
+              onClick={activeTab === 'questions' ? handleCreateQuestion : handleCreateSurvey}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              ➕ Neue Frage
+              ➕ {activeTab === 'questions' ? 'Neue Frage' : 'Neue Umfrage'}
             </button>
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('questions')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'questions'
+                    ? (isDarkMode ? 'border-blue-400 text-blue-400' : 'border-blue-500 text-blue-600')
+                    : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
+                }`}
+              >
+                📝 Fragen ({questions.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('surveys')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'surveys'
+                    ? (isDarkMode ? 'border-blue-400 text-blue-400' : 'border-blue-500 text-blue-600')
+                    : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
+                }`}
+              >
+                📋 Umfragen ({surveys.length})
+              </button>
+            </nav>
+          </div>
+        </div>
+
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-            <div className="flex items-center">
-              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'} mr-3`}>
-                📊
+        {activeTab === 'questions' ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+              <div className="flex items-center">
+                <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'} mr-3`}>
+                  📊
+                </div>
+                <div>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {questions.length}
+                  </p>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Fragen gesamt
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {questions.length}
-                </p>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Fragen gesamt
-                </p>
+            </div>
+
+            {['text', 'rating', 'multiple_choice'].map(type => {
+              const count = questions.filter(q => q.type === type).length;
+              const typeLabels = {
+                text: 'Text-Fragen',
+                rating: 'Bewertungen',
+                multiple_choice: 'Multiple Choice'
+              };
+              const typeIcons = {
+                text: '📝',
+                rating: '⭐',
+                multiple_choice: '☑️'
+              };
+              return (
+                <div key={type} className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+                  <div className="flex items-center">
+                    <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} mr-3`}>
+                      {typeIcons[type]}
+                    </div>
+                    <div>
+                      <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {count}
+                      </p>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {typeLabels[type]}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+              <div className="flex items-center">
+                <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'} mr-3`}>
+                  📋
+                </div>
+                <div>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {surveys.length}
+                  </p>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Umfragen gesamt
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+              <div className="flex items-center">
+                <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'} mr-3`}>
+                  🟢
+                </div>
+                <div>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {surveys.filter(s => (s.status || (s.active ? 'active' : 'inactive')) === 'active').length}
+                  </p>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Online
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+              <div className="flex items-center">
+                <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} mr-3`}>
+                  ⚫
+                </div>
+                <div>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {surveys.filter(s => (s.status || (s.active ? 'active' : 'inactive')) === 'inactive').length}
+                  </p>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Offline
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+              <div className="flex items-center">
+                <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-700'} mr-3`}>
+                  📊
+                </div>
+                <div>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {surveys.reduce((acc, survey) => acc + (survey.responses?.length || 0), 0)}
+                  </p>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Antworten
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-
-          {['text', 'rating', 'multiple_choice'].map(type => {
-            const count = questions.filter(q => q.type === type).length;
-            const typeLabels = {
-              text: 'Text-Fragen',
-              rating: 'Bewertungen',
-              multiple_choice: 'Multiple Choice'
-            };
-            const typeIcons = {
-              text: '📝',
-              rating: '⭐',
-              multiple_choice: '☑️'
-            };
-            return (
-              <div key={type} className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-                <div className="flex items-center">
-                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} mr-3`}>
-                    {typeIcons[type]}
-                  </div>
-                  <div>
-                    <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {count}
-                    </p>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {typeLabels[type]}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        )}
 
         {/* Suche und Filter */}
         <div className={`mb-6 p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
@@ -571,7 +995,7 @@ export default function QuestionManager() {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="🔍 Fragen durchsuchen..."
+                placeholder={`🔍 ${activeTab === 'questions' ? 'Fragen' : 'Umfragen'} durchsuchen...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
@@ -591,12 +1015,22 @@ export default function QuestionManager() {
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
             >
-              <option value="all">Alle Fragetypen</option>
-              <option value="text">📝 Textantwort</option>
-              <option value="rating">⭐ Bewertung</option>
-              <option value="multiple_choice">☑️ Multiple Choice</option>
-              <option value="yes_no">❓ Ja/Nein</option>
-              <option value="scale">📊 Skala</option>
+              {activeTab === 'questions' ? (
+                <>
+                  <option value="all">Alle Fragetypen</option>
+                  <option value="text">📝 Textantwort</option>
+                  <option value="rating">⭐ Bewertung</option>
+                  <option value="multiple_choice">☑️ Multiple Choice</option>
+                  <option value="yes_no">❓ Ja/Nein</option>
+                  <option value="scale">📊 Skala</option>
+                </>
+              ) : (
+                <>
+                  <option value="all">Alle Status</option>
+                  <option value="active">🟢 Online</option>
+                  <option value="inactive">⚫ Offline</option>
+                </>
+              )}
             </select>
           </div>
         </div>
@@ -606,39 +1040,81 @@ export default function QuestionManager() {
           <div className="flex justify-center items-center py-12">
             <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${isDarkMode ? 'border-white' : 'border-gray-900'}`}></div>
           </div>
-        ) : filteredQuestions.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📝</div>
-            <h3 className={`mt-2 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-              Keine Fragen gefunden
-            </h3>
-            <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-              {searchTerm || filterType !== 'all' 
-                ? 'Versuche deine Suchkriterien zu ändern.' 
-                : 'Erstelle deine erste Frage, um zu beginnen.'}
-            </p>
-            {(!searchTerm && filterType === 'all') && (
-              <button
-                onClick={handleCreateQuestion}
-                className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                ✨ Erste Frage erstellen
-              </button>
-            )}
-          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredQuestions.map((question) => (
-              <QuestionCard
-                key={question.id}
-                question={question}
-                onEdit={handleEditQuestion}
-                onDelete={handleDeleteQuestion}
-                onDuplicate={handleDuplicateQuestion}
-                isDarkMode={isDarkMode}
-              />
-            ))}
-          </div>
+          <>
+            {activeTab === 'questions' ? (
+              filteredQuestions.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📝</div>
+                  <h3 className={`mt-2 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    Keine Fragen gefunden
+                  </h3>
+                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    {searchTerm || filterType !== 'all' 
+                      ? 'Versuche deine Suchkriterien zu ändern.' 
+                      : 'Erstelle deine erste Frage, um zu beginnen.'}
+                  </p>
+                  {(!searchTerm && filterType === 'all') && (
+                    <button
+                      onClick={handleCreateQuestion}
+                      className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      ✨ Erste Frage erstellen
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredQuestions.map((question) => (
+                    <QuestionCard
+                      key={question.id}
+                      question={question}
+                      onEdit={handleEditQuestion}
+                      onDelete={handleDeleteQuestion}
+                      onDuplicate={handleDuplicateQuestion}
+                      isDarkMode={isDarkMode}
+                    />
+                  ))}
+                </div>
+              )
+            ) : (
+              filteredSurveys.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📋</div>
+                  <h3 className={`mt-2 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    Keine Umfragen gefunden
+                  </h3>
+                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    {searchTerm || filterType !== 'all' 
+                      ? 'Versuche deine Suchkriterien zu ändern.' 
+                      : 'Erstelle deine erste Umfrage, um zu beginnen.'}
+                  </p>
+                  {(!searchTerm && filterType === 'all') && (
+                    <button
+                      onClick={handleCreateSurvey}
+                      className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      ✨ Erste Umfrage erstellen
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredSurveys.map((survey) => (
+                    <SurveyCard
+                      key={survey.id}
+                      survey={survey}
+                      onEdit={handleEditSurvey}
+                      onDelete={handleDeleteSurvey}
+                      onToggleStatus={handleToggleSurveyStatus}
+                      onSendNotification={handleSendNotification}
+                      isDarkMode={isDarkMode}
+                    />
+                  ))}
+                </div>
+              )
+            )}
+          </>
         )}
 
         {error && (
@@ -654,6 +1130,15 @@ export default function QuestionManager() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onSave={handleSaveQuestion}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* Push Notification Modal */}
+      <PushNotificationModal
+        survey={selectedSurvey}
+        isOpen={showNotificationModal}
+        onClose={() => setShowNotificationModal(false)}
+        onSend={handleSendPushNotification}
         isDarkMode={isDarkMode}
       />
     </div>
