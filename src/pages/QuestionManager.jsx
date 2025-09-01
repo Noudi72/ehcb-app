@@ -691,7 +691,8 @@ export default function QuestionManager() {
     surveys = [], 
     fetchSurveys, 
     deleteSurvey,
-    updateSurvey
+    updateSurvey,
+    forceCleanReload
   } = useUmfrage();
   const { user, isCoach } = useAuth();
   const { isDarkMode } = useTheme();
@@ -707,6 +708,14 @@ export default function QuestionManager() {
   const [filterType, setFilterType] = useState("all");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
+
+  // Force refresh function
+  const handleForceRefresh = async () => {
+    console.log('🧹 Manual force refresh triggered');
+    setLoading(true);
+    await forceCleanReload();
+    setLoading(false);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -859,12 +868,22 @@ export default function QuestionManager() {
               </p>
             </div>
             
-            <button
-              onClick={handleCreateSurvey}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              ➕ Neue Umfrage
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleForceRefresh}
+                className="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
+                disabled={loading}
+              >
+                🔄 {loading ? 'Lädt...' : 'Aktualisieren'}
+              </button>
+              
+              <button
+                onClick={handleCreateSurvey}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                ➕ Neue Umfrage
+              </button>
+            </div>
           </div>
         </div>
 

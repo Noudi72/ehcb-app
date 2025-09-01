@@ -19,8 +19,52 @@ export const UmfrageProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [notifications, setNotifications] = useState([]);
   
+  // Force clean state and reload everything
+  const forceCleanReload = async () => {
+    console.log('🧹 FORCE CLEAN RELOAD - Clearing all state and reloading...');
+    setLoading(true);
+    setSurveys([]);
+    setQuestions([]);
+    setResponses([]);
+    setError(null);
+    
+    try {
+      // Multiple cache-busting attempts
+      const timestamp = Date.now();
+      const cacheBusters = [
+        `?_t=${timestamp}`,
+        `?cb=${timestamp}&r=${Math.random()}`,
+        `?nocache=${timestamp}&v=2`
+      ];
+      
+      for (const cacheBuster of cacheBusters) {
+        try {
+          console.log('🔄 Trying cache buster:', cacheBuster);
+          const response = await axios.get(`${API_BASE_URL}/surveys${cacheBuster}`);
+          console.log('📥 Fresh data received:', response.data);
+          setSurveys(response.data);
+          setError(null);
+          break; // Success, stop trying
+        } catch (err) {
+          console.warn('⚠️ Cache buster failed:', cacheBuster, err.message);
+          continue; // Try next cache buster
+        }
+      }
+      
+    } catch (err) {
+      setError("Fehler beim Neuladen der Daten");
+      console.error("Fehler beim Force Clean Reload:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Alle Umfragen abrufen (mit Cache-Busting)
   const fetchSurveys = useCallback(async (forceRefresh = false) => {
+    if (forceRefresh) {
+      return forceCleanReload();
+    }
+    
     setLoading(true);
     try {
       // Cache-busting parameter to force fresh data
@@ -544,6 +588,7 @@ export const UmfrageProvider = ({ children }) => {
     fetchQuestions,
     fetchResponses,
     fetchNotifications,
+    forceCleanReload, // Add this to context
     addQuestion,
     updateQuestion,
     deleteQuestion,
