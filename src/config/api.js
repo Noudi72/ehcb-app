@@ -15,7 +15,7 @@ const RAILWAY_FALLBACK = 'https://ehcb-app-production.up.railway.app';
 
 // Force production API for GitHub Pages deployment
 const PRODUCTION_API_URL = GITHUB_PAGES_HOST ? RAILWAY_FALLBACK : (LS_OVERRIDE || ENV_API || RAILWAY_FALLBACK);
-const DEVELOPMENT_API_URL = LS_OVERRIDE || ENV_API || 'http://localhost:3001';
+const DEVELOPMENT_API_URL = LS_OVERRIDE || ENV_API || 'http://localhost:3002';
 
 export const API_BASE_URL = isDevelopment ? DEVELOPMENT_API_URL : PRODUCTION_API_URL;
 

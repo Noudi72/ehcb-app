@@ -13,22 +13,11 @@ export default function SimpleSurveyEditor() {
     error, 
     fetchSurveys, 
     createSurvey, 
-    updateSurvey,
-    deleteSurvey 
+    updateSurvey 
   } = useUmfrage();
   
-  // Zustand für die Umfrage
-  const [survey, setSurvey] = useState({
-    title: "",
-    description: "",
-    questions: [],
-    resultsVisibleToPlayers: false,
-    anonymous: false,
-    targetTeams: ["u18-elit"],
-    active: false
-  });
-
-  // Zustand für Fragen
+  // Vereinfachter Zustand - nur eine Liste von Fragen, kein separater Titel
+  const [surveyTitle, setSurveyTitle] = useState("");
   const [questions, setQuestions] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -38,11 +27,25 @@ export default function SimpleSurveyEditor() {
     if (surveyId && surveys.length > 0) {
       const existingSurvey = surveys.find(s => s.id === surveyId);
       if (existingSurvey) {
-        setSurvey(existingSurvey);
+        setSurveyTitle(existingSurvey.title || "");
         setQuestions(existingSurvey.questions || []);
       }
     }
   }, [fetchSurveys, surveyId, surveys]);
+
+  // Erste Frage hinzufügen falls keine vorhanden - nur einmal beim Mount
+  useEffect(() => {
+    if (questions.length === 0 && !surveyId) {
+      const newQuestion = {
+        id: `q_${Date.now()}`,
+        text: "",
+        type: "multiple-choice",
+        options: ["", ""],
+        required: false
+      };
+      setQuestions([newQuestion]);
+    }
+  }, []); // Leere dependency array um endlose Loops zu verhindern
 
   // Neue Frage hinzufügen
   const addQuestion = () => {
@@ -50,7 +53,7 @@ export default function SimpleSurveyEditor() {
       id: `q_${Date.now()}`,
       text: "",
       type: "multiple-choice",
-      options: ["Option 1", "Option 2"],
+      options: ["", ""],
       required: false
     };
     setQuestions([...questions, newQuestion]);
@@ -65,13 +68,16 @@ export default function SimpleSurveyEditor() {
 
   // Frage löschen
   const removeQuestion = (questionId) => {
-    setQuestions(questions.filter(q => q.id !== questionId));
+    if (questions.length > 1) {
+      setQuestions(questions.filter(q => q.id !== questionId));
+    }
   };
 
   // Option zu Frage hinzufügen
   const addOption = (questionId) => {
+    const question = questions.find(q => q.id === questionId);
     updateQuestion(questionId, {
-      options: [...(questions.find(q => q.id === questionId)?.options || []), `Option ${(questions.find(q => q.id === questionId)?.options?.length || 0) + 1}`]
+      options: [...(question?.options || []), ""]
     });
   };
 
@@ -87,264 +93,214 @@ export default function SimpleSurveyEditor() {
 
   // Umfrage speichern
   const handleSave = async () => {
-    if (!survey.title.trim()) {
-      alert("Bitte geben Sie einen Umfragetitel ein.");
+    // Validierung: Prüfe ob mindestens eine Frage ausgefüllt ist
+    const validQuestions = questions.filter(q => q.text.trim());
+    
+    if (validQuestions.length === 0) {
+      alert("Bitte geben Sie mindestens eine Frage ein.");
       return;
     }
 
-    if (questions.length === 0) {
-      alert("Bitte fügen Sie mindestens eine Frage hinzu.");
-      return;
-    }
+    // Automatischen Titel generieren wenn nicht vorhanden
+    const finalTitle = surveyTitle.trim() || `Umfrage vom ${new Date().toLocaleDateString('de-DE')}`;
 
     try {
       const surveyData = {
-        ...survey,
-        questions: questions
+        title: finalTitle,
+        description: "", // Keine separate Beschreibung mehr
+        questions: validQuestions,
+        resultsVisibleToPlayers: false,
+        anonymous: true, // Standardmäßig anonym
+        targetTeams: ["u18-elit"],
+        active: true,
+        createdAt: new Date().toISOString()
       };
 
-      let result;
       if (surveyId) {
-        result = await updateSurvey(surveyId, surveyData);
+        await updateSurvey(surveyId, { ...surveyData, id: surveyId });
+        setSuccessMessage("Umfrage erfolgreich aktualisiert!");
       } else {
-        result = await createSurvey(surveyData);
+        await createSurvey(surveyData);
+        setSuccessMessage("Umfrage erfolgreich erstellt!");
       }
 
-      if (result) {
-        setSuccessMessage(`Umfrage erfolgreich ${surveyId ? 'aktualisiert' : 'erstellt'}!`);
-        setTimeout(() => {
-          navigate('/coach/surveys');
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("Fehler beim Speichern der Umfrage:", err);
-    }
-  };
-
-  // Umfrage löschen
-  const handleDelete = async () => {
-    if (!surveyId) return;
-    
-    if (window.confirm(`Möchten Sie die Umfrage "${survey.title}" wirklich löschen?`)) {
-      try {
-        await deleteSurvey(surveyId);
+      // Nach 2 Sekunden zur Übersicht zurückkehren
+      setTimeout(() => {
         navigate('/coach/surveys');
-      } catch (err) {
-        console.error("Fehler beim Löschen der Umfrage:", err);
-      }
+      }, 2000);
+
+    } catch (err) {
+      console.error("Fehler beim Speichern:", err);
+      alert("Fehler beim Speichern der Umfrage.");
     }
   };
+
+  // Umfrage löschen (entfernt - nicht in SimpleSurveyEditor benötigt)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#f8fafc] font-sans">
       <Header />
-      <BackButton />
+      <BackButton to="/coach/surveys" />
       
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">
-            {surveyId ? 'Umfrage bearbeiten' : 'Neue Umfrage erstellen'}
-          </h1>
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {surveyId ? "📝 Umfrage bearbeiten" : "✨ Neue Umfrage erstellen"}
+            </h1>
+          </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               {error}
             </div>
           )}
 
           {successMessage && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
+            <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
               {successMessage}
             </div>
           )}
 
-          {/* Umfrage-Grunddaten */}
-          <div className="space-y-4 mb-8">
+          {/* Vereinfachtes Formular - nur das Nötigste */}
+          <div className="space-y-6">
+            
+            {/* Optionaler Titel */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Umfragetitel *
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                📋 Umfragetitel (optional)
               </label>
               <input
                 type="text"
-                value={survey.title}
-                onChange={(e) => setSurvey({...survey, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. Trainings-Feedback"
+                value={surveyTitle}
+                onChange={(e) => setSurveyTitle(e.target.value)}
+                placeholder="z.B. 'Training Feedback' - oder leer lassen für automatischen Titel"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Wenn leer, wird automatisch ein Titel generiert
+              </p>
             </div>
 
+            {/* Fragen */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Beschreibung
-              </label>
-              <textarea
-                value={survey.description}
-                onChange={(e) => setSurvey({...survey, description: e.target.value})}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Beschreiben Sie den Zweck dieser Umfrage..."
-              />
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={survey.anonymous}
-                  onChange={(e) => setSurvey({...survey, anonymous: e.target.checked})}
-                  className="mr-2"
-                />
-                Anonyme Umfrage
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={survey.resultsVisibleToPlayers}
-                  onChange={(e) => setSurvey({...survey, resultsVisibleToPlayers: e.target.checked})}
-                  className="mr-2"
-                />
-                Ergebnisse für Spieler sichtbar
-              </label>
-            </div>
-          </div>
-
-          {/* Fragen-Bereich */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Fragen</h2>
-              <button
-                onClick={addQuestion}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                + Frage hinzufügen
-              </button>
-            </div>
-
-            {questions.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                Noch keine Fragen hinzugefügt. Klicken Sie auf "Frage hinzufügen" um zu beginnen.
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Fragen</h3>
+                <button
+                  onClick={addQuestion}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                >
+                  + Frage hinzufügen
+                </button>
               </div>
-            ) : (
-              <div className="space-y-6">
-                {questions.map((question, index) => (
-                  <div key={question.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-medium text-gray-800">Frage {index + 1}</h3>
+
+              {questions.map((question, questionIndex) => (
+                <div key={question.id} className="border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-900">Frage {questionIndex + 1}</h4>
+                    {questions.length > 1 && (
                       <button
                         onClick={() => removeQuestion(question.id)}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        title="Frage löschen"
                       >
-                        ✕
+                        ❌
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Fragetext */}
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Fragetext *
+                    </label>
+                    <input
+                      type="text"
+                      value={question.text}
+                      onChange={(e) => updateQuestion(question.id, { text: e.target.value })}
+                      placeholder="z.B. 'Wie zufrieden warst du mit dem heutigen Training?'"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Fragetyp */}
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Antworttyp
+                    </label>
+                    <select
+                      value={question.type}
+                      onChange={(e) => updateQuestion(question.id, { type: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="multiple-choice">Multiple Choice</option>
+                      <option value="text">Textantwort</option>
+                      <option value="rating">Bewertung (1-5 Sterne)</option>
+                      <option value="yes-no">Ja/Nein</option>
+                    </select>
+                  </div>
+
+                  {/* Antwortoptionen für Multiple Choice */}
+                  {question.type === 'multiple-choice' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Antwortoptionen
+                      </label>
+                      {question.options.map((option, optionIndex) => (
+                        <div key={optionIndex} className="flex items-center gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={option}
+                            onChange={(e) => {
+                              const newOptions = [...question.options];
+                              newOptions[optionIndex] = e.target.value;
+                              updateQuestion(question.id, { options: newOptions });
+                            }}
+                            placeholder={`Option ${optionIndex + 1}`}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          {question.options.length > 2 && (
+                            <button
+                              onClick={() => removeOption(question.id, optionIndex)}
+                              className="text-red-600 hover:text-red-800 px-2"
+                              title="Option entfernen"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => addOption(question.id)}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        + Option hinzufügen
                       </button>
                     </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Fragetext *
-                        </label>
-                        <input
-                          type="text"
-                          value={question.text}
-                          onChange={(e) => updateQuestion(question.id, { text: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Geben Sie Ihre Frage ein..."
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Fragetyp
-                        </label>
-                        <select
-                          value={question.type}
-                          onChange={(e) => updateQuestion(question.id, { type: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="multiple-choice">Multiple Choice</option>
-                          <option value="text">Textantwort</option>
-                          <option value="rating">Bewertung (1-5)</option>
-                        </select>
-                      </div>
-
-                      {question.type === 'multiple-choice' && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Antwortoptionen
-                          </label>
-                          <div className="space-y-2">
-                            {question.options?.map((option, optionIndex) => (
-                              <div key={optionIndex} className="flex items-center space-x-2">
-                                <input
-                                  type="text"
-                                  value={option}
-                                  onChange={(e) => {
-                                    const newOptions = [...question.options];
-                                    newOptions[optionIndex] = e.target.value;
-                                    updateQuestion(question.id, { options: newOptions });
-                                  }}
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                {question.options.length > 2 && (
-                                  <button
-                                    onClick={() => removeOption(question.id, optionIndex)}
-                                    className="text-red-600 hover:text-red-800"
-                                  >
-                                    ✕
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                            <button
-                              onClick={() => addOption(question.id)}
-                              className="text-blue-600 hover:text-blue-800 text-sm"
-                            >
-                              + Option hinzufügen
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Aktionen */}
-          <div className="flex justify-between">
-            <div>
-              {surveyId && (
-                <button
-                  onClick={handleDelete}
-                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-                  disabled={loading}
-                >
-                  Umfrage löschen
-                </button>
-              )}
+                  )}
+                </div>
+              ))}
             </div>
-            
-            <div className="space-x-4">
+
+            {/* Speichern Button */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
               <button
                 onClick={() => navigate('/coach/surveys')}
-                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
                 Abbrechen
               </button>
-              
               <button
                 onClick={handleSave}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
                 disabled={loading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? 'Speichert...' : (surveyId ? 'Umfrage aktualisieren' : 'Umfrage erstellen')}
+                {loading ? "Wird gespeichert..." : (surveyId ? "Aktualisieren" : "Erstellen")}
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

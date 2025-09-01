@@ -10,33 +10,43 @@ function Header() {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Responsive Banner Selection
+  // Responsive Banner Selection - mit stabilem Cache
   const getBannerImage = () => {
     if (typeof window !== 'undefined') {
-  const base = import.meta.env.BASE_URL || '/';
-  return window.innerWidth >= 768 ? `${base}banner_ehcb_desktop.png` : `${base}banner_ehcb_spirit.png`;
+      const base = import.meta.env.BASE_URL || '/';
+      return window.innerWidth >= 768 ? `${base}banner_ehcb_desktop.png` : `${base}banner_ehcb_spirit.png`;
     }
     return '/banner_ehcb_spirit.png'; // fallback
   };
 
   const [bannerImage, setBannerImage] = useState(getBannerImage());
 
-  // Update banner on window resize
+  // Update banner on window resize - mit Debouncing um Flackern zu verhindern
   useEffect(() => {
+    let resizeTimer;
     const handleResize = () => {
-      setBannerImage(getBannerImage());
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const newImage = getBannerImage();
+        if (newImage !== bannerImage) {
+          setBannerImage(newImage);
+        }
+      }, 100); // 100ms debounce
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
+  }, [bannerImage]);
 
   return (
     <>
       <header 
         className="relative bg-cover bg-center text-white"
         style={{
-          backgroundImage: `url('${bannerImage}?v=${Date.now()}')`,
+          backgroundImage: `url('${bannerImage}')`,
           backgroundSize: 'cover',
           backgroundPosition: window.innerWidth >= 768 ? 'center' : 'center',
           // Optimiert für angepasstes Desktop Banner
