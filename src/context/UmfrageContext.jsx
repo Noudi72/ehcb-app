@@ -19,11 +19,14 @@ export const UmfrageProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [notifications, setNotifications] = useState([]);
   
-  // Alle Umfragen abrufen
-  const fetchSurveys = useCallback(async () => {
+  // Alle Umfragen abrufen (mit Cache-Busting)
+  const fetchSurveys = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/surveys`);
+      // Cache-busting parameter to force fresh data
+      const cacheBuster = forceRefresh ? `?_t=${Date.now()}` : '';
+      const response = await axios.get(`${API_BASE_URL}/surveys${cacheBuster}`);
+      console.log('📥 Fetched surveys:', response.data);
       setSurveys(response.data);
       setError(null);
     } catch (err) {
@@ -194,7 +197,9 @@ export const UmfrageProvider = ({ children }) => {
       clearTimeout(timeoutId);
       
       if (response.data) {
-        setSurveys([...surveys, response.data]);
+        // Force refresh after creation to get fresh data from server
+        await fetchSurveys(true);
+        
         setError(null);
         console.log('✅ Umfrage erfolgreich erstellt und zur Liste hinzugefügt');
         
@@ -288,13 +293,17 @@ export const UmfrageProvider = ({ children }) => {
       // Entferne updatedAt aus den zu sendenden Daten, da es automatisch gesetzt wird
       const { updatedAt, ...dataToSend } = updatedData;
       
+      console.log('📝 Updating survey:', surveyId, dataToSend);
+      
       const response = await axios.put(`${API_BASE_URL}/surveys/${surveyId}`, {
         ...dataToSend,
         updatedAt: new Date().toISOString()
       });
       
-      // Aktualisiere die Umfrage in der Liste
-      setSurveys(surveys.map(s => s.id === surveyId ? response.data : s));
+      // Force refresh after update to get fresh data from server
+      await fetchSurveys(true);
+      
+      console.log('✅ Survey updated and data refreshed');
       setError(null);
       return response.data;
     } catch (err) {
@@ -310,8 +319,13 @@ export const UmfrageProvider = ({ children }) => {
   const deleteSurvey = async (surveyId) => {
     setLoading(true);
     try {
+      console.log('🗑️ Deleting survey:', surveyId);
       await axios.delete(`${API_BASE_URL}/surveys/${surveyId}`);
-      setSurveys(surveys.filter(s => s.id !== surveyId));
+      
+      // Force refresh after deletion to get fresh data from server
+      await fetchSurveys(true);
+      
+      console.log('✅ Survey deleted and data refreshed');
       setError(null);
       return true;
     } catch (err) {
