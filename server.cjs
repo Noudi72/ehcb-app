@@ -16,18 +16,62 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const server = jsonServer.create();
 // Support konfigurierbaren DB-Pfad (z. B. für persistente Disks auf Render)
 const DEFAULT_DB_FILE = path.join(__dirname, 'db.json');
+const TEMPLATE_DB_FILE = path.join(__dirname, 'db.template.json');
 const DB_FILE = process.env.DB_FILE || DEFAULT_DB_FILE;
-// Falls ein externer DB_PATH gesetzt ist und die Datei nicht existiert, versuche initial zu seed'en
+
+// DB-Initialisierung für Production (Railway)
 try {
   const targetDir = path.dirname(DB_FILE);
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
   }
-  if (!fs.existsSync(DB_FILE) && fs.existsSync(DEFAULT_DB_FILE)) {
-    fs.copyFileSync(DEFAULT_DB_FILE, DB_FILE);
+  
+  // Falls DB-Datei nicht existiert, versuche von verschiedenen Quellen zu erstellen
+  if (!fs.existsSync(DB_FILE)) {
+    console.log('🔧 DB-Datei nicht gefunden, initialisiere...');
+    
+    if (fs.existsSync(DEFAULT_DB_FILE)) {
+      // Lokale db.json vorhanden (Development)
+      fs.copyFileSync(DEFAULT_DB_FILE, DB_FILE);
+      console.log('✅ DB von lokaler db.json initialisiert');
+    } else if (fs.existsSync(TEMPLATE_DB_FILE)) {
+      // Template vorhanden (Production)
+      fs.copyFileSync(TEMPLATE_DB_FILE, DB_FILE);
+      console.log('✅ DB von db.template.json initialisiert');
+    } else {
+      // Fallback: Minimale DB erstellen
+      const minimalDb = {
+        "sport-food-categories": [],
+        "sport-food-items": [],
+        "questions": [],
+        "surveys": [],
+        "survey-responses": [],
+        "notifications": [],
+        "users": [
+          {
+            "id": "coach1",
+            "username": "coach",
+            "password": "coach123",
+            "role": "coach",
+            "name": "Trainer",
+            "active": true,
+            "teams": ["u18-elit"]
+          }
+        ],
+        "reflexion-entries": [],
+        "news": [],
+        "cardio-programs": []
+      };
+      fs.writeFileSync(DB_FILE, JSON.stringify(minimalDb, null, 2));
+      console.log('✅ DB mit minimalen Daten initialisiert');
+    }
+  } else {
+    console.log('✅ DB-Datei gefunden:', DB_FILE);
   }
 } catch (e) {
-  console.warn('Warnung beim Initialisieren der DB-Datei:', e.message);
+  console.error('❌ Fehler beim Initialisieren der DB-Datei:', e.message);
+  // Fallback: In-Memory DB
+  console.log('🔄 Verwende In-Memory Fallback DB');
 }
 const router = jsonServer.router(DB_FILE);
 const middlewares = jsonServer.defaults({ static: 'public' });

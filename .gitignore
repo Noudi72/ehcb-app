@@ -14,6 +14,8 @@ dist-ssr
 
 # Database - Don't track changes to local dev database
 db.json
+# BUT keep the template for production deployment
+# db.template.json (included in git)
 
 # Editor directories and files
 .vscode/*
