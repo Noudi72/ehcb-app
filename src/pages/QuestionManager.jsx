@@ -7,7 +7,6 @@ import useAutoRefresh from "../hooks/useAutoRefresh";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { useNavigate } from "react-router-dom";
-import { performNuclearReset } from "../utils/serviceWorkerReset";
 
 // Survey Card Component
 function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSendNotification }) {
@@ -710,12 +709,41 @@ export default function QuestionManager() {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
 
-  // Force refresh function
+  // Force refresh function with nuclear option
   const handleForceRefresh = async () => {
     console.log('🧹 Manual force refresh triggered');
     setLoading(true);
-    await forceCleanReload();
-    setLoading(false);
+    
+    // Check if this is a double-click within 2 seconds for nuclear reset
+    const now = Date.now();
+    const lastClick = localStorage.getItem('lastRefreshClick');
+    
+    if (lastClick && (now - parseInt(lastClick)) < 2000) {
+      // NUCLEAR RESET on double-click
+      console.log('💥 NUCLEAR RESET - Double click detected!');
+      localStorage.removeItem('lastRefreshClick');
+      
+      try {
+        // Import and execute nuclear reset
+        const { performNuclearReset } = await import('../utils/serviceWorkerReset');
+        await performNuclearReset();
+      } catch (error) {
+        console.error('Nuclear reset failed:', error);
+        // Fallback to manual reset
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.reload(true);
+      }
+    } else {
+      // Normal refresh
+      localStorage.setItem('lastRefreshClick', now.toString());
+      await forceCleanReload();
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -874,16 +902,9 @@ export default function QuestionManager() {
                 onClick={handleForceRefresh}
                 className="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
                 disabled={loading}
+                title="Einfachklick: Aktualisieren | Doppelklick: Nuclear Reset (alle Caches löschen)"
               >
                 🔄 {loading ? 'Lädt...' : 'Aktualisieren'}
-              </button>
-              
-              <button
-                onClick={performNuclearReset}
-                className="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-                title="Cache & Service Worker komplett leeren und neuladen"
-              >
-                💥 Reset
               </button>
               
               <button
