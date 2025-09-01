@@ -30,6 +30,8 @@ jobs:
         run: npm ci
 
       - name: Build application
+        env:
+          VITE_API_BASE_URL: https://ehcb-app-production.up.railway.app
         run: npm run build
 
       - name: Upload artifact

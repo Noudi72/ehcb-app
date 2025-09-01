@@ -1,4 +1,4 @@
-name: CI — Build & Deploy to Vercel
+name: CI — Build for Vercel (Manual Deploy)
 
 on:
   push:
@@ -6,10 +6,9 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,13 +24,15 @@ jobs:
         run: npm ci
 
       - name: Build (runs prepare-sw then vite build)
+        env:
+          VITE_API_BASE_URL: https://ehcb-app-production.up.railway.app
         run: npm run build
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: .
-          prod: true
+          name: dist
+          path: dist/
+
+      # NOTE: Automatic Vercel deployment is disabled due to missing secrets
+      # To enable: Add VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID to repository secrets
