@@ -60,19 +60,9 @@ export default function CoachDashboard() {
   // Umfrage-Management Bereiche
   const surveyManagementItems = [
     {
-      title: "Umfrage erstellen",
-      description: "Neue Umfragen mit ausgewählten Fragen zusammenstellen",
-      icon: "plus",
-      path: "/coach/survey-editor",
-      color: "bg-blue-500 hover:bg-blue-600",
-      iconBg: "bg-blue-100 group-hover:bg-blue-200",
-      iconColor: "text-blue-600",
-      borderColor: "group-hover:border-blue-500"
-    },
-    {
-      title: "Fragen verwalten",
-      description: "Eigene Fragen erstellen, bearbeiten und kategorisieren",
-      icon: "question",
+      title: "Umfragen verwalten",
+      description: "Umfragen erstellen, bearbeiten und verwalten",
+      icon: "edit",
       path: "/coach/questions",
       color: "bg-purple-500 hover:bg-purple-600",
       iconBg: "bg-purple-100 group-hover:bg-purple-200",
