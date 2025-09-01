@@ -378,7 +378,7 @@ export default function Umfrage() {
             {activeSurveys.length === 0 && (
               <div className="mb-6 p-4 rounded-lg border border-gray-200 bg-yellow-50 text-gray-800">
                 <strong>Zurzeit sind keine Umfragen aktiv.</strong>
-                <p className="mt-2 text-sm text-gray-700">Wenn du Trainer bist, kannst du Umfragen im Coach‑Dashboard > Aktive Umfragen aktivieren.</p>
+                <p className="mt-2 text-sm text-gray-700">Wenn du Trainer bist, kannst du Umfragen im Coach-Dashboard &gt; Aktive Umfragen aktivieren.</p>
                 <div className="mt-3 flex space-x-2">
                   <button onClick={() => window.location.href = '/'} className="px-4 py-2 bg-[#0a2240] text-white rounded">Zur Startseite</button>
                   <button onClick={() => window.location.href = '/coach-login'} className="px-4 py-2 bg-blue-100 text-blue-800 rounded">Coach Login</button>
