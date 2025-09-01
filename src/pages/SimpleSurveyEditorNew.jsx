@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { API_BASE_URL } from "../config/api";
 
 export default function SimpleSurveyEditorNew() {
   const navigate = useNavigate();
+  const { surveyId } = useParams(); // Get surveyId from URL for editing
   
   const [surveyTitle, setSurveyTitle] = useState("");
   const [questions, setQuestions] = useState([
@@ -19,6 +20,46 @@ export default function SimpleSurveyEditorNew() {
   ]);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Load existing survey data if editing
+  useEffect(() => {
+    if (surveyId) {
+      loadSurveyData(surveyId);
+    }
+  }, [surveyId]);
+
+  const loadSurveyData = async (id) => {
+    try {
+      console.log('📥 Loading survey data for ID:', id);
+      const response = await fetch(`${API_BASE_URL}/surveys/${id}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const surveyData = await response.json();
+      console.log('✅ Loaded survey data:', surveyData);
+      
+      setSurveyTitle(surveyData.title || "");
+      
+      // Load questions with their options
+      if (surveyData.questions && surveyData.questions.length > 0) {
+        const loadedQuestions = surveyData.questions.map(q => ({
+          id: q.id || `q_${Date.now()}_${Math.random()}`,
+          text: q.text || "",
+          type: q.type || "multiple-choice",
+          options: q.options || ["", ""],
+          required: q.required || false
+        }));
+        setQuestions(loadedQuestions);
+        console.log('📝 Questions loaded:', loadedQuestions);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error loading survey:', error);
+      alert(`Fehler beim Laden der Umfrage: ${error.message}`);
+    }
+  };
 
   // Neue Frage hinzufügen
   const addQuestion = () => {
@@ -94,14 +135,28 @@ export default function SimpleSurveyEditorNew() {
 
       console.log('📤 Direct API Call:', surveyData);
 
-      // DIRECT fetch call - bypassing context completely
-      const response = await fetch(`${API_BASE_URL}/surveys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(surveyData)
-      });
+      let response;
+      if (surveyId) {
+        // Update existing survey
+        console.log('📝 Updating survey:', surveyId);
+        response = await fetch(`${API_BASE_URL}/surveys/${surveyId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...surveyData, id: surveyId })
+        });
+      } else {
+        // Create new survey
+        console.log('✨ Creating new survey');
+        response = await fetch(`${API_BASE_URL}/surveys`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(surveyData)
+        });
+      }
 
       console.log('📥 Response Status:', response.status);
 
@@ -112,7 +167,7 @@ export default function SimpleSurveyEditorNew() {
       const result = await response.json();
       console.log('✅ SUCCESS:', result);
 
-      setSuccessMessage("✅ Umfrage erfolgreich erstellt!");
+      setSuccessMessage(surveyId ? "✅ Umfrage erfolgreich aktualisiert!" : "✅ Umfrage erfolgreich erstellt!");
       setLoading(false);
 
       // Navigate back after 2 seconds
@@ -136,7 +191,7 @@ export default function SimpleSurveyEditorNew() {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900">
-              🚀 Neue Umfrage (Direct Save)
+              {surveyId ? "📝 Umfrage bearbeiten" : "🚀 Neue Umfrage (Direct Save)"}
             </h1>
           </div>
 
@@ -272,7 +327,7 @@ export default function SimpleSurveyEditorNew() {
                 disabled={loading}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
               >
-                {loading ? "Wird gespeichert..." : "🚀 Direct Save"}
+                {loading ? "Wird gespeichert..." : (surveyId ? "📝 Aktualisieren" : "🚀 Direct Save")}
               </button>
             </div>
           </div>
