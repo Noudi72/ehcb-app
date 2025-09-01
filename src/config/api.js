@@ -1,10 +1,11 @@
 // API Configuration für Production Deployment
 const isDevelopment = import.meta.env.MODE === 'development' || 
                       import.meta.env.DEV || 
-                      window.location.hostname === 'localhost' || 
-                      window.location.hostname === '127.0.0.1' ||
-                      window.location.port === '5173' ||
-                      window.location.port === '5174';
+                      (typeof window !== 'undefined' && 
+                       (window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' ||
+                        window.location.port === '5173' ||
+                        window.location.port === '5174'));
 
 // Local override via LocalStorage (ohne Rebuild änderbar)
 const LS_OVERRIDE = typeof window !== 'undefined' ? window.localStorage.getItem('API_BASE_URL') : null;

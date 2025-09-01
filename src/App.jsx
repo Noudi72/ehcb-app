@@ -118,6 +118,11 @@ export default function App() {
                       <Statistics />
                     </ProtectedRoute>
                   } />
+                  <Route path="/coach/surveys" element={
+                    <ProtectedRoute coachOnly={true}>
+                      <QuestionManager />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/coach/questions" element={
                     <ProtectedRoute coachOnly={true}>
                       <QuestionManager />
