@@ -50,8 +50,8 @@ export default function UmfrageEditor() {
         // Lade alle Fragen und Umfragen
         await Promise.all([fetchQuestions(), fetchSurveys()]);
         
-        // Standardmäßig den Fragen-Tab anzeigen
-        setActiveTab("questions");
+        // Standardmäßig den Umfrage-Tab anzeigen
+        setActiveTab("surveys");
         
         // Initialisiere eine leere neue Umfrage
         setCurrentSurvey({
@@ -86,7 +86,7 @@ export default function UmfrageEditor() {
           anonymous: Boolean(existingSurvey.anonymous),
           active: Boolean(existingSurvey.active)
         });
-        // Wechsle zur Umfrage-Erstellung, da wir eine bestehende Umfrage bearbeiten
+        // Bleibe im Umfrage-Tab für bearbeitung
         setActiveTab("surveys");
       }
     }
@@ -448,28 +448,8 @@ export default function UmfrageEditor() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Umfrage-Editor</h1>
+            <h1 className="text-2xl font-bold text-gray-900">📋 Umfrage-Editor</h1>
             <div className="flex space-x-2">
-              <button
-                onClick={() => setActiveTab("questions")}
-                className={`px-4 py-2 rounded-lg ${
-                  activeTab === "questions"
-                    ? "bg-[#0a2240] text-white"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                Fragen
-              </button>
-              <button
-                onClick={() => setActiveTab("create")}
-                className={`px-4 py-2 rounded-lg ${
-                  activeTab === "create"
-                    ? "bg-[#0a2240] text-white"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {editMode ? "Frage bearbeiten" : "Neue Frage"}
-              </button>
               <button
                 onClick={() => setActiveTab("surveys")}
                 className={`px-4 py-2 rounded-lg ${
@@ -478,7 +458,7 @@ export default function UmfrageEditor() {
                     : "bg-gray-100 text-gray-700"
                 }`}
               >
-                {surveyId ? "Umfrage bearbeiten" : "Umfrage erstellen"}
+                {surveyId ? "📝 Umfrage bearbeiten" : "✨ Umfrage erstellen"}
               </button>
             </div>
           </div>

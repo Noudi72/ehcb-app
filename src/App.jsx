@@ -4,7 +4,7 @@ import { LanguageProvider } from "./context/LanguageContext";
 import Home from "./pages/Home";
 import Reflexion from "./pages/Reflexion";
 import Umfrage from "./pages/Umfrage";
-import UmfrageEditor from "./pages/UmfrageEditor";
+import SimpleSurveyEditor from "./pages/SimpleSurveyEditor";
 import UmfrageResults from "./pages/UmfrageResults";
 import SportFood from "./pages/SportFood";
 import SportFoodManager from "./pages/SportFoodManager";
@@ -140,12 +140,12 @@ export default function App() {
                   } />
                   <Route path="/coach/survey-editor" element={
                     <ProtectedRoute coachOnly={true}>
-                      <UmfrageEditor />
+                      <SimpleSurveyEditor />
                     </ProtectedRoute>
                   } />
                   <Route path="/coach/survey-editor/:surveyId" element={
                     <ProtectedRoute coachOnly={true}>
-                      <UmfrageEditor />
+                      <SimpleSurveyEditor />
                     </ProtectedRoute>
                   } />
                   <Route path="/coach/survey-results" element={
