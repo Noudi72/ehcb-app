@@ -29,7 +29,7 @@ import CoachDashboard from "./pages/CoachDashboard";
 import TeamOverview from "./pages/TeamOverview";
 import ReflexionDashboard from "./pages/ReflexionDashboard";
 import QuestionManager from "./pages/QuestionManager";
-import ActiveSurveyManager from "./pages/ActiveSurveyManager";
+import UmfrageHub from "./pages/UmfrageHub";
 import CoachResultsView from "./pages/CoachResultsView";
 import PlayerLogin from "./pages/PlayerLogin";
 import UserManager from "./pages/UserManager";
@@ -125,7 +125,7 @@ export default function App() {
                   } />
                   <Route path="/coach/active-surveys" element={
                     <ProtectedRoute coachOnly={true}>
-                      <ActiveSurveyManager />
+                      <UmfrageHub />
                     </ProtectedRoute>
                   } />
                   <Route path="/coach/user-manager" element={
