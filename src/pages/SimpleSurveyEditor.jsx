@@ -93,8 +93,12 @@ export default function SimpleSurveyEditor() {
 
   // Umfrage speichern
   const handleSave = async () => {
+    console.log('🎯 handleSave aufgerufen');
+    console.log('📊 Aktueller Zustand:', { surveyTitle, questions, loading });
+
     // Validierung: Prüfe ob mindestens eine Frage ausgefüllt ist
     const validQuestions = questions.filter(q => q.text.trim());
+    console.log('✅ Gültige Fragen:', validQuestions);
     
     if (validQuestions.length === 0) {
       alert("Bitte geben Sie mindestens eine Frage ein.");
@@ -103,6 +107,7 @@ export default function SimpleSurveyEditor() {
 
     // Automatischen Titel generieren wenn nicht vorhanden
     const finalTitle = surveyTitle.trim() || `Umfrage vom ${new Date().toLocaleDateString('de-DE')}`;
+    console.log('📝 Finaler Titel:', finalTitle);
 
     console.log('💾 Speichere Umfrage:', { finalTitle, validQuestions });
 
@@ -118,12 +123,18 @@ export default function SimpleSurveyEditor() {
         createdAt: new Date().toISOString()
       };
 
+      console.log('📤 Survey Data:', JSON.stringify(surveyData, null, 2));
+      console.log('🔧 Aufrufe createSurvey Funktion...');
+
       let result;
       if (surveyId) {
+        console.log('📝 Update existierende Umfrage:', surveyId);
         result = await updateSurvey(surveyId, { ...surveyData, id: surveyId });
         setSuccessMessage("Umfrage erfolgreich aktualisiert!");
       } else {
+        console.log('✨ Erstelle neue Umfrage...');
         result = await createSurvey(surveyData);
+        console.log('🎉 createSurvey Antwort:', result);
         setSuccessMessage("Umfrage erfolgreich erstellt!");
       }
 
@@ -131,11 +142,14 @@ export default function SimpleSurveyEditor() {
 
       // Nach 2 Sekunden zur Übersicht zurückkehren
       setTimeout(() => {
+        console.log('🚀 Navigiere zurück zu /coach/surveys');
         navigate('/coach/surveys');
       }, 2000);
 
     } catch (err) {
       console.error("❌ Fehler beim Speichern:", err);
+      console.error("❌ Error Stack:", err.stack);
+      console.error("❌ Error Message:", err.message);
       setSuccessMessage(""); // Clear success message
       alert("Fehler beim Speichern der Umfrage: " + (err.message || "Unbekannter Fehler"));
     }

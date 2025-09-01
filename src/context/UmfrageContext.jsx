@@ -184,26 +184,11 @@ export const UmfrageProvider = ({ children }) => {
       
       if (response.data) {
         setSurveys([...surveys, response.data]);
-        
-        // Team-spezifische Benachrichtigung für Spieler erstellen
-        await createTeamNotifications(validatedSurveyData.targetTeams, {
-          title: "📋 Neue Umfrage verfügbar",
-          message: `"${validatedSurveyData.title}" - Bitte fülle die Umfrage aus.`,
-          type: "survey",
-          contentId: response.data.id
-        });
-        
-        // Push-Benachrichtigung für neue Umfrage senden (nur für Spieler wichtig)
-        try {
-          await sendSurveyNotification(
-            validatedSurveyData.title,
-            validatedSurveyData.description || ''
-          );
-        } catch (error) {
-          console.warn('Push-Benachrichtigung für Umfrage konnte nicht gesendet werden:', error);
-        }
-        
         setError(null);
+        console.log('✅ Umfrage erfolgreich erstellt und zur Liste hinzugefügt');
+        
+        // TODO: Benachrichtigungen später hinzufügen
+        
         return response.data;
       } else {
         throw new Error("Keine Daten vom Server erhalten");
