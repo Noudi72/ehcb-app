@@ -27,8 +27,6 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
           ? 'bg-gray-800 border-gray-700 hover:border-gray-600' 
           : 'bg-white border-gray-200 hover:border-gray-300'
       }`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 pr-4">
@@ -59,83 +57,87 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
             </p>
           )}
 
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
             <span>📊 {survey.questions?.length || 0} Fragen</span>
             <span>👥 {survey.responses?.length || 0} Antworten</span>
             <span>📅 {new Date(survey.createdAt || Date.now()).toLocaleDateString('de-DE')}</span>
           </div>
         </div>
+      </div>
+
+      {/* Mobile-friendly Action Buttons */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        <button
+          onClick={() => onToggleStatus(survey)}
+          className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            status === 'active'
+              ? (isDarkMode ? 'bg-orange-900 text-orange-300 hover:bg-orange-800' : 'bg-orange-100 text-orange-800 hover:bg-orange-200')
+              : (isDarkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-800 hover:bg-green-200')
+          }`}
+          title={status === 'active' ? 'Offline stellen' : 'Online stellen'}
+        >
+          <span className="mr-1">{status === 'active' ? '⏸️' : '▶️'}</span>
+          <span className="hidden sm:inline">{status === 'active' ? 'Offline' : 'Online'}</span>
+        </button>
         
-        {showActions && (
-          <div className="flex flex-col space-y-1 min-w-0 flex-shrink-0">
-            <button
-              onClick={() => onToggleStatus(survey)}
-              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                status === 'active'
-                  ? (isDarkMode ? 'bg-orange-900 text-orange-300 hover:bg-orange-800' : 'bg-orange-100 text-orange-800 hover:bg-orange-200')
-                  : (isDarkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-800 hover:bg-green-200')
-              }`}
-              title={status === 'active' ? 'Offline stellen' : 'Online stellen'}
-            >
-              {status === 'active' ? '⏸️' : '▶️'}
-            </button>
-            
-            {status === 'active' && (
-              <button
-                onClick={() => onSendNotification(survey)}
-                className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                  isDarkMode 
-                    ? 'bg-purple-900 text-purple-300 hover:bg-purple-800' 
-                    : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
-                }`}
-                title="Benachrichtigung senden"
-              >
-                📱
-              </button>
-            )}
-            
-            <button
-              onClick={handleViewResults}
-              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                isDarkMode 
-                  ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' 
-                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-              }`}
-              title="Ergebnisse"
-            >
-              📊
-            </button>
-            
-            <button
-              onClick={() => onEdit(survey)}
-              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                isDarkMode 
-                  ? 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800' 
-                  : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-              }`}
-              title="Bearbeiten"
-            >
-              ✏️
-            </button>
-            
-            <button
-              onClick={() => onDelete(survey)}
-              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                isDarkMode 
-                  ? 'bg-red-900 text-red-300 hover:bg-red-800' 
-                  : 'bg-red-100 text-red-800 hover:bg-red-200'
-              }`}
-              title="Löschen"
-            >
-              🗑️
-            </button>
-          </div>
+        {status === 'active' && (
+          <button
+            onClick={() => onSendNotification(survey)}
+            className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+              isDarkMode 
+                ? 'bg-purple-900 text-purple-300 hover:bg-purple-800' 
+                : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+            }`}
+            title="Benachrichtigung senden"
+          >
+            <span className="mr-1">📱</span>
+            <span className="hidden sm:inline">Push</span>
+          </button>
         )}
+        
+        <button
+          onClick={handleViewResults}
+          className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            isDarkMode 
+              ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' 
+              : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+          }`}
+          title="Ergebnisse anzeigen"
+        >
+          <span className="mr-1">📊</span>
+          <span className="hidden sm:inline">Ergebnisse</span>
+        </button>
+        
+        <button
+          onClick={() => onEdit(survey)}
+          className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            isDarkMode 
+              ? 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800' 
+              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+          }`}
+          title="Bearbeiten"
+        >
+          <span className="mr-1">✏️</span>
+          <span className="hidden sm:inline">Bearbeiten</span>
+        </button>
+        
+        <button
+          onClick={() => onDelete(survey)}
+          className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            isDarkMode 
+              ? 'bg-red-900 text-red-300 hover:bg-red-800' 
+              : 'bg-red-100 text-red-800 hover:bg-red-200'
+          }`}
+          title="Löschen"
+        >
+          <span className="mr-1">🗑️</span>
+          <span className="hidden sm:inline">Löschen</span>
+        </button>
       </div>
 
       {/* Survey Questions Preview */}
       {survey.questions && survey.questions.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-gray-200">
           <p className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Verwendete Fragen:
           </p>

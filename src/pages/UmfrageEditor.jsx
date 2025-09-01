@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useUmfrage } from "../context/UmfrageContext";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 
 
 export default function UmfrageEditor() {
-  const location = useLocation();
-  const navigate = useNavigate(); // Import useNavigate
+  const { surveyId } = useParams(); // Verwende useParams statt Query-Parameter
+  const navigate = useNavigate();
   const { 
     questions, 
     surveys, 
@@ -22,10 +22,6 @@ export default function UmfrageEditor() {
     updateSurvey 
   } = useUmfrage();
   
-  // URL-Parameter auslesen, um zu prüfen, ob eine bestehende Umfrage bearbeitet werden soll
-  const queryParams = new URLSearchParams(location.search);
-  const surveyId = queryParams.get("id");
-
   // Zustand für neue Frage
   const [newQuestion, setNewQuestion] = useState({
     question: "",

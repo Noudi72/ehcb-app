@@ -138,6 +138,11 @@ export default function App() {
                       <UmfrageEditor />
                     </ProtectedRoute>
                   } />
+                  <Route path="/coach/survey-editor/:surveyId" element={
+                    <ProtectedRoute coachOnly={true}>
+                      <UmfrageEditor />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/coach/survey-results" element={
                     <ProtectedRoute coachOnly={true}>
                       <CoachResultsView />
