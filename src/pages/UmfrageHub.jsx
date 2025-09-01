@@ -7,7 +7,10 @@ import BackButton from "../components/BackButton";
 import { useNavigate } from "react-router-dom";
 
 // Status Badge Component
-const StatusBadge = ({ status, isDarkMode }) => {
+const StatusBadge = ({ survey, isDarkMode }) => {
+  // Status bestimmen - entweder aus survey.status oder aus survey.active
+  const status = survey.status || (survey.active ? 'active' : 'inactive');
+  
   const statusConfig = {
     active: {
       label: 'Aktiv',
@@ -62,7 +65,7 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, onViewResults, i
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 pr-4">
           <div className="flex items-center gap-3 mb-2">
-            <StatusBadge status={survey.status} isDarkMode={isDarkMode} />
+            <StatusBadge survey={survey} isDarkMode={isDarkMode} />
             {survey.anonymous && (
               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                 isDarkMode ? 'bg-yellow-900 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
@@ -73,7 +76,7 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, onViewResults, i
           </div>
           
           <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            {survey.title}
+            {survey.title || 'Unbenannte Umfrage'}
           </h3>
           
           {survey.description && (
@@ -118,13 +121,13 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, onViewResults, i
             <button
               onClick={() => onToggleStatus(survey)}
               className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                survey.status === 'active'
+                (survey.status === 'active' || survey.active)
                   ? (isDarkMode ? 'bg-orange-900 text-orange-300 hover:bg-orange-800' : 'bg-orange-100 text-orange-800 hover:bg-orange-200')
                   : (isDarkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-800 hover:bg-green-200')
               }`}
-              title={survey.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+              title={(survey.status === 'active' || survey.active) ? 'Deaktivieren' : 'Aktivieren'}
             >
-              {survey.status === 'active' ? '⏸️' : '▶️'}
+              {(survey.status === 'active' || survey.active) ? '⏸️' : '▶️'}
             </button>
             
             <button
@@ -263,18 +266,31 @@ export default function UmfrageHub() {
 
   // Filter und Suche
   const filteredSurveys = surveys.filter(survey => {
-    const matchesSearch = survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (survey.description && survey.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Sichere Überprüfung auf title Eigenschaft
+    const title = survey.title || 'Unbenannte Umfrage';
+    const description = survey.description || '';
+    
+    const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         description.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (!matchesSearch) return false;
     
     if (filterStatus === "all") return true;
-    return survey.status === filterStatus;
+    
+    // Sichere Überprüfung auf status - falls nicht vorhanden, verwende active als Fallback
+    const status = survey.status || (survey.active ? 'active' : 'inactive');
+    return status === filterStatus;
   });
 
   // Gruppiere Umfragen
-  const activeSurveys = filteredSurveys.filter(s => s.status === 'active');
-  const inactiveSurveys = filteredSurveys.filter(s => s.status !== 'active');
+  const activeSurveys = filteredSurveys.filter(s => {
+    const status = s.status || (s.active ? 'active' : 'inactive');
+    return status === 'active';
+  });
+  const inactiveSurveys = filteredSurveys.filter(s => {
+    const status = s.status || (s.active ? 'active' : 'inactive');
+    return status !== 'active';
+  });
 
   const handleCreateSurvey = () => {
     navigate('/coach/survey-editor');
@@ -289,7 +305,8 @@ export default function UmfrageHub() {
   };
 
   const handleDeleteSurvey = async (survey) => {
-    if (window.confirm(`Möchtest du die Umfrage "${survey.title}" wirklich löschen?`)) {
+    const title = survey.title || 'Unbenannte Umfrage';
+    if (window.confirm(`Möchtest du die Umfrage "${title}" wirklich löschen?`)) {
       try {
         await deleteSurvey(survey.id);
         await fetchSurveys();
@@ -302,8 +319,18 @@ export default function UmfrageHub() {
 
   const handleToggleStatus = async (survey) => {
     try {
-      const newStatus = survey.status === 'active' ? 'inactive' : 'active';
-      await updateSurvey(survey.id, { ...survey, status: newStatus });
+      // Bestimme aktuellen Status
+      const currentStatus = survey.status || (survey.active ? 'active' : 'inactive');
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      
+      // Update sowohl status als auch active für Kompatibilität
+      const updatedSurvey = {
+        ...survey,
+        status: newStatus,
+        active: newStatus === 'active'
+      };
+      
+      await updateSurvey(survey.id, updatedSurvey);
       await fetchSurveys();
     } catch (err) {
       setError("Fehler beim Ändern des Status");
