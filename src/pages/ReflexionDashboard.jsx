@@ -57,7 +57,7 @@ export default function ReflexionDashboard() {
     try {
       await sendNotification({
         title: "Spielerreflexion ausfüllen",
-        message: "Vergiss nicht, deine Spielerreflexion auszufüllen! Dein Feedback hilft uns allen, besser zu werden. 🏀⭐",
+        message: "Vergiss nicht, deine Spielerreflexion auszufüllen! Dein Feedback hilft uns allen, besser zu werden. �⭐",
         type: 'reflection_reminder',
         targetAudience: 'team_members',
         urgent: false
@@ -317,7 +317,7 @@ export default function ReflexionDashboard() {
                   Nachricht:
                 </p>
                 <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  "Vergiss nicht, deine Spielerreflexion auszufüllen! Dein Feedback hilft uns allen, besser zu werden. 🏀⭐"
+                  "Vergiss nicht, deine Spielerreflexion auszufüllen! Dein Feedback hilft uns allen, besser zu werden. �⭐"
                 </p>
               </div>
             </div>
