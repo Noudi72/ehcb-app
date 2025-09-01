@@ -38,6 +38,9 @@ Kurze Übersicht und Betriebsanleitung (Deutsch).
 - Backend: Node.js (Express + JSON Server)
 - Deployment: GitHub Pages, Railway
 
+## iOS & Xcode Setup 🍎
+Für iOS-Entwicklung und Xcode-Tokens: siehe [IOS_XCODE_SETUP.md](./IOS_XCODE_SETUP.md)
+
 ## Support
 Fragen/Probleme: nguyaz@ehcb.ch
 

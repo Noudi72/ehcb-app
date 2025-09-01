@@ -1,0 +1,25 @@
+{
+  "appId": "ch.ehcb.spirit.app",
+  "appName": "EHC Biel Spirit",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#1e40af",
+      "showSpinner": false
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "StatusBar": {
+      "style": "Dark",
+      "backgroundColor": "#1e40af"
+    }
+  },
+  "ios": {
+    "scheme": "EHC Biel Spirit"
+  }
+}

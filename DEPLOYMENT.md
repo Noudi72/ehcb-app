@@ -184,14 +184,38 @@ Runtime/Node: 20 LTS (Repos enthält `engines` und `.nvmrc`).
 - Vercel Pro: $20/Monat
 - Railway Pro: $20/Monat
 
+## iOS App Store Deployment
+
+Für die Veröffentlichung als native iOS App:
+
+### Vorbereitung:
+1. **iOS Setup durchführen**: Siehe [IOS_XCODE_SETUP.md](./IOS_XCODE_SETUP.md)
+2. **Capacitor installieren**: `npm install @capacitor/core @capacitor/cli @capacitor/ios`
+3. **iOS Platform hinzufügen**: `npx cap add ios`
+
+### Build für iOS:
+1. **Web Build**: `npm run build`
+2. **Capacitor Sync**: `npx cap sync`
+3. **Xcode öffnen**: `npx cap open ios`
+4. **App Store Upload** über Xcode oder CLI
+
+### App Store Connect:
+- **Bundle ID**: `ch.ehcb.spirit.app` (empfohlen)
+- **App Name**: "EHC Biel Spirit"
+- **Kategorie**: Sports
+- **Altersfreigabe**: 4+ (Sports apps)
+
 ## Support & Troubleshooting:
 
 ### Häufige Probleme:
 1. CORS-Fehler: Backend CORS-Konfiguration prüfen
 2. Build-Fehler: Dependencies und Node.js Version prüfen
 3. API-Verbindung: Environment Variables prüfen
+4. iOS Build-Fehler: Xcode/Capacitor Setup prüfen
 
 ### Helpful Links:
 - Vercel Docs: https://vercel.com/docs
 - Railway Docs: https://docs.railway.app
 - PWA Testing: https://web.dev/pwa-checklist/
+- iOS Setup: [IOS_XCODE_SETUP.md](./IOS_XCODE_SETUP.md)
+- Capacitor Docs: https://capacitorjs.com/docs
