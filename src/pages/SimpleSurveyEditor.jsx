@@ -93,7 +93,7 @@ export default function SimpleSurveyEditor() {
 
   // Umfrage speichern
   const handleSave = async () => {
-    console.log('🎯 handleSave aufgerufen');
+    console.log('🎯 [SAVE START] handleSave aufgerufen - Version 2.0');
     console.log('📊 Aktueller Zustand:', { surveyTitle, questions, loading });
 
     // Validierung: Prüfe ob mindestens eine Frage ausgefüllt ist
