@@ -38,7 +38,7 @@ const QuestionTypeBadge = ({ type, isDarkMode }) => {
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${typeColors[type] || typeColors.text}`}>
       <QuestionTypeIcon type={type} className="w-3 h-3 mr-1" />
-      {typeLabels[type] || 'Unbekannt'}
+      {typeLabels[type] || 'Andere'}
     </span>
   );
 };
@@ -58,7 +58,7 @@ function QuestionCard({ question, onEdit, onDelete, onDuplicate, isDarkMode }) {
       onMouseLeave={() => setShowActions(false)}
     >
       <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
+        <div className="flex-1 pr-4">
           <div className="flex items-center gap-3 mb-2">
             <QuestionTypeBadge type={question.type} isDarkMode={isDarkMode} />
             {question.required && (
@@ -82,41 +82,41 @@ function QuestionCard({ question, onEdit, onDelete, onDuplicate, isDarkMode }) {
         </div>
         
         {showActions && (
-          <div className="flex space-x-2 ml-4">
+          <div className="flex flex-col space-y-1 min-w-0 flex-shrink-0">
             <button
               onClick={() => onEdit(question)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                 isDarkMode 
                   ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' 
                   : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
               }`}
               title="Bearbeiten"
             >
-              ✏️ Bearbeiten
+              ✏️
             </button>
             
             <button
               onClick={() => onDuplicate(question)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                 isDarkMode 
                   ? 'bg-green-900 text-green-300 hover:bg-green-800' 
                   : 'bg-green-100 text-green-800 hover:bg-green-200'
               }`}
               title="Duplizieren"
             >
-              📋 Kopieren
+              📋
             </button>
             
             <button
               onClick={() => onDelete(question)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                 isDarkMode 
                   ? 'bg-red-900 text-red-300 hover:bg-red-800' 
                   : 'bg-red-100 text-red-800 hover:bg-red-200'
               }`}
               title="Löschen"
             >
-              🗑️ Löschen
+              🗑️
             </button>
           </div>
         )}
