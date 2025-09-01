@@ -104,6 +104,8 @@ export default function SimpleSurveyEditor() {
     // Automatischen Titel generieren wenn nicht vorhanden
     const finalTitle = surveyTitle.trim() || `Umfrage vom ${new Date().toLocaleDateString('de-DE')}`;
 
+    console.log('💾 Speichere Umfrage:', { finalTitle, validQuestions });
+
     try {
       const surveyData = {
         title: finalTitle,
@@ -116,13 +118,16 @@ export default function SimpleSurveyEditor() {
         createdAt: new Date().toISOString()
       };
 
+      let result;
       if (surveyId) {
-        await updateSurvey(surveyId, { ...surveyData, id: surveyId });
+        result = await updateSurvey(surveyId, { ...surveyData, id: surveyId });
         setSuccessMessage("Umfrage erfolgreich aktualisiert!");
       } else {
-        await createSurvey(surveyData);
+        result = await createSurvey(surveyData);
         setSuccessMessage("Umfrage erfolgreich erstellt!");
       }
+
+      console.log('✅ Umfrage gespeichert:', result);
 
       // Nach 2 Sekunden zur Übersicht zurückkehren
       setTimeout(() => {
@@ -130,8 +135,9 @@ export default function SimpleSurveyEditor() {
       }, 2000);
 
     } catch (err) {
-      console.error("Fehler beim Speichern:", err);
-      alert("Fehler beim Speichern der Umfrage.");
+      console.error("❌ Fehler beim Speichern:", err);
+      setSuccessMessage(""); // Clear success message
+      alert("Fehler beim Speichern der Umfrage: " + (err.message || "Unbekannter Fehler"));
     }
   };
 

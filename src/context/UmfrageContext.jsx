@@ -174,20 +174,11 @@ export const UmfrageProvider = ({ children }) => {
         active: surveyData.active !== undefined ? surveyData.active : true,
         resultsVisibleToPlayers: surveyData.resultsVisibleToPlayers || false,
         anonymous: surveyData.anonymous !== undefined ? surveyData.anonymous : false,
-        questions: Array.isArray(surveyData.questions) ? 
-          surveyData.questions.map(q => q.toString().replace(/[^\w-]/g, '_')) : []
+        // WICHTIG: questions sind bereits vollständige Objekte, nicht nur IDs!
+        questions: Array.isArray(surveyData.questions) ? surveyData.questions : []
       };
       
-      // Überprüfen, ob alle referenzierten Fragen existieren
-      if (validatedSurveyData.questions.length > 0) {
-        const allQuestions = await axios.get(`${API_BASE_URL}/questions`);
-        const questionIds = allQuestions.data.map(q => q.id);
-        
-        // Nur gültige Frage-IDs einbeziehen
-        validatedSurveyData.questions = validatedSurveyData.questions.filter(
-          qId => questionIds.includes(qId)
-        );
-      }
+      console.log('🔥 Erstelle Umfrage:', validatedSurveyData);
       
       const response = await axios.post(`${API_BASE_URL}/surveys`, validatedSurveyData);
       
