@@ -96,22 +96,30 @@ export default function SimpleSurveyEditor() {
     console.log('🎯 [SAVE START] handleSave aufgerufen - Version 2.0');
     console.log('📊 Aktueller Zustand:', { surveyTitle, questions, loading });
 
-    // Validierung: Prüfe ob mindestens eine Frage ausgefüllt ist
-    const validQuestions = questions.filter(q => q.text.trim());
-    console.log('✅ Gültige Fragen:', validQuestions);
-    
-    if (validQuestions.length === 0) {
-      alert("Bitte geben Sie mindestens eine Frage ein.");
-      return;
-    }
-
-    // Automatischen Titel generieren wenn nicht vorhanden
-    const finalTitle = surveyTitle.trim() || `Umfrage vom ${new Date().toLocaleDateString('de-DE')}`;
-    console.log('📝 Finaler Titel:', finalTitle);
-
-    console.log('💾 Speichere Umfrage:', { finalTitle, validQuestions });
+    // Timeout-Schutz für die gesamte Save-Operation
+    const saveTimeout = setTimeout(() => {
+      console.error('⏰ SAVE TIMEOUT: Save-Operation dauert zu lange, breche ab');
+      alert('Speichern dauert zu lange. Bitte versuchen Sie es erneut.');
+      setSuccessMessage("");
+    }, 20000); // 20 Sekunden Gesamt-Timeout
 
     try {
+      // Validierung: Prüfe ob mindestens eine Frage ausgefüllt ist
+      const validQuestions = questions.filter(q => q.text.trim());
+      console.log('✅ Gültige Fragen:', validQuestions);
+      
+      if (validQuestions.length === 0) {
+        clearTimeout(saveTimeout);
+        alert("Bitte geben Sie mindestens eine Frage ein.");
+        return;
+      }
+
+      // Automatischen Titel generieren wenn nicht vorhanden
+      const finalTitle = surveyTitle.trim() || `Umfrage vom ${new Date().toLocaleDateString('de-DE')}`;
+      console.log('📝 Finaler Titel:', finalTitle);
+
+      console.log('💾 Speichere Umfrage:', { finalTitle, validQuestions });
+
       const surveyData = {
         title: finalTitle,
         description: "", // Keine separate Beschreibung mehr
@@ -140,6 +148,9 @@ export default function SimpleSurveyEditor() {
 
       console.log('✅ Umfrage gespeichert:', result);
 
+      // Timeout löschen wenn erfolgreich
+      clearTimeout(saveTimeout);
+
       // Nach 2 Sekunden zur Übersicht zurückkehren
       setTimeout(() => {
         console.log('🚀 Navigiere zurück zu /coach/surveys');
@@ -147,6 +158,7 @@ export default function SimpleSurveyEditor() {
       }, 2000);
 
     } catch (err) {
+      clearTimeout(saveTimeout);
       console.error("❌ Fehler beim Speichern:", err);
       console.error("❌ Error Stack:", err.stack);
       console.error("❌ Error Message:", err.message);

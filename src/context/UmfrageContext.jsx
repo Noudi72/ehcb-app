@@ -166,6 +166,11 @@ export const UmfrageProvider = ({ children }) => {
   // Neue Umfrage erstellen
   const createSurvey = async (surveyData) => {
     setLoading(true);
+    
+    // Timeout-Mechanismus hinzufügen
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Sekunden Timeout
+    
     try {
       // Sicherstellen, dass die Umfrage-Daten vollständig und korrekt sind
       const validatedSurveyData = {
@@ -179,8 +184,14 @@ export const UmfrageProvider = ({ children }) => {
       };
       
       console.log('🔥 Erstelle Umfrage:', validatedSurveyData);
+      console.log('⏰ Mit Timeout von 15 Sekunden');
       
-      const response = await axios.post(`${API_BASE_URL}/surveys`, validatedSurveyData);
+      const response = await axios.post(`${API_BASE_URL}/surveys`, validatedSurveyData, {
+        signal: controller.signal,
+        timeout: 15000
+      });
+      
+      clearTimeout(timeoutId);
       
       if (response.data) {
         setSurveys([...surveys, response.data]);
@@ -194,8 +205,17 @@ export const UmfrageProvider = ({ children }) => {
         throw new Error("Keine Daten vom Server erhalten");
       }
     } catch (err) {
+      clearTimeout(timeoutId);
+      
+      if (err.name === 'AbortError' || err.code === 'ECONNABORTED') {
+        const timeoutError = "Zeitüberschreitung beim Speichern der Umfrage. Bitte versuchen Sie es erneut.";
+        setError(timeoutError);
+        console.error("❌ Timeout-Fehler beim Erstellen der Umfrage:", err);
+        throw new Error(timeoutError);
+      }
+      
       setError("Fehler beim Erstellen der Umfrage: " + (err.response?.data?.message || err.message));
-      console.error("Fehler beim Erstellen der Umfrage:", err);
+      console.error("❌ Fehler beim Erstellen der Umfrage:", err);
       return null;
     } finally {
       setLoading(false);
