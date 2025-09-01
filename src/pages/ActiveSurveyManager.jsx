@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import StatusBadge from "./SurveyManagerOverview";
 import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -205,8 +206,8 @@ export default function ActiveSurveyManager() {
                 }`}>
                   <div className="flex justify-between items-start mb-2">
                     <h3 className={`font-bold flex items-center ${isDarkMode ? 'text-gray-200' : ''}`}>
-                      <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
                       {survey.title}
+                      <span className="ml-2"><StatusBadge status={survey.status || (survey.active ? "active" : "draft")} /></span>
                     </h3>
                     <div className="flex space-x-2">
                       <Link 
@@ -295,8 +296,8 @@ export default function ActiveSurveyManager() {
                 }`}>
                   <div className="flex justify-between items-start mb-2">
                     <h3 className={`font-bold flex items-center ${isDarkMode ? 'text-gray-200' : ''}`}>
-                      <span className="w-3 h-3 bg-gray-400 rounded-full mr-2"></span>
                       {survey.title}
+                      <span className="ml-2"><StatusBadge status={survey.status || (survey.active ? "active" : "draft")} /></span>
                     </h3>
                     <div className="flex space-x-2">
                       <Link 

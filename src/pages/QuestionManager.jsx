@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import StatusBadge from "./SurveyManagerOverview";
 import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import Header from "../components/Header";
@@ -411,7 +412,10 @@ export default function QuestionManager() {
                   {questions.map((question) => (
                     <div key={question.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold">{question.question}</h3>
+                        <h3 className="font-bold flex items-center">{question.question}
+                          {question.required && <span className="ml-2"><StatusBadge status="Pflichtfeld" /></span>}
+                          {question.resultsVisibleToPlayers && <span className="ml-2"><StatusBadge status="Ergebnisse sichtbar" /></span>}
+                        </h3>
                         <div className="flex space-x-2">
                           <button 
                             onClick={() => handleEdit(question)}
