@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useReflexion } from "../context/ReflexionContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useNotification } from "../context/NotificationContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { API_BASE_URL } from "../config/api";
@@ -12,9 +13,12 @@ export default function ReflexionDashboard() {
   const { reflections, fetchReflections, loading, error } = useReflexion();
   const { logout } = useAuth();
   const { isDarkMode } = useTheme();
+  const { sendNotification } = useNotification();
   const navigate = useNavigate();
   const [filterName, setFilterName] = useState("");
   const [filterDate, setFilterDate] = useState("");
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   
   useEffect(() => {
     // Nur einmal beim Laden der Komponente ausführen
@@ -48,6 +52,30 @@ export default function ReflexionDashboard() {
       // Optionally show error message to user
     }
   };
+
+  const sendReflectionReminder = async () => {
+    try {
+      await sendNotification({
+        title: "Spielerreflexion ausfüllen",
+        message: "Vergiss nicht, deine Spielerreflexion auszufüllen! Dein Feedback hilft uns allen, besser zu werden. 🏀⭐",
+        type: 'reflection_reminder',
+        targetAudience: 'team_members',
+        urgent: false
+      });
+
+      setSuccessMessage("Push-Benachrichtigung wurde an alle Spieler gesendet!");
+      setTimeout(() => setSuccessMessage(""), 4000);
+      setShowNotificationModal(false);
+    } catch (error) {
+      console.error("Fehler beim Senden der Push-Benachrichtigung:", error);
+      alert("Fehler beim Senden der Benachrichtigung");
+    }
+  };
+
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(""), 4000);
+  };
   
   // Filter der Reflexionen
   const filteredReflections = reflections.filter(reflexion => {
@@ -78,6 +106,18 @@ export default function ReflexionDashboard() {
           <div className="flex justify-between items-center mb-6">
             <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-[#0a2240]'}`}>Spielerreflexionen Dashboard</h1>
             <div className="flex space-x-2">
+              <button
+                onClick={() => setShowNotificationModal(true)}
+                className={`px-4 py-2 rounded-md hover:focus:outline-none flex items-center ${
+                  isDarkMode ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                }`}
+                title="Erinnerung an alle Spieler senden"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 2L3 7v11a1 1 0 001 1h3v-7h6v7h3a1 1 0 001-1V7l-7-5z"/>
+                </svg>
+                📲 Erinnerung senden
+              </button>
               <Link
                 to="/coach/statistics"
                 className={`px-4 py-2 rounded-md hover:focus:outline-none flex items-center ${
@@ -108,6 +148,13 @@ export default function ReflexionDashboard() {
               </button>
             </div>
           </div>
+          
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+              ✅ {successMessage}
+            </div>
+          )}
           
           {error && (
             <div className={`mb-4 px-4 py-3 rounded relative ${
@@ -243,6 +290,59 @@ export default function ReflexionDashboard() {
           )}
         </div>
       </main>
+      
+      {/* Push Notification Modal */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className={`max-w-md w-full rounded-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                📲 Reflexions-Erinnerung senden
+              </h3>
+              <button
+                onClick={() => setShowNotificationModal(false)}
+                className={`p-1 rounded ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                ❌
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Möchtest du eine Push-Benachrichtigung an alle Spieler senden, um sie an das Ausfüllen ihrer Reflexion zu erinnern?
+              </p>
+              
+              <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Nachricht:
+                </p>
+                <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  "Vergiss nicht, deine Spielerreflexion auszufüllen! Dein Feedback hilft uns allen, besser zu werden. 🏀⭐"
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowNotificationModal(false)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                  isDarkMode 
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={sendReflectionReminder}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                📲 Erinnerung senden
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
     </div>
   );
