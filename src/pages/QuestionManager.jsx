@@ -7,6 +7,7 @@ import useAutoRefresh from "../hooks/useAutoRefresh";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { useNavigate } from "react-router-dom";
+import { performNuclearReset } from "../utils/serviceWorkerReset";
 
 // Survey Card Component
 function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSendNotification }) {
@@ -875,6 +876,14 @@ export default function QuestionManager() {
                 disabled={loading}
               >
                 🔄 {loading ? 'Lädt...' : 'Aktualisieren'}
+              </button>
+              
+              <button
+                onClick={performNuclearReset}
+                className="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                title="Cache & Service Worker komplett leeren und neuladen"
+              >
+                💥 Reset
               </button>
               
               <button

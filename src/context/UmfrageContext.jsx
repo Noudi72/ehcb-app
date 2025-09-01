@@ -29,27 +29,28 @@ export const UmfrageProvider = ({ children }) => {
     setError(null);
     
     try {
-      // Multiple cache-busting attempts
+      // NUCLEAR cache-busting with random values and headers
       const timestamp = Date.now();
-      const cacheBusters = [
-        `?_t=${timestamp}`,
-        `?cb=${timestamp}&r=${Math.random()}`,
-        `?nocache=${timestamp}&v=2`
-      ];
+      const random = Math.random().toString(36).substring(7);
       
-      for (const cacheBuster of cacheBusters) {
-        try {
-          console.log('🔄 Trying cache buster:', cacheBuster);
-          const response = await axios.get(`${API_BASE_URL}/surveys${cacheBuster}`);
-          console.log('📥 Fresh data received:', response.data);
-          setSurveys(response.data);
-          setError(null);
-          break; // Success, stop trying
-        } catch (err) {
-          console.warn('⚠️ Cache buster failed:', cacheBuster, err.message);
-          continue; // Try next cache buster
+      const response = await axios.get(`${API_BASE_URL}/surveys`, {
+        params: {
+          _t: timestamp,
+          _r: random,
+          nocache: true,
+          v: '3.0',
+          bust: timestamp
+        },
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
-      }
+      });
+      
+      console.log('🎯 NUCLEAR FRESH DATA:', response.data);
+      setSurveys(response.data);
+      setError(null);
       
     } catch (err) {
       setError("Fehler beim Neuladen der Daten");
