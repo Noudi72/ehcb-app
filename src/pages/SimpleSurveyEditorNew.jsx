@@ -42,17 +42,53 @@ export default function SimpleSurveyEditorNew() {
       
       setSurveyTitle(surveyData.title || "");
       
-      // Load questions with their options
+      // Load questions by their IDs from Questions API
       if (surveyData.questions && surveyData.questions.length > 0) {
-        const loadedQuestions = surveyData.questions.map(q => ({
-          id: q.id || `q_${Date.now()}_${Math.random()}`,
-          text: q.text || "",
-          type: q.type || "multiple-choice",
-          options: q.options || ["", ""],
-          required: q.required || false
-        }));
+        console.log('📥 Loading questions by IDs:', surveyData.questions);
+        
+        const loadedQuestions = [];
+        
+        for (const questionId of surveyData.questions) {
+          try {
+            const questionResponse = await fetch(`${API_BASE_URL}/questions/${questionId}`);
+            
+            if (questionResponse.ok) {
+              const questionData = await questionResponse.json();
+              console.log('✅ Loaded question:', questionData);
+              
+              loadedQuestions.push({
+                id: questionData.id,
+                text: questionData.text || "",
+                type: questionData.type || "multiple-choice",
+                options: questionData.options || ["", ""],
+                required: questionData.required || false
+              });
+            } else {
+              console.warn('⚠️ Could not load question:', questionId);
+              // Create placeholder for missing question
+              loadedQuestions.push({
+                id: questionId,
+                text: "",
+                type: "multiple-choice",
+                options: ["", ""],
+                required: false
+              });
+            }
+          } catch (err) {
+            console.error('❌ Error loading question:', questionId, err);
+            // Create placeholder for failed question
+            loadedQuestions.push({
+              id: questionId,
+              text: "",
+              type: "multiple-choice", 
+              options: ["", ""],
+              required: false
+            });
+          }
+        }
+        
         setQuestions(loadedQuestions);
-        console.log('📝 Questions loaded:', loadedQuestions);
+        console.log('📝 All questions loaded:', loadedQuestions);
       }
       
     } catch (error) {
@@ -122,10 +158,45 @@ export default function SimpleSurveyEditorNew() {
     try {
       const finalTitle = surveyTitle.trim() || `Umfrage vom ${new Date().toLocaleDateString('de-DE')}`;
       
+      console.log('📤 Step 1: Speichere Fragen einzeln...');
+      
+      // Step 1: Save each question to Questions API and collect IDs
+      const questionIds = [];
+      
+      for (const question of validQuestions) {
+        console.log('💾 Speichere Frage:', question.text);
+        
+        const questionData = {
+          text: question.text,
+          type: question.type,
+          options: question.type === 'multiple-choice' ? question.options.filter(opt => opt.trim()) : [],
+          required: question.required || false
+        };
+        
+        const questionResponse = await fetch(`${API_BASE_URL}/questions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(questionData)
+        });
+        
+        if (!questionResponse.ok) {
+          throw new Error(`Fehler beim Speichern der Frage: ${questionResponse.status}`);
+        }
+        
+        const savedQuestion = await questionResponse.json();
+        questionIds.push(savedQuestion.id);
+        console.log('✅ Frage gespeichert mit ID:', savedQuestion.id);
+      }
+      
+      console.log('📤 Step 2: Erstelle Umfrage mit Fragen-IDs:', questionIds);
+      
+      // Step 2: Create survey with question IDs
       const surveyData = {
         title: finalTitle,
         description: "",
-        questions: validQuestions,
+        questions: questionIds, // Use IDs instead of full objects
         resultsVisibleToPlayers: false,
         anonymous: true,
         targetTeams: ["u18-elit"],
@@ -133,7 +204,7 @@ export default function SimpleSurveyEditorNew() {
         createdAt: new Date().toISOString()
       };
 
-      console.log('📤 Direct API Call:', surveyData);
+      console.log('📤 Direct API Call (Survey):', surveyData);
 
       let response;
       if (surveyId) {
