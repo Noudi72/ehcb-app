@@ -337,7 +337,7 @@ export default function SimpleSurveyEditorNew() {
                     onChange={(e) => setAnonymityLevel(e.target.value)}
                     className="mr-2"
                   />
-                  <span className="text-sm">👥 <strong>Namen für alle sichtbar</strong> - Vollständig transparent</span>
+                  <span className={`text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>👥 <strong>Namen für alle sichtbar</strong> - Vollständig transparent</span>
                 </label>
               </div>
             </div>

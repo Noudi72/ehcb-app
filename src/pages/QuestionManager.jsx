@@ -3,7 +3,7 @@ import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNotification } from "../context/NotificationContext";
-import useAutoRefresh from "../hooks/useAutoRefresh";
+// import useAutoRefresh from "../hooks/useAutoRefresh"; // Disabled to prevent scroll jumping
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { useNavigate } from "react-router-dom";
@@ -855,8 +855,8 @@ export default function QuestionManager() {
   const { sendNotificationToTeam } = useNotification();
   const navigate = useNavigate();
   
-  // Auto-refresh surveys when component mounts
-  useAutoRefresh();
+  // Auto-refresh disabled to prevent scroll jumping on mobile
+  // useAutoRefresh();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
