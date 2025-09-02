@@ -34,10 +34,16 @@ export default function UserManager() {
   const fetchTeams = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/teams`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
-      setTeams(data);
+      // Sicherstellen, dass data ein Array ist
+      setTeams(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Fehler beim Laden der Teams:", err);
+      // Fallback: Leeres Array setzen
+      setTeams([]);
     }
   };
 
@@ -92,14 +98,14 @@ export default function UserManager() {
     if (!teamIds || !Array.isArray(teamIds)) {
       // Backward compatibility - falls noch das alte single team format verwendet wird
       if (typeof teamIds === 'string') {
-        const team = teams.find(t => t.id === teamIds);
+        const team = Array.isArray(teams) ? teams.find(t => t.id === teamIds) : null;
         return team ? team.name : teamIds;
       }
       return "-";
     }
     
     return teamIds.map(teamId => {
-      const team = teams.find(t => t.id === teamId);
+      const team = Array.isArray(teams) ? teams.find(t => t.id === teamId) : null;
       return team ? team.name : teamId;
     }).join(", ");
   };
