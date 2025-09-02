@@ -101,6 +101,32 @@ const translations = {
       "errorSaving": "Fehler beim Speichern der Reflexion. Bitte versuchen Sie es erneut.",
       "errorGeneral": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
       "backToHome": "Zurück zur Startseite"
+    },
+    // PlayerLogin translations
+    "playerLogin": {
+      "title": "Spieler Registrierung",
+      "coachPrompt": "Coach?",
+      "coachLogin": "Hier anmelden",
+      "description": "Registriere dich für die Team-App.",
+      "approvalNote": "Ein Coach wird deine Registrierung prüfen und dir Teams zuweisen.",
+      "fullName": "Vollständiger Name",
+      "namePlaceholder": "z.B. Max Mustermann",
+      "mainTeam": "Hauptteam",
+      "selectTeam": "Wähle dein Hauptteam",
+      "teamHelp": "Dein Hauptteam hilft dem Coach bei der Team-Zuweisung",
+      "jerseyNumber": "Trikotnummer (optional)",
+      "numberPlaceholder": "z.B. 7",
+      "afterRegistration": "Nach der Registrierung:",
+      "step1": "Ein Coach prüft deine Anmeldung",
+      "step2": "Du wirst den passenden Teams zugewiesen",
+      "step3": "Du erhältst Zugang zur App nach Genehmigung",
+      "submit": "Registrierung absenden",
+      "submitting": "Wird registriert...",
+      "alreadyRegistered": "Du hast dich bereits registriert und wartest auf Genehmigung vom Coach.",
+      "registrationRejected": "Deine Registrierung wurde abgelehnt. Bitte wende dich an den Coach.",
+      "registrationError": "Fehler beim Erstellen der Registrierung",
+      "registrationSuccess": "Registrierung erfolgreich! Du wirst benachrichtigt, sobald ein Coach deine Registrierung genehmigt hat.",
+      "errorPrefix": "Fehler bei der Registrierung: "
     }
   },
   fr: {
@@ -202,6 +228,32 @@ const translations = {
       "errorSaving": "Erreur lors de la sauvegarde de la réflexion. Veuillez réessayer.",
       "errorGeneral": "Une erreur s'est produite. Veuillez réessayer plus tard.",
       "backToHome": "Retour à l'accueil"
+    },
+    // PlayerLogin translations
+    "playerLogin": {
+      "title": "Inscription Joueur",
+      "coachPrompt": "Coach?",
+      "coachLogin": "Se connecter ici",
+      "description": "Inscrivez-vous pour l'application d'équipe.",
+      "approvalNote": "Un coach examinera votre inscription et vous assignera aux équipes.",
+      "fullName": "Nom complet",
+      "namePlaceholder": "p.ex. Max Mustermann",
+      "mainTeam": "Équipe principale",
+      "selectTeam": "Choisissez votre équipe principale",
+      "teamHelp": "Votre équipe principale aide le coach pour l'assignation d'équipe",
+      "jerseyNumber": "Numéro de maillot (optionnel)",
+      "numberPlaceholder": "p.ex. 7",
+      "afterRegistration": "Après l'inscription:",
+      "step1": "Un coach examine votre demande",
+      "step2": "Vous serez assigné aux équipes appropriées",
+      "step3": "Vous obtenez l'accès à l'app après approbation",
+      "submit": "Soumettre l'inscription",
+      "submitting": "Inscription en cours...",
+      "alreadyRegistered": "Vous êtes déjà inscrit et attendez l'approbation du coach.",
+      "registrationRejected": "Votre inscription a été rejetée. Veuillez contacter le coach.",
+      "registrationError": "Erreur lors de la création de l'inscription",
+      "registrationSuccess": "Inscription réussie! Vous serez notifié dès qu'un coach approuve votre inscription.",
+      "errorPrefix": "Erreur lors de l'inscription: "
     }
   },
   en: {
@@ -303,6 +355,32 @@ const translations = {
       "errorSaving": "Error saving reflection. Please try again.",
       "errorGeneral": "An error occurred. Please try again later.",
       "backToHome": "Back to Home"
+    },
+    // PlayerLogin translations
+    "playerLogin": {
+      "title": "Player Registration",
+      "coachPrompt": "Coach?",
+      "coachLogin": "Sign in here",
+      "description": "Register for the team app.",
+      "approvalNote": "A coach will review your registration and assign you to teams.",
+      "fullName": "Full Name",
+      "namePlaceholder": "e.g. Max Mustermann",
+      "mainTeam": "Main Team",
+      "selectTeam": "Choose your main team",
+      "teamHelp": "Your main team helps the coach with team assignment",
+      "jerseyNumber": "Jersey Number (optional)",
+      "numberPlaceholder": "e.g. 7",
+      "afterRegistration": "After registration:",
+      "step1": "A coach reviews your application",
+      "step2": "You will be assigned to appropriate teams",
+      "step3": "You get app access after approval",
+      "submit": "Submit Registration",
+      "submitting": "Registering...",
+      "alreadyRegistered": "You are already registered and waiting for coach approval.",
+      "registrationRejected": "Your registration was rejected. Please contact the coach.",
+      "registrationError": "Error creating registration",
+      "registrationSuccess": "Registration successful! You will be notified once a coach approves your registration.",
+      "errorPrefix": "Registration error: "
     }
   }
 };

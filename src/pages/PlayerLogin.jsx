@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { API_BASE_URL } from "../config/api";
 
 export default function PlayerLogin() {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
     playerNumber: "",
@@ -42,7 +44,7 @@ export default function PlayerLogin() {
 
       if (existingUser) {
         if (existingUser.status === "pending") {
-          setError("Du hast dich bereits registriert und wartest auf Genehmigung vom Coach.");
+          setError(t('playerLogin.alreadyRegistered'));
           setLoading(false);
           return;
         } else if (existingUser.status === "approved") {
@@ -51,7 +53,7 @@ export default function PlayerLogin() {
           navigate("/");
           return;
         } else if (existingUser.status === "rejected") {
-          setError("Deine Registrierung wurde abgelehnt. Bitte wende dich an den Coach.");
+          setError(t('playerLogin.registrationRejected'));
           setLoading(false);
           return;
         }
@@ -79,10 +81,10 @@ export default function PlayerLogin() {
       });
 
       if (!createResponse.ok) {
-        throw new Error("Fehler beim Erstellen der Registrierung");
+        throw new Error(t('playerLogin.registrationError'));
       }
 
-      setSuccess("Registrierung erfolgreich! Du wirst benachrichtigt, sobald ein Coach deine Registrierung genehmigt hat.");
+      setSuccess(t('playerLogin.registrationSuccess'));
       
       // Form zurücksetzen
       setFormData({
@@ -92,7 +94,7 @@ export default function PlayerLogin() {
       });
 
     } catch (err) {
-      setError("Fehler bei der Registrierung: " + err.message);
+      setError(t('playerLogin.errorPrefix') + err.message);
     } finally {
       setLoading(false);
     }
@@ -114,21 +116,21 @@ export default function PlayerLogin() {
           isDarkMode ? 'bg-gray-800' : 'bg-white'
         }`}>
           <div className="flex items-center justify-between mb-6">
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-[#0a2240]'}`}>Spieler Registrierung</h1>
+            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-[#0a2240]'}`}>{t('playerLogin.title')}</h1>
             <BackButton to="/" />
           </div>
 
           <div className="mb-4 text-center">
             <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Coach? <a href="/coach-login" className={`hover:underline font-medium ${
+              {t('playerLogin.coachPrompt')} <a href="/coach-login" className={`hover:underline font-medium ${
                 isDarkMode ? 'text-blue-400' : 'text-blue-600'
-              }`}>Hier anmelden</a>
+              }`}>{t('playerLogin.coachLogin')}</a>
             </p>
           </div>
           
           <p className={`mb-6 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Registriere dich für die Team-App.<br/>
-            <span className={`text-sm ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Ein Coach wird deine Registrierung prüfen und dir Teams zuweisen.</span>
+            {t('playerLogin.description')}<br/>
+            <span className={`text-sm ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{t('playerLogin.approvalNote')}</span>
           </p>
 
           {error && (
@@ -152,7 +154,7 @@ export default function PlayerLogin() {
               <label htmlFor="name" className={`block text-sm font-medium mb-1 ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Vollständiger Name *
+                {t('playerLogin.fullName')} *
               </label>
               <input
                 type="text"
@@ -164,7 +166,7 @@ export default function PlayerLogin() {
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
                 }`}
-                placeholder="z.B. Max Mustermann"
+                placeholder={t('playerLogin.namePlaceholder')}
               />
             </div>
 
@@ -172,7 +174,7 @@ export default function PlayerLogin() {
               <label htmlFor="mainTeam" className={`block text-sm font-medium mb-1 ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Hauptteam *
+                {t('playerLogin.mainTeam')} *
               </label>
               <select
                 id="mainTeam"
@@ -184,7 +186,7 @@ export default function PlayerLogin() {
                   isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                 }`}
               >
-                <option value="">Wähle dein Hauptteam</option>
+                <option value="">{t('playerLogin.selectTeam')}</option>
                 {teams.map(team => (
                   <option key={team.id} value={team.id}>
                     {team.name}
@@ -192,7 +194,7 @@ export default function PlayerLogin() {
                 ))}
               </select>
               <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Dein Hauptteam hilft dem Coach bei der Team-Zuweisung
+                {t('playerLogin.teamHelp')}
               </p>
             </div>
 
@@ -200,7 +202,7 @@ export default function PlayerLogin() {
               <label htmlFor="playerNumber" className={`block text-sm font-medium mb-1 ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Trikotnummer (optional)
+                {t('playerLogin.jerseyNumber')}
               </label>
               <input
                 type="number"
@@ -211,7 +213,7 @@ export default function PlayerLogin() {
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
                 }`}
-                placeholder="z.B. 7"
+                placeholder={t('playerLogin.numberPlaceholder')}
                 min="1"
                 max="99"
               />
@@ -229,13 +231,13 @@ export default function PlayerLogin() {
                 <div>
                   <p className={`text-sm font-medium ${
                     isDarkMode ? 'text-blue-300' : 'text-blue-800'
-                  }`}>Nach der Registrierung:</p>
+                  }`}>{t('playerLogin.afterRegistration')}</p>
                   <ul className={`text-sm mt-1 space-y-1 ${
                     isDarkMode ? 'text-blue-200' : 'text-blue-700'
                   }`}>
-                    <li>• Ein Coach prüft deine Anmeldung</li>
-                    <li>• Du wirst den passenden Teams zugewiesen</li>
-                    <li>• Du erhältst Zugang zur App nach Genehmigung</li>
+                    <li>• {t('playerLogin.step1')}</li>
+                    <li>• {t('playerLogin.step2')}</li>
+                    <li>• {t('playerLogin.step3')}</li>
                   </ul>
                 </div>
               </div>
@@ -250,7 +252,7 @@ export default function PlayerLogin() {
                   : 'bg-[#0a2240] text-white hover:bg-[#083056]'
               }`}
             >
-              {loading ? "Wird registriert..." : "Registrierung absenden"}
+              {loading ? t('playerLogin.submitting') : t('playerLogin.submit')}
             </button>
           </form>
         </div>
