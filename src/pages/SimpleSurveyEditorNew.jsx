@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
+import { useTheme } from "../context/ThemeContext";
 import { API_BASE_URL } from "../config/api";
 
 export default function SimpleSurveyEditorNew() {
   const navigate = useNavigate();
   const { surveyId } = useParams(); // Get surveyId from URL for editing
+  const { isDarkMode } = useTheme();
   
   const [surveyTitle, setSurveyTitle] = useState("");
   const [anonymityLevel, setAnonymityLevel] = useState("anonymous"); // anonymous, coaches-only, public
@@ -257,20 +259,24 @@ export default function SimpleSurveyEditorNew() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] font-sans">
+    <div className={`min-h-screen flex flex-col font-sans ${isDarkMode ? 'bg-gray-900' : 'bg-[#f8fafc]'}`}>
       <Header />
       <BackButton to="/coach/surveys" />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className={`rounded-xl shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               {surveyId ? "📝 Umfrage bearbeiten" : "🚀 Neue Umfrage (Direct Save)"}
             </h1>
           </div>
 
           {successMessage && (
-            <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+            <div className={`mb-4 border px-4 py-3 rounded ${
+              isDarkMode 
+                ? 'bg-green-900 border-green-700 text-green-300' 
+                : 'bg-green-100 border-green-400 text-green-700'
+            }`}>
               {successMessage}
             </div>
           )}
@@ -278,7 +284,7 @@ export default function SimpleSurveyEditorNew() {
           <div className="space-y-6">
             {/* Titel */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 📋 Umfragetitel (optional)
               </label>
               <input
@@ -286,13 +292,17 @@ export default function SimpleSurveyEditorNew() {
                 value={surveyTitle}
                 onChange={(e) => setSurveyTitle(e.target.value)}
                 placeholder="z.B. 'Training Feedback'"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
               />
             </div>
 
             {/* Anonymitäts-Einstellungen */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 🔒 Anonymitäts-Einstellungen
               </label>
               <div className="space-y-2">
@@ -305,7 +315,7 @@ export default function SimpleSurveyEditorNew() {
                     onChange={(e) => setAnonymityLevel(e.target.value)}
                     className="mr-2"
                   />
-                  <span className="text-sm">🕶️ <strong>Vollständig anonym</strong> - Namen werden nicht erfasst</span>
+                  <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>🕶️ <strong>Vollständig anonym</strong> - Namen werden nicht erfasst</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -316,7 +326,7 @@ export default function SimpleSurveyEditorNew() {
                     onChange={(e) => setAnonymityLevel(e.target.value)}
                     className="mr-2"
                   />
-                  <span className="text-sm">👨‍💼 <strong>Namen nur für Coaches sichtbar</strong> - Spieler sehen anonyme Ergebnisse</span>
+                  <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>👨‍💼 <strong>Namen nur für Coaches sichtbar</strong> - Spieler sehen anonyme Ergebnisse</span>
                 </label>
                 <label className="flex items-center">
                   <input
