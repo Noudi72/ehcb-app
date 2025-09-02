@@ -114,20 +114,23 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
           <span>Einstellungen</span>
         </button>
         
-        {status === 'active' && (
-          <button
-            onClick={() => onSendNotification(survey)}
-            className={`flex items-center justify-center px-2 py-2 text-xs font-medium rounded-lg transition-colors ${
-              isDarkMode 
-                ? 'bg-indigo-900 text-indigo-300 hover:bg-indigo-800' 
-                : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
-            }`}
-            title="Benachrichtigung senden"
-          >
-            <span className="mr-1">📱</span>
-            <span>Push</span>
-          </button>
-        )}
+        <button
+          onClick={() => status === 'active' ? onSendNotification(survey) : null}
+          disabled={status !== 'active'}
+          className={`flex items-center justify-center px-2 py-2 text-xs font-medium rounded-lg transition-colors ${
+            status === 'active' 
+              ? (isDarkMode 
+                  ? 'bg-indigo-900 text-indigo-300 hover:bg-indigo-800' 
+                  : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200')
+              : (isDarkMode 
+                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed')
+          }`}
+          title={status === 'active' ? "Benachrichtigung senden" : "Nur für Online-Umfragen verfügbar"}
+        >
+          <span className="mr-1">📱</span>
+          <span>Push</span>
+        </button>
         
         <button
           onClick={handleViewResults}
@@ -171,20 +174,23 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
           {status === 'active' ? 'Offline stellen' : 'Online stellen'}
         </button>
         
-        {status === 'active' && (
-          <button
-            onClick={() => onSendNotification(survey)}
-            className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              isDarkMode 
-                ? 'bg-purple-900 text-purple-300 hover:bg-purple-800' 
-                : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
-            }`}
-            title="Benachrichtigung senden"
-          >
-            <span className="mr-1">📱</span>
-            Push-Benachrichtigung
-          </button>
-        )}
+        <button
+          onClick={() => status === 'active' ? onSendNotification(survey) : null}
+          disabled={status !== 'active'}
+          className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            status === 'active' 
+              ? (isDarkMode 
+                  ? 'bg-purple-900 text-purple-300 hover:bg-purple-800' 
+                  : 'bg-purple-100 text-purple-800 hover:bg-purple-200')
+              : (isDarkMode 
+                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed')
+          }`}
+          title={status === 'active' ? "Benachrichtigung senden" : "Nur für Online-Umfragen verfügbar"}
+        >
+          <span className="mr-1">📱</span>
+          Push-Benachrichtigung
+        </button>
         
         <button
           onClick={handleViewResults}
