@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  areNotificationsSupported, 
-  getNotificationPermission, 
+  isPushSupported, 
   requestNotificationPermission
 } from '../utils/pushNotifications';
 
@@ -10,8 +9,12 @@ const PushNotificationSettings = () => {
   const [isSupported, setIsSupported] = useState(false);
 
   useEffect(() => {
-    setIsSupported(areNotificationsSupported());
-    setNotificationPermission(getNotificationPermission());
+    setIsSupported(isPushSupported());
+    
+    // Aktuelle Berechtigung prüfen
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
   }, []);
 
   const handleRequestPermission = async () => {
@@ -26,7 +29,9 @@ const PushNotificationSettings = () => {
           ❌ Push-Benachrichtigungen nicht unterstützt
         </h3>
         <p className="text-red-700 dark:text-red-300">
-          Ihr Browser unterstützt keine Push-Benachrichtigungen.
+          Ihr Browser/Gerät unterstützt keine Push-Benachrichtigungen.
+          {' '}Versuchen Sie es mit einem anderen Browser oder stellen Sie sicher, 
+          dass Sie die neueste Version verwenden.
         </p>
       </div>
     );

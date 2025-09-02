@@ -85,6 +85,23 @@
       "teams": ["u18-elit"]
     }
   ],
+  "teams": [
+    {
+      "id": "u18-elit",
+      "name": "U18 Elite",
+      "description": "Elite Nachwuchsteam U18"
+    },
+    {
+      "id": "u16",
+      "name": "U16",
+      "description": "Nachwuchsteam U16"
+    },
+    {
+      "id": "u14",
+      "name": "U14", 
+      "description": "Nachwuchsteam U14"
+    }
+  ],
   "reflexion-entries": [],
   "news": [],
   "cardio-programs": []
