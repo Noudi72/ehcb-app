@@ -35,8 +35,8 @@ export default function PlayerLogin() {
     setSuccess("");
 
     try {
-      // Erstelle einen eindeutigen Username basierend auf Namen
-      const username = `${formData.name.toLowerCase().replace(/\s+/g, "")}`;
+      // Erstelle einen eindeutigen Username basierend auf Namen (mit Trimming)
+      const username = `${formData.name.toLowerCase().trim().replace(/\s+/g, "")}`;
       
       // Prüfe ob User bereits existiert
       const response = await fetch(`${API_BASE_URL}/users`);
@@ -63,8 +63,8 @@ export default function PlayerLogin() {
       // Erstelle neue Registrierung
       const newUser = {
         username: username,
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(), // Trim the name when saving
+        email: formData.email.trim(),
         playerNumber: formData.playerNumber,
         mainTeam: formData.mainTeam, // Hauptteam vom Spieler gewählt
         role: "player",

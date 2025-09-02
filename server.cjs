@@ -455,16 +455,6 @@ server.post('/notify-coaches', (req, res) => {
     res.status(500).json({ error: 'Failed to send coach notifications' });
   }
 });
-      console.log(`Notification sent to ${userId}: ${title} - ${message}`);
-      res.status(200).json({ message: 'Notification sent successfully' });
-    } else {
-      res.status(404).json({ error: 'User subscription not found' });
-    }
-  } catch (error) {
-    console.error('Error sending notification:', error);
-    res.status(500).json({ error: 'Failed to send notification' });
-  }
-});
 
 // Broadcast-Notification an alle
 server.post('/api/broadcast-notification', (req, res) => {

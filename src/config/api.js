@@ -16,7 +16,7 @@ const RAILWAY_FALLBACK = 'https://ehcb-app-production.up.railway.app';
 
 // IMMER Railway API für gehostete Seiten verwenden
 const PRODUCTION_API_URL = RAILWAY_FALLBACK; // Immer Railway für Production
-const DEVELOPMENT_API_URL = LS_OVERRIDE || ENV_API || 'http://localhost:3002';
+const DEVELOPMENT_API_URL = LS_OVERRIDE || ENV_API || 'http://localhost:3001';
 
 export const API_BASE_URL = isDevelopment ? DEVELOPMENT_API_URL : PRODUCTION_API_URL;
 

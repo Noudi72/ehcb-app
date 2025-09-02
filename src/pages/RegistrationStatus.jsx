@@ -37,9 +37,9 @@ export default function RegistrationStatus() {
       const response = await fetch(`${API_BASE_URL}/users`);
       const users = await response.json();
       
-      // Suche nach Benutzer mit Name und mainTeam
+      // Suche nach Benutzer mit Name und mainTeam (mit automatischem Trimming)
       const user = users.find(u => 
-        u.name.toLowerCase() === searchData.name.toLowerCase() && 
+        u.name.toLowerCase().trim() === searchData.name.toLowerCase().trim() && 
         u.mainTeam === searchData.mainTeam &&
         u.role === "player"
       );
