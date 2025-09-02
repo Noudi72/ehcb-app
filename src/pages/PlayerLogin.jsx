@@ -11,6 +11,7 @@ export default function PlayerLogin() {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
+    password: "",
     playerNumber: "",
     mainTeam: ""
   });
@@ -59,16 +60,17 @@ export default function PlayerLogin() {
         }
       }
 
-      // Erstelle neue Registrierung
+      // Erstelle neue Registrierung  
       const newUser = {
         username: username,
-        name: formData.name.trim(), // Trim the name when saving
+        name: formData.name.trim(),
+        password: formData.password, // Spieler wählt eigenes Passwort
         playerNumber: formData.playerNumber,
-        mainTeam: formData.mainTeam, // Hauptteam vom Spieler gewählt
+        mainTeam: formData.mainTeam,
         role: "player",
-        status: "pending", // Warten auf Coach-Genehmigung
-        teams: [], // Wird vom Coach zugewiesen
-        active: false, // Wird erst nach Genehmigung aktiviert
+        status: "active", // Sofort aktiv - keine Wartezeit
+        teams: [formData.mainTeam], // Automatisch zum gewählten Team zugewiesen
+        active: true, // Sofort verfügbar
         createdAt: new Date().toISOString()
       };
 
@@ -84,30 +86,25 @@ export default function PlayerLogin() {
         throw new Error(t('playerLogin.registrationError'));
       }
 
-      // Send push notification to coaches
-      try {
-        await fetch(`${API_BASE_URL}/notify-coaches`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            type: "new-registration",
-            playerName: formData.name,
-            playerTeam: formData.mainTeam,
-            message: `Neue Spieler-Registrierung: ${formData.name} für ${teams.find(t => t.id === formData.mainTeam)?.name || formData.mainTeam}`
-          })
-        });
-      } catch (notificationError) {
-        console.warn("Failed to send coach notification:", notificationError);
-        // Don't fail the registration if notification fails
-      }
+      // Sofortige Anmeldung - kein Warten nötig
+      setSuccess(`🎉 Willkommen ${formData.name}! Du bist jetzt registriert und kannst die App nutzen.`);
+      setError("");
 
-      setSuccess(t('playerLogin.registrationSuccess'));
+      // Automatisches Login nach 2 Sekunden
+      setTimeout(() => {
+        login({
+          username: username,
+          name: formData.name,
+          role: "player",
+          teams: [formData.mainTeam]
+        });
+        navigate('/');
+      }, 2000);
       
       // Form zurücksetzen
       setFormData({
         name: "",
+        password: "",
         playerNumber: "",
         mainTeam: ""
       });
@@ -186,6 +183,26 @@ export default function PlayerLogin() {
                   isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
                 }`}
                 placeholder={t('playerLogin.namePlaceholder')}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className={`block text-sm font-medium mb-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Passwort wählen *
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
+                }`}
+                placeholder="Dein eigenes Passwort eingeben"
               />
             </div>
 
