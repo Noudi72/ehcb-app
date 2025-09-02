@@ -9,7 +9,7 @@ import BackButton from "../components/BackButton";
 import { useNavigate } from "react-router-dom";
 
 // Survey Card Component
-function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSendNotification }) {
+function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSendNotification, onQuickSettings }) {
   const [showActions, setShowActions] = useState(false);
   const navigate = useNavigate();
 
@@ -62,6 +62,12 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
             <span>📊 {survey.questions?.length || 0} Fragen</span>
             <span>👥 {survey.responses?.length || 0} Antworten</span>
             <span>📅 {new Date(survey.createdAt || Date.now()).toLocaleDateString('de-DE')}</span>
+            <span>
+              {survey.anonymityLevel === 'anonymous' && '🕶️ Anonym'}
+              {survey.anonymityLevel === 'coaches-only' && '👨‍💼 Coaches'}
+              {survey.anonymityLevel === 'public' && '👥 Öffentlich'}
+              {(!survey.anonymityLevel && survey.anonymous !== false) && '🕶️ Anonym'}
+            </span>
           </div>
         </div>
       </div>
@@ -194,6 +200,19 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
         </button>
         
         <button
+          onClick={() => onQuickSettings(survey)}
+          className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            isDarkMode 
+              ? 'bg-purple-900 text-purple-300 hover:bg-purple-800' 
+              : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+          }`}
+          title="Schnell-Einstellungen (Anonymität etc.)"
+        >
+          <span className="mr-1">⚙️</span>
+          Einstellungen
+        </button>
+        
+        <button
           onClick={() => onDelete(survey)}
           className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
             isDarkMode 
@@ -218,6 +237,124 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, isDarkMode, onSe
           </div>
         </div>
       )}
+    </div>
+  );
+}
+// Quick Survey Settings Modal Component  
+function QuickSettingsModal({ survey, isOpen, onClose, onSave, isDarkMode }) {
+  const [anonymityLevel, setAnonymityLevel] = useState('anonymous');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (survey && isOpen) {
+      setAnonymityLevel(survey.anonymityLevel || 'anonymous');
+    }
+  }, [survey, isOpen]);
+
+  const handleSave = async () => {
+    if (!survey) return;
+    
+    setSaving(true);
+    try {
+      const updatedSurvey = {
+        ...survey,
+        anonymityLevel: anonymityLevel,
+        anonymous: anonymityLevel === 'anonymous'
+      };
+      
+      await onSave(updatedSurvey);
+      onClose();
+    } catch (error) {
+      console.error('Error updating survey settings:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className={`max-w-md w-full rounded-lg shadow-xl ${
+        isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+      }`}>
+        <div className="p-6">
+          <h3 className="text-lg font-medium mb-4">
+            ⚙️ Schnell-Einstellungen: {survey?.title || 'Umfrage'}
+          </h3>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-3">
+              🔒 Anonymitäts-Einstellungen
+            </label>
+            <div className="space-y-3">
+              <label className="flex items-start cursor-pointer">
+                <input
+                  type="radio"
+                  name="quickAnonymity"
+                  value="anonymous"
+                  checked={anonymityLevel === "anonymous"}
+                  onChange={(e) => setAnonymityLevel(e.target.value)}
+                  className="mr-3 mt-1"
+                />
+                <div>
+                  <div className="font-medium">🕶️ Vollständig anonym</div>
+                  <div className="text-sm text-gray-500">Namen werden nicht erfasst</div>
+                </div>
+              </label>
+              <label className="flex items-start cursor-pointer">
+                <input
+                  type="radio"
+                  name="quickAnonymity"
+                  value="coaches-only"
+                  checked={anonymityLevel === "coaches-only"}
+                  onChange={(e) => setAnonymityLevel(e.target.value)}
+                  className="mr-3 mt-1"
+                />
+                <div>
+                  <div className="font-medium">👨‍💼 Namen nur für Coaches</div>
+                  <div className="text-sm text-gray-500">Spieler sehen anonyme Ergebnisse</div>
+                </div>
+              </label>
+              <label className="flex items-start cursor-pointer">
+                <input
+                  type="radio"
+                  name="quickAnonymity"
+                  value="public"
+                  checked={anonymityLevel === "public"}
+                  onChange={(e) => setAnonymityLevel(e.target.value)}
+                  className="mr-3 mt-1"
+                />
+                <div>
+                  <div className="font-medium">👥 Namen für alle sichtbar</div>
+                  <div className="text-sm text-gray-500">Vollständig transparent</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                isDarkMode 
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              disabled={saving}
+            >
+              Abbrechen
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              disabled={saving}
+            >
+              {saving ? 'Speichert...' : '💾 Speichern'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -707,6 +844,7 @@ export default function QuestionManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showQuickSettingsModal, setShowQuickSettingsModal] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
 
   // Force refresh function with nuclear option
@@ -828,6 +966,21 @@ export default function QuestionManager() {
   const handleSendNotification = (survey) => {
     setSelectedSurvey(survey);
     setShowNotificationModal(true);
+  };
+
+  const handleQuickSettings = (survey) => {
+    setSelectedSurvey(survey);
+    setShowQuickSettingsModal(true);
+  };
+
+  const handleSaveQuickSettings = async (updatedSurvey) => {
+    try {
+      await updateSurvey(updatedSurvey.id, updatedSurvey);
+      console.log('✅ Survey settings updated:', updatedSurvey);
+    } catch (error) {
+      console.error('❌ Error updating survey settings:', error);
+      setError("Fehler beim Aktualisieren der Einstellungen");
+    }
   };
 
   const handleSendPushNotification = async (survey, message) => {
@@ -1052,6 +1205,7 @@ export default function QuestionManager() {
                 onDelete={handleDeleteSurvey}
                 onToggleStatus={handleToggleSurveyStatus}
                 onSendNotification={handleSendNotification}
+                onQuickSettings={handleQuickSettings}
                 isDarkMode={isDarkMode}
               />
             ))}
@@ -1071,6 +1225,15 @@ export default function QuestionManager() {
         isOpen={showNotificationModal}
         onClose={() => setShowNotificationModal(false)}
         onSend={handleSendPushNotification}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* Quick Settings Modal */}
+      <QuickSettingsModal
+        survey={selectedSurvey}
+        isOpen={showQuickSettingsModal}
+        onClose={() => setShowQuickSettingsModal(false)}
+        onSave={handleSaveQuickSettings}
         isDarkMode={isDarkMode}
       />
     </div>

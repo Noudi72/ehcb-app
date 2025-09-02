@@ -9,6 +9,7 @@ export default function SimpleSurveyEditorNew() {
   const { surveyId } = useParams(); // Get surveyId from URL for editing
   
   const [surveyTitle, setSurveyTitle] = useState("");
+  const [anonymityLevel, setAnonymityLevel] = useState("anonymous"); // anonymous, coaches-only, public
   const [questions, setQuestions] = useState([
     {
       id: `q_${Date.now()}`,
@@ -41,6 +42,7 @@ export default function SimpleSurveyEditorNew() {
       console.log('✅ Loaded survey data:', surveyData);
       
       setSurveyTitle(surveyData.title || "");
+      setAnonymityLevel(surveyData.anonymityLevel || "anonymous");
       
       // Load questions by their IDs from Questions API
       if (surveyData.questions && surveyData.questions.length > 0) {
@@ -198,7 +200,8 @@ export default function SimpleSurveyEditorNew() {
         description: "",
         questions: questionIds, // Use IDs instead of full objects
         resultsVisibleToPlayers: false,
-        anonymous: true,
+        anonymous: anonymityLevel === "anonymous",
+        anonymityLevel: anonymityLevel, // Store the specific level
         targetTeams: ["u18-elit"],
         active: true,
         createdAt: new Date().toISOString()
@@ -285,6 +288,48 @@ export default function SimpleSurveyEditorNew() {
                 placeholder="z.B. 'Training Feedback'"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
+
+            {/* Anonymitäts-Einstellungen */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🔒 Anonymitäts-Einstellungen
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="anonymity"
+                    value="anonymous"
+                    checked={anonymityLevel === "anonymous"}
+                    onChange={(e) => setAnonymityLevel(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">🕶️ <strong>Vollständig anonym</strong> - Namen werden nicht erfasst</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="anonymity"
+                    value="coaches-only"
+                    checked={anonymityLevel === "coaches-only"}
+                    onChange={(e) => setAnonymityLevel(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">👨‍💼 <strong>Namen nur für Coaches sichtbar</strong> - Spieler sehen anonyme Ergebnisse</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="anonymity"
+                    value="public"
+                    checked={anonymityLevel === "public"}
+                    onChange={(e) => setAnonymityLevel(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">👥 <strong>Namen für alle sichtbar</strong> - Vollständig transparent</span>
+                </label>
+              </div>
             </div>
 
             {/* Fragen */}
