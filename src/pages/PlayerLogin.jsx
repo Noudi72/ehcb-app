@@ -68,7 +68,7 @@ export default function PlayerLogin() {
         playerNumber: formData.playerNumber,
         mainTeam: formData.mainTeam,
         role: "player",
-        status: "active", // Sofort aktiv - keine Wartezeit
+        status: "approved", // Approved status für UserManager Aktionen
         teams: [formData.mainTeam], // Automatisch zum gewählten Team zugewiesen
         active: true, // Sofort verfügbar
         createdAt: new Date().toISOString()
