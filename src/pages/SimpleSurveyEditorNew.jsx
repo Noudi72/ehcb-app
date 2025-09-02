@@ -12,6 +12,7 @@ export default function SimpleSurveyEditorNew() {
   
   const [surveyTitle, setSurveyTitle] = useState("");
   const [anonymityLevel, setAnonymityLevel] = useState("anonymous"); // anonymous, coaches-only, coaches-private, public
+  const [targetTeams, setTargetTeams] = useState(["u18-elit"]); // Default to U18-Elit
   const [questions, setQuestions] = useState([
     {
       id: `q_${Date.now()}`,
@@ -51,6 +52,7 @@ export default function SimpleSurveyEditorNew() {
       
       setSurveyTitle(surveyData.title || "");
       setAnonymityLevel(surveyData.anonymityLevel || "anonymous");
+      setTargetTeams(surveyData.targetTeams || ["u18-elit"]);
       
       // Load questions by their IDs from Questions API
       if (surveyData.questions && surveyData.questions.length > 0) {
@@ -215,7 +217,7 @@ export default function SimpleSurveyEditorNew() {
         resultsVisibleToPlayers: false,
         anonymous: anonymityLevel === "anonymous",
         anonymityLevel: anonymityLevel, // Store the specific level
-        targetTeams: ["u18-elit"],
+        targetTeams: targetTeams, // Use selected teams
         active: true,
         createdAt: new Date().toISOString()
       };
@@ -361,6 +363,36 @@ export default function SimpleSurveyEditorNew() {
                   />
                   <span className={`text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>👥 <strong>Namen für alle sichtbar</strong> - Vollständig transparent</span>
                 </label>
+              </div>
+            </div>
+
+            {/* Team-Auswahl */}
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
+                🏒 Ziel-Teams auswählen
+              </label>
+              <div className="space-y-2">
+                {["u16-elit", "u18-elit", "u21-elit"].map(teamId => (
+                  <label key={teamId} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={targetTeams.includes(teamId)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setTargetTeams([...targetTeams, teamId]);
+                        } else {
+                          setTargetTeams(targetTeams.filter(t => t !== teamId));
+                        }
+                      }}
+                      className="mr-2"
+                    />
+                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
+                      {teamId === "u16-elit" ? "U16-Elit" : 
+                       teamId === "u18-elit" ? "U18-Elit" : 
+                       "U21-Elit"}
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
 

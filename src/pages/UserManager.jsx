@@ -234,6 +234,11 @@ export default function UserManager() {
                     <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
                       isDarkMode ? 'text-gray-300' : 'text-gray-500'
                     }`}>
+                      Passwort
+                    </th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       Teams
                     </th>
                     <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
@@ -272,6 +277,11 @@ export default function UserManager() {
                           isDarkMode ? 'text-white' : 'text-gray-900'
                         }`}>
                           {user.name}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-mono ${
+                          isDarkMode ? 'text-blue-300' : 'text-blue-600'
+                        }`}>
+                          {user.password || "-"}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                           isDarkMode ? 'text-gray-300' : 'text-gray-500'
