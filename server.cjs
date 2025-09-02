@@ -393,6 +393,68 @@ server.post('/api/send-notification', (req, res) => {
     if (userId && subscriptions.has(userId)) {
       // Hier würdest du normalerweise web-push verwenden
       // Für jetzt nur erfolgreiche Response
+      console.log('Sending notification to user:', userId, { title, message, url });
+      res.status(200).json({ message: 'Notification sent successfully' });
+    } else {
+      res.status(404).json({ error: 'User subscription not found' });
+    }
+  } catch (error) {
+    console.error('Error sending notification:', error);
+    res.status(500).json({ error: 'Failed to send notification' });
+  }
+});
+
+// Coach-Benachrichtigung für neue Spieler-Registrierungen
+server.post('/notify-coaches', (req, res) => {
+  try {
+    const { type, playerName, playerTeam, message } = req.body;
+    
+    console.log('📱 Sending coach notification:', { type, playerName, playerTeam, message });
+    
+    // Finde alle Coach-Subscriptions
+    const coachNotifications = [];
+    
+    for (const [userId, subscription] of subscriptions.entries()) {
+      // Hier könntest du prüfen, ob der User ein Coach ist
+      // Für jetzt senden wir an alle Subscriptions (Coaches sollten sich mit spezifischer userId registrieren)
+      if (userId.includes('coach') || userId === 'coach1') {
+        coachNotifications.push({
+          userId,
+          subscription,
+          notification: {
+            title: '🏒 Neue Spieler-Registrierung',
+            body: message,
+            icon: '/u18-team_app-icon.png',
+            badge: '/u18-team_app-icon.png',
+            data: {
+              type: 'new-registration',
+              playerName,
+              playerTeam,
+              url: '/coach-dashboard'
+            }
+          }
+        });
+      }
+    }
+    
+    console.log(`Sending notifications to ${coachNotifications.length} coaches`);
+    
+    // Hier würdest du normalerweise web-push verwenden um echte Push-Notifications zu senden
+    // Für jetzt loggen wir nur und geben Erfolg zurück
+    coachNotifications.forEach(({ userId, notification }) => {
+      console.log(`📨 Notification for coach ${userId}:`, notification);
+    });
+    
+    res.status(200).json({ 
+      message: 'Coach notifications sent successfully',
+      notificationsSent: coachNotifications.length
+    });
+    
+  } catch (error) {
+    console.error('Error sending coach notifications:', error);
+    res.status(500).json({ error: 'Failed to send coach notifications' });
+  }
+});
       console.log(`Notification sent to ${userId}: ${title} - ${message}`);
       res.status(200).json({ message: 'Notification sent successfully' });
     } else {

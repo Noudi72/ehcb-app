@@ -30,6 +30,14 @@ export default function Home() {
               {t('header.coachArea')}
             </Link>
           </div>
+          <div className="mt-3">
+            <Link
+              to="/registration-status"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {t('home.checkRegistrationStatus')}
+            </Link>
+          </div>
           <p className="text-xs text-gray-600 dark:text-gray-400">
             {t('home.firstTimeAccess')}
           </p>

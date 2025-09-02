@@ -32,6 +32,7 @@ import QuestionManager from "./pages/QuestionManager";
 import UmfrageHub from "./pages/UmfrageHub";
 import CoachResultsView from "./pages/CoachResultsView";
 import PlayerLogin from "./pages/PlayerLogin";
+import RegistrationStatus from "./pages/RegistrationStatus";
 import UserManager from "./pages/UserManager";
 import ProtectedRoute from "./components/ProtectedRoute";
 import InstallPrompt from "./components/InstallPrompt";
@@ -98,6 +99,7 @@ export default function App() {
                   <Route path="/news" element={<News />} />
                   <Route path="/coach-login" element={<CoachLogin />} />
                   <Route path="/player-login" element={<PlayerLogin />} />
+                  <Route path="/registration-status" element={<RegistrationStatus />} />
                   <Route path="/coach/dashboard" element={
                     <ProtectedRoute coachOnly={true}>
                       <CoachDashboard />

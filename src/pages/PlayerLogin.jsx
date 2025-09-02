@@ -86,6 +86,25 @@ export default function PlayerLogin() {
         throw new Error(t('playerLogin.registrationError'));
       }
 
+      // Send push notification to coaches
+      try {
+        await fetch(`${API_BASE_URL}/notify-coaches`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            type: "new-registration",
+            playerName: formData.name,
+            playerTeam: formData.mainTeam,
+            message: `Neue Spieler-Registrierung: ${formData.name} für ${teams.find(t => t.id === formData.mainTeam)?.name || formData.mainTeam}`
+          })
+        });
+      } catch (notificationError) {
+        console.warn("Failed to send coach notification:", notificationError);
+        // Don't fail the registration if notification fails
+      }
+
       setSuccess(t('playerLogin.registrationSuccess'));
       
       // Form zurücksetzen

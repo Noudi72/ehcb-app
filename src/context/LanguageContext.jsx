@@ -35,7 +35,8 @@ const translations = {
     "home": {
       "coachDashboard": "Trainer Dashboard",
       "loggedInAs": "Angemeldet als:",
-      "firstTimeAccess": "Erstmaliger Zugang? Als Spieler anmelden und Team auswählen."
+      "firstTimeAccess": "Erstmaliger Zugang? Als Spieler anmelden und Team auswählen.",
+      "checkRegistrationStatus": "Registrierungsstatus prüfen"
     },
     // Menu items
     "menu": {
@@ -129,6 +130,30 @@ const translations = {
       "registrationError": "Fehler beim Erstellen der Registrierung",
       "registrationSuccess": "Registrierung erfolgreich! Du wirst benachrichtigt, sobald ein Coach deine Registrierung genehmigt hat.",
       "errorPrefix": "Fehler bei der Registrierung: "
+    },
+    // RegistrationStatus translations
+    "registrationStatus": {
+      "title": "Registrierungsstatus",
+      "description": "Gib deinen Namen und dein Team ein, um den Status deiner Registrierung zu prüfen.",
+      "fullName": "Vollständiger Name",
+      "namePlaceholder": "z.B. Max Mustermann",
+      "mainTeam": "Hauptteam",
+      "selectTeam": "Wähle dein Hauptteam",
+      "checkStatus": "Status prüfen",
+      "checking": "Wird geprüft...",
+      "notFound": "Keine Registrierung mit diesem Namen und Team gefunden.",
+      "error": "Fehler beim Prüfen des Status. Bitte versuche es erneut.",
+      "loginError": "Fehler beim Anmelden. Bitte versuche es erneut.",
+      "pending": "Warte auf Genehmigung",
+      "approved": "Registrierung genehmigt!",
+      "rejected": "Registrierung abgelehnt",
+      "unknown": "Unbekannter Status",
+      "pendingMessage": "Ein Coach wird deine Registrierung bald prüfen. Du kannst jederzeit zurückkommen um den Status zu prüfen.",
+      "approvedMessage": "Deine Registrierung wurde genehmigt! Du kannst dich jetzt in die App einloggen.",
+      "rejectedMessage": "Deine Registrierung wurde abgelehnt. Bitte wende dich an einen Coach für weitere Informationen.",
+      "loginNow": "Jetzt einloggen",
+      "newRegistration": "Noch nicht registriert?",
+      "registerHere": "Hier registrieren"
     }
   },
   fr: {
@@ -164,7 +189,8 @@ const translations = {
     "home": {
       "coachDashboard": "Tableau de bord Coach",
       "loggedInAs": "Connecté en tant que:",
-      "firstTimeAccess": "Première connexion? Se connecter en tant que joueur et sélectionner l'équipe."
+      "firstTimeAccess": "Première connexion? Se connecter en tant que joueur et sélectionner l'équipe.",
+      "checkRegistrationStatus": "Vérifier le statut d'inscription"
     },
     // Menu items
     "menu": {
@@ -258,6 +284,30 @@ const translations = {
       "registrationError": "Erreur lors de la création de l'inscription",
       "registrationSuccess": "Inscription réussie! Vous serez notifié dès qu'un coach approuve votre inscription.",
       "errorPrefix": "Erreur lors de l'inscription: "
+    },
+    // RegistrationStatus translations
+    "registrationStatus": {
+      "title": "Statut d'inscription",
+      "description": "Entrez votre nom et votre équipe pour vérifier le statut de votre inscription.",
+      "fullName": "Nom complet",
+      "namePlaceholder": "p.ex. Max Mustermann",
+      "mainTeam": "Équipe principale",
+      "selectTeam": "Choisissez votre équipe principale",
+      "checkStatus": "Vérifier le statut",
+      "checking": "Vérification...",
+      "notFound": "Aucune inscription trouvée avec ce nom et cette équipe.",
+      "error": "Erreur lors de la vérification du statut. Veuillez réessayer.",
+      "loginError": "Erreur lors de la connexion. Veuillez réessayer.",
+      "pending": "En attente d'approbation",
+      "approved": "Inscription approuvée!",
+      "rejected": "Inscription rejetée",
+      "unknown": "Statut inconnu",
+      "pendingMessage": "Un coach examinera bientôt votre inscription. Vous pouvez revenir à tout moment pour vérifier le statut.",
+      "approvedMessage": "Votre inscription a été approuvée! Vous pouvez maintenant vous connecter à l'application.",
+      "rejectedMessage": "Votre inscription a été rejetée. Veuillez contacter un coach pour plus d'informations.",
+      "loginNow": "Se connecter maintenant",
+      "newRegistration": "Pas encore inscrit?",
+      "registerHere": "S'inscrire ici"
     }
   },
   en: {
@@ -293,7 +343,8 @@ const translations = {
     "home": {
       "coachDashboard": "Coach Dashboard",
       "loggedInAs": "Logged in as:",
-      "firstTimeAccess": "First time access? Login as player and select team."
+      "firstTimeAccess": "First time access? Login as player and select team.",
+      "checkRegistrationStatus": "Check registration status"
     },
     // Menu items
     "menu": {
@@ -413,6 +464,30 @@ const translations = {
       "registrationError": "Error creating registration",
       "registrationSuccess": "Registration successful! You will be notified once a coach approves your registration.",
       "errorPrefix": "Registration error: "
+    },
+    // RegistrationStatus translations
+    "registrationStatus": {
+      "title": "Registration Status",
+      "description": "Enter your name and team to check the status of your registration.",
+      "fullName": "Full Name",
+      "namePlaceholder": "e.g. Max Mustermann",
+      "mainTeam": "Main Team",
+      "selectTeam": "Choose your main team",
+      "checkStatus": "Check Status",
+      "checking": "Checking...",
+      "notFound": "No registration found with this name and team.",
+      "error": "Error checking status. Please try again.",
+      "loginError": "Error logging in. Please try again.",
+      "pending": "Waiting for approval",
+      "approved": "Registration approved!",
+      "rejected": "Registration rejected",
+      "unknown": "Unknown status",
+      "pendingMessage": "A coach will review your registration soon. You can come back anytime to check the status.",
+      "approvedMessage": "Your registration has been approved! You can now log into the app.",
+      "rejectedMessage": "Your registration was rejected. Please contact a coach for more information.",
+      "loginNow": "Login Now",
+      "newRegistration": "Not registered yet?",
+      "registerHere": "Register here"
     }
   }
 };
