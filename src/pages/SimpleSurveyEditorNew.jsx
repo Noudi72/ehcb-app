@@ -37,6 +37,12 @@ export default function SimpleSurveyEditorNew() {
       const response = await fetch(`${API_BASE_URL}/surveys/${id}`);
       
       if (!response.ok) {
+        if (response.status === 404) {
+          console.warn('⚠️ Survey not found (404), redirecting to create new survey');
+          // Survey doesn't exist anymore, redirect to create mode
+          navigate('/survey-editor');
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -97,6 +103,11 @@ export default function SimpleSurveyEditorNew() {
       
     } catch (error) {
       console.error('❌ Error loading survey:', error);
+      if (error.message.includes('404') || error.message.includes('not found')) {
+        console.warn('⚠️ Survey not found, redirecting to create new survey');
+        navigate('/survey-editor');
+        return;
+      }
       alert(`Fehler beim Laden der Umfrage: ${error.message}`);
     }
   };
