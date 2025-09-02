@@ -345,7 +345,7 @@ export default function SimpleSurveyEditorNew() {
             {/* Fragen */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Fragen</h3>
+                <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Fragen</h3>
                 <button
                   onClick={addQuestion}
                   className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
@@ -355,13 +355,15 @@ export default function SimpleSurveyEditorNew() {
               </div>
 
               {questions.map((question, questionIndex) => (
-                <div key={question.id} className="border border-gray-200 rounded-lg p-4 mb-4">
+                <div key={question.id} className={`border rounded-lg p-4 mb-4 ${
+                  isDarkMode ? 'border-gray-600 bg-gray-750' : 'border-gray-200 bg-white'
+                }`}>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">Frage {questionIndex + 1}</h4>
+                    <h4 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Frage {questionIndex + 1}</h4>
                     {questions.length > 1 && (
                       <button
                         onClick={() => removeQuestion(question.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className={`text-sm ${isDarkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-800'}`}
                       >
                         ❌
                       </button>
@@ -370,7 +372,7 @@ export default function SimpleSurveyEditorNew() {
 
                   {/* Fragetext */}
                   <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Fragetext *
                     </label>
                     <input
@@ -378,19 +380,27 @@ export default function SimpleSurveyEditorNew() {
                       value={question.text}
                       onChange={(e) => updateQuestion(question.id, { text: e.target.value })}
                       placeholder="z.B. 'Wie zufrieden warst du mit dem heutigen Training?'"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
                     />
                   </div>
 
                   {/* Fragetyp */}
                   <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Antworttyp
                     </label>
                     <select
                       value={question.type}
                       onChange={(e) => updateQuestion(question.id, { type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     >
                       <option value="multiple-choice">Multiple Choice</option>
                       <option value="text">Textantwort</option>
@@ -402,7 +412,7 @@ export default function SimpleSurveyEditorNew() {
                   {/* Optionen für Multiple Choice */}
                   {question.type === 'multiple-choice' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         Antwortoptionen
                       </label>
                       {question.options.map((option, optionIndex) => (
@@ -416,12 +426,16 @@ export default function SimpleSurveyEditorNew() {
                               updateQuestion(question.id, { options: newOptions });
                             }}
                             placeholder={`Option ${optionIndex + 1}`}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              isDarkMode 
+                                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                            }`}
                           />
                           {question.options.length > 2 && (
                             <button
                               onClick={() => removeOption(question.id, optionIndex)}
-                              className="text-red-600 hover:text-red-800 px-2"
+                              className={`px-2 ${isDarkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-800'}`}
                             >
                               🗑️
                             </button>
@@ -430,7 +444,7 @@ export default function SimpleSurveyEditorNew() {
                       ))}
                       <button
                         onClick={() => addOption(question.id)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        className={`text-sm ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
                       >
                         + Option hinzufügen
                       </button>
