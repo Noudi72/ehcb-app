@@ -339,6 +339,20 @@ function QuickSettingsModal({ survey, isOpen, onClose, onSave, isDarkMode }) {
                 <input
                   type="radio"
                   name="quickAnonymity"
+                  value="coaches-private"
+                  checked={anonymityLevel === "coaches-private"}
+                  onChange={(e) => setAnonymityLevel(e.target.value)}
+                  className="mr-3 mt-1"
+                />
+                <div>
+                  <div className="font-medium">🔐 Nur für Coaches sichtbar (mit Namen)</div>
+                  <div className="text-sm text-gray-500">Spieler können keine Ergebnisse sehen</div>
+                </div>
+              </label>
+              <label className="flex items-start cursor-pointer">
+                <input
+                  type="radio"
+                  name="quickAnonymity"
                   value="public"
                   checked={anonymityLevel === "public"}
                   onChange={(e) => setAnonymityLevel(e.target.value)}
