@@ -11,7 +11,6 @@ export default function PlayerLogin() {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     playerNumber: "",
     mainTeam: ""
   });
@@ -64,7 +63,6 @@ export default function PlayerLogin() {
       const newUser = {
         username: username,
         name: formData.name.trim(), // Trim the name when saving
-        email: formData.email.trim(),
         playerNumber: formData.playerNumber,
         mainTeam: formData.mainTeam, // Hauptteam vom Spieler gewählt
         role: "player",
@@ -110,7 +108,6 @@ export default function PlayerLogin() {
       // Form zurücksetzen
       setFormData({
         name: "",
-        email: "",
         playerNumber: "",
         mainTeam: ""
       });
@@ -189,26 +186,6 @@ export default function PlayerLogin() {
                   isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
                 }`}
                 placeholder={t('playerLogin.namePlaceholder')}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className={`block text-sm font-medium mb-1 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {t('playerLogin.email')} *
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
-                }`}
-                placeholder={t('playerLogin.emailPlaceholder')}
               />
             </div>
 
