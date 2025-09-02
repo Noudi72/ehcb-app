@@ -25,6 +25,10 @@ export default function CoachDashboard() {
     fetchResponses();
     fetchQuestions();
     fetchPendingRegistrations();
+    
+    // Auto-refresh pending registrations every 30 seconds
+    const interval = setInterval(fetchPendingRegistrations, 30000);
+    return () => clearInterval(interval);
   }, [fetchSurveys, fetchResponses, fetchQuestions]);
 
   const fetchPendingRegistrations = async () => {
@@ -335,7 +339,7 @@ export default function CoachDashboard() {
 
           {/* Pending Registrations Sektion */}
           <div id="pending-registrations" className="mt-8">
-            <PendingRegistrations />
+            <PendingRegistrations onUpdate={fetchPendingRegistrations} />
           </div>
 
           {/* Push-Benachrichtigungen Einstellungen */}

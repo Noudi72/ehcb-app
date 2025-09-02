@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { API_BASE_URL } from "../config/api";
 
-export default function PendingRegistrations() {
+export default function PendingRegistrations({ onUpdate }) {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +67,9 @@ export default function PendingRegistrations() {
       // Aktualisiere die lokale Liste
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
       
+      // Informiere das Dashboard über die Änderung
+      if (onUpdate) onUpdate();
+      
       // Hier könnte eine Benachrichtigung an den Spieler gesendet werden
       alert("Spieler wurde erfolgreich genehmigt und den Teams zugewiesen!");
 
@@ -99,6 +102,9 @@ export default function PendingRegistrations() {
 
       // Aktualisiere die lokale Liste
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
+      
+      // Informiere das Dashboard über die Änderung
+      if (onUpdate) onUpdate();
       
       alert("Registrierung wurde abgelehnt.");
 
