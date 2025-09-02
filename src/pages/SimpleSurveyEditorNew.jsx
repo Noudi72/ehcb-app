@@ -11,7 +11,7 @@ export default function SimpleSurveyEditorNew() {
   const { isDarkMode } = useTheme();
   
   const [surveyTitle, setSurveyTitle] = useState("");
-  const [anonymityLevel, setAnonymityLevel] = useState("anonymous"); // anonymous, coaches-only, public
+  const [anonymityLevel, setAnonymityLevel] = useState("anonymous"); // anonymous, coaches-only, coaches-private, public
   const [questions, setQuestions] = useState([
     {
       id: `q_${Date.now()}`,
@@ -338,6 +338,17 @@ export default function SimpleSurveyEditorNew() {
                     className="mr-2"
                   />
                   <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>👨‍💼 <strong>Namen nur für Coaches sichtbar</strong> - Spieler sehen anonyme Ergebnisse</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="anonymity"
+                    value="coaches-private"
+                    checked={anonymityLevel === "coaches-private"}
+                    onChange={(e) => setAnonymityLevel(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>🔐 <strong>Nur für Coaches sichtbar (mit Namen)</strong> - Spieler können keine Ergebnisse sehen</span>
                 </label>
                 <label className="flex items-center">
                   <input
