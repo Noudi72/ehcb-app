@@ -23,6 +23,8 @@ const UmfrageNeu = () => {
         console.log("📥 Alle Umfragen:", data);
         console.log("📥 Type:", typeof data);
         console.log("📥 Is Array:", Array.isArray(data));
+        console.log("📥 Object Keys:", Object.keys(data));
+        console.log("📥 Full Object:", JSON.stringify(data, null, 2));
         
         // Robust array extraction - handle all possible formats
         let surveysArray = [];
