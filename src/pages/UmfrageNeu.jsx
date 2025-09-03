@@ -26,12 +26,23 @@ const UmfrageNeu = () => {
         console.log("📥 Type:", typeof activeSurveys);
         console.log("� Is Array:", Array.isArray(activeSurveys));
         
-        // Filter für Team
+        // Filter für Team - AUCH FÜR COACHES
         const userTeams = user?.teams || [];
-        const filteredSurveys = activeSurveys.filter(survey => {
-          if (!survey.targetTeams || survey.targetTeams.length === 0) return true;
-          return survey.targetTeams.some(team => userTeams.includes(team));
-        });
+        const isCoach = user?.username === 'coach';
+        
+        let filteredSurveys;
+        if (isCoach) {
+          // Coaches sehen ALLE aktiven Umfragen
+          filteredSurveys = activeSurveys;
+          console.log("👨‍💼 Coach sieht alle Umfragen:", filteredSurveys.length);
+        } else {
+          // Spieler sehen nur team-spezifische Umfragen
+          filteredSurveys = activeSurveys.filter(survey => {
+          filteredSurveys = activeSurveys.filter(survey => {
+            if (!survey.targetTeams || survey.targetTeams.length === 0) return true;
+            return survey.targetTeams.some(team => userTeams.includes(team));
+          });
+        }
         
         console.log("✅ Gefilterte Umfragen:", filteredSurveys);
         setSurveys(filteredSurveys);
