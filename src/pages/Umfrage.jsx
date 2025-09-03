@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useUmfrage } from "../context/UmfrageContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from "../config/api";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 
@@ -8,6 +10,7 @@ import BackButton from "../components/BackButton";
 export default function Umfrage() {
   const { questions, surveys, getActiveSurveysWithQuestions, getTranslatedSurveysWithQuestions, getTranslatedQuestions, submitSurveyResponse, loading, error } = useUmfrage();
   const { t, language } = useLanguage();
+  const { user, isCoach } = useAuth();
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [playerName, setPlayerName] = useState("");
@@ -16,67 +19,93 @@ export default function Umfrage() {
   const [activeSurveys, setActiveSurveys] = useState([]);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   
-  // Lade aktive Umfragen mit ihren Fragen (übersetzt)
+  // Direkte Team-gefilterte Umfrage-Ladung
+  const loadTeamFilteredSurveys = async () => {
+    try {
+      console.log("🚀 DIREKTE UMFRAGE-LADUNG gestartet");
+      console.log("🔍 User-Status:", { user: user?.name, isCoach, teams: user?.teams });
+      
+      // Lade alle aktiven Umfragen direkt von der API
+      const response = await fetch(`${API_BASE_URL}/surveys`);
+      const allSurveys = await response.json();
+      const activeSurveys = allSurveys.filter(survey => survey.active);
+      
+      console.log("📋 Alle aktiven Umfragen:", activeSurveys.map(s => ({ id: s.id, title: s.title, targetTeams: s.targetTeams })));
+      
+      // Team-Filterung für Spieler
+      let filteredSurveys = activeSurveys;
+      if (!isCoach && user) {
+        console.log("🏒 [DIREKT] Filtere Umfragen für Spieler:", user.name);
+        
+        filteredSurveys = activeSurveys.filter(survey => {
+          // Wenn keine targetTeams definiert sind oder 'all' enthalten, zeige die Umfrage
+          if (!survey.targetTeams || survey.targetTeams.length === 0 || survey.targetTeams.includes('all')) {
+            console.log(`✅ Umfrage "${survey.title}": Für alle Teams (keine targetTeams oder 'all')`);
+            return true;
+          }
+          
+          // Prüfe ob Spieler in einem der Ziel-Teams ist
+          const userTeams = user.teams || (user.team ? [user.team] : []);
+          const hasMatchingTeam = survey.targetTeams.some(targetTeam => userTeams.includes(targetTeam));
+          console.log(`${hasMatchingTeam ? '✅' : '❌'} Umfrage "${survey.title}": targetTeams=${JSON.stringify(survey.targetTeams)}, userTeams=${JSON.stringify(userTeams)}, match=${hasMatchingTeam}`);
+          return hasMatchingTeam;
+        });
+        
+        console.log(`🎯 [DIREKT] Von ${activeSurveys.length} Umfragen sind ${filteredSurveys.length} für Spieler sichtbar`);
+      } else {
+        console.log(`👨‍💼 Coach sieht alle ${activeSurveys.length} Umfragen`);
+      }
+      
+      // Lade Fragen für jede Umfrage
+      const surveysWithQuestions = await Promise.all(
+        filteredSurveys.map(async (survey) => {
+          const questionsResponse = await fetch(`${API_BASE_URL}/questions`);
+          const allQuestions = await questionsResponse.json();
+          
+          const surveyQuestions = survey.questions
+            .map(qId => allQuestions.find(q => q.id == qId))
+            .filter(q => q !== undefined);
+          
+          return {
+            ...survey,
+            questions: surveyQuestions
+          };
+        })
+      );
+      
+      const sortedSurveys = [...surveysWithQuestions].sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      
+      setActiveSurveys(sortedSurveys);
+      console.log("🏁 [DIREKT] Umfragen geladen:", sortedSurveys.map(s => ({ id: s.id, title: s.title })));
+      
+      if (sortedSurveys.length > 0) {
+        const latestSurvey = sortedSurveys[0];
+        setSelectedSurvey(latestSurvey);
+        setCurrentQuestions(latestSurvey.questions || []);
+      } else {
+        setSelectedSurvey(null);
+        setCurrentQuestions([]);
+      }
+      
+    } catch (error) {
+      console.error("❌ Fehler beim direkten Laden der Umfragen:", error);
+    }
+  };
+  
+  // Lade aktive Umfragen mit ihren Fragen (übersetzt) - ALTE METHODE
   useEffect(() => {
     const loadTranslatedSurveys = async () => {
       try {
-        // Warten bis surveys und questions geladen sind
-        if (surveys.length === 0 || questions.length === 0) {
-          console.log("Warte auf das Laden von Surveys und Questions...");
-          return;
-        }
-        
-        const surveysWithQuestions = await getTranslatedSurveysWithQuestions(language);
-        const sortedSurveys = [...surveysWithQuestions].sort((a, b) => {
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        });
-        
-        setActiveSurveys(sortedSurveys);
-        console.log("Übersetzte aktive Umfragen geladen:", sortedSurveys);
-        
-        if (sortedSurveys.length > 0) {
-          const latestSurvey = sortedSurveys[0];
-          setSelectedSurvey(latestSurvey);
-          
-          if (latestSurvey.questions && Array.isArray(latestSurvey.questions) && latestSurvey.questions.length > 0) {
-            console.log("Übersetzte Fragen für ausgewählte Umfrage:", latestSurvey.questions);
-            setCurrentQuestions(latestSurvey.questions);
-          } else {
-            // Keine Fragen in der aktiven Umfrage — lege currentQuestions leer fest
-            setCurrentQuestions([]);
-          }
-        } else {
-          // Keine aktiven Umfragen vorhanden: zeige keine Default‑Fragen mehr, sondern eine Info im UI
-          setActiveSurveys([]);
-          setSelectedSurvey(null);
-          setCurrentQuestions([]);
-        }
-      } catch (error) {
-        console.error("Fehler beim Laden der übersetzten Umfragen:", error);
-        // Fallback: verwende normale Umfragen
-        const surveysWithQuestions = getActiveSurveysWithQuestions();
-        const sortedSurveys = [...surveysWithQuestions].sort((a, b) => {
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        });
-        setActiveSurveys(sortedSurveys);
-        
-        if (sortedSurveys.length > 0) {
-          const latestSurvey = sortedSurveys[0];
-          setSelectedSurvey(latestSurvey);
-          
-          if (latestSurvey.questions && Array.isArray(latestSurvey.questions) && latestSurvey.questions.length > 0) {
-            setCurrentQuestions(latestSurvey.questions);
-          } else {
-            setCurrentQuestions([]);
-          }
-        } else {
-          setCurrentQuestions([]);
-        }
-      }
-    };
-
-    loadTranslatedSurveys();
-  }, [surveys, questions, getTranslatedSurveysWithQuestions, getTranslatedQuestions, language]);
+    // Verwende die neue direkte Methode anstatt der alten
+    if (!isCoach && !user) {
+      console.log("⏳ Warte auf User-Daten für Team-Filterung...");
+      return;
+    }
+    
+    loadTeamFilteredSurveys();
+  }, [user, isCoach]);
   
   // Initialisiere Antworten
   useEffect(() => {
