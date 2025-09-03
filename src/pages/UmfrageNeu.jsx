@@ -21,10 +21,32 @@ const UmfrageNeu = () => {
         const data = await response.json();
         
         console.log("📥 Alle Umfragen:", data);
+        console.log("📥 Type:", typeof data);
+        console.log("📥 Is Array:", Array.isArray(data));
         
-        // API gibt {surveys: [...]} zurück, nicht direkt ein Array
-        const surveysArray = data.surveys || data || [];
+        // Robust array extraction - handle all possible formats
+        let surveysArray = [];
+        if (Array.isArray(data)) {
+          surveysArray = data;
+        } else if (data && data.surveys && Array.isArray(data.surveys)) {
+          surveysArray = data.surveys;
+        } else if (data && Array.isArray(data.data)) {
+          surveysArray = data.data;
+        } else {
+          console.error("❌ Unbekanntes API-Format:", data);
+          surveysArray = [];
+        }
+        
         console.log("📋 Array extrahiert:", surveysArray);
+        console.log("📋 Array length:", surveysArray.length);
+        
+        // Sicherheitscheck
+        if (!Array.isArray(surveysArray)) {
+          console.error("❌ Konnte kein Array extrahieren!");
+          setSurveys([]);
+          setLoading(false);
+          return;
+        }
         
         // Filter für Team
         const userTeams = user?.teams || [];
