@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
-import { API_BASE_URL } from '../config/api';
+import { news } from '../config/supabase-api';
 import { sendNewsNotification } from '../utils/pushNotifications';
 
 // Erstellen eines Kontexts für News-Daten
@@ -15,14 +14,11 @@ export const NewsProvider = ({ children }) => {
   const loadNews = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}/news`);
-      const items = Array.isArray(res.data) ? res.data : [];
-      // Nach Datum sortieren (neu zuerst), falls kein Server-Sort
-      items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-      setNewsItems(items);
-      saveNewsLocal(items);
+      const items = await news.getAll();
+      setNewsItems(items || []);
+      saveNewsLocal(items || []);
     } catch (error) {
-      console.warn('Konnte News nicht vom Server laden, nutze lokalen Cache:', error?.message || error);
+      console.warn('Konnte News nicht von Supabase laden, nutze lokalen Cache:', error?.message || error);
       try {
         const stored = localStorage.getItem('ehcb-news');
         if (stored) {
@@ -58,13 +54,10 @@ export const NewsProvider = ({ children }) => {
   const addNewsItem = async (newItem) => {
     const payload = {
       ...newItem,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     };
     try {
-      const res = await axios.post(`${API_BASE_URL}/news`, payload, {
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const saved = res.data || payload;
+      const saved = await news.create(payload);
       const updatedNews = [saved, ...newsItems];
       setNewsItems(updatedNews);
       saveNewsLocal(updatedNews);
@@ -75,7 +68,7 @@ export const NewsProvider = ({ children }) => {
       }
       return saved;
     } catch (error) {
-      console.warn('Server-POST fehlgeschlagen, speichere lokal:', error?.message || error);
+      console.warn('Supabase-POST fehlgeschlagen, speichere lokal:', error?.message || error);
       const local = { ...payload, id: Date.now() };
       const updatedNews = [local, ...newsItems];
       setNewsItems(updatedNews);
@@ -86,13 +79,11 @@ export const NewsProvider = ({ children }) => {
   
   // Funktion zum Aktualisieren eines News-Items
   const updateNewsItem = async (updatedItem) => {
-    const payload = { ...updatedItem, updatedAt: new Date().toISOString() };
+    const payload = { ...updatedItem, updated_at: new Date().toISOString() };
     try {
-      await axios.patch(`${API_BASE_URL}/news/${updatedItem.id}`, payload, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      await news.update(updatedItem.id, payload);
     } catch (error) {
-      console.warn('Server-PATCH fehlgeschlagen, aktualisiere nur lokal:', error?.message || error);
+      console.warn('Supabase-UPDATE fehlgeschlagen, aktualisiere nur lokal:', error?.message || error);
     }
     const updatedNews = newsItems.map(item => item.id === updatedItem.id ? payload : item);
     setNewsItems(updatedNews);
@@ -103,9 +94,9 @@ export const NewsProvider = ({ children }) => {
   // Funktion zum Löschen eines News-Items
   const deleteNewsItem = async (itemId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/news/${itemId}`);
+      await news.delete(itemId);
     } catch (error) {
-      console.warn('Server-DELETE fehlgeschlagen, lösche nur lokal:', error?.message || error);
+      console.warn('Supabase-DELETE fehlgeschlagen, lösche nur lokal:', error?.message || error);
     }
     const updatedNews = newsItems.filter(item => item.id !== itemId);
     setNewsItems(updatedNews);

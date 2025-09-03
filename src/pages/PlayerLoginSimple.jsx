@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/ThemeContext";
-import { API_BASE_URL } from "../config/api";
+import { users } from "../config/supabase-api";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 
@@ -35,12 +35,11 @@ export default function PlayerLoginSimple() {
     try {
       console.log("🔐 Spieler-Login Versuch:", formData.name);
       
-      // Lade alle User
-      const response = await fetch(`${API_BASE_URL}/users`);
-      const users = await response.json();
+      // Lade alle aktive Spieler von Supabase
+      const allUsers = await users.getAll();
       
       // Suche Spieler nach Name (case insensitive)
-      const player = users.find(u => 
+      const player = allUsers.find(u => 
         u.role === "player" && 
         u.name?.toLowerCase().trim() === formData.name.toLowerCase().trim()
       );

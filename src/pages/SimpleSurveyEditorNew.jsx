@@ -3,12 +3,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { useTheme } from "../context/ThemeContext";
-import { API_BASE_URL } from "../config/api";
+import { useUmfrage } from "../context/UmfrageContext-new";
 
 export default function SimpleSurveyEditorNew() {
   const navigate = useNavigate();
   const { surveyId } = useParams(); // Get surveyId from URL for editing
   const { isDarkMode } = useTheme();
+  const { surveys, createSurvey, updateSurvey, getSurveyById } = useUmfrage();
   
   const [surveyTitle, setSurveyTitle] = useState("");
   const [anonymityLevel, setAnonymityLevel] = useState("anonymous"); // anonymous, coaches-only, coaches-private, public
@@ -35,81 +36,38 @@ export default function SimpleSurveyEditorNew() {
   const loadSurveyData = async (id) => {
     try {
       console.log('📥 Loading survey data for ID:', id);
-      const response = await fetch(`${API_BASE_URL}/surveys/${id}`);
+      const surveyData = await getSurveyById(id);
       
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.warn('⚠️ Survey not found (404), redirecting to create new survey');
-          // Survey doesn't exist anymore, redirect to create mode
-          navigate('/survey-editor');
-          return;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!surveyData) {
+        console.warn('⚠️ Survey not found, redirecting to create new survey');
+        navigate('/survey-editor');
+        return;
       }
       
-      const surveyData = await response.json();
       console.log('✅ Loaded survey data:', surveyData);
       
       setSurveyTitle(surveyData.title || "");
       setAnonymityLevel(surveyData.anonymityLevel || "anonymous");
       setTargetTeams(surveyData.targetTeams || ["u18-elit"]);
       
-      // Load questions by their IDs from Questions API
+      // Questions are already included in surveyData from Supabase
       if (surveyData.questions && surveyData.questions.length > 0) {
-        console.log('📥 Loading questions by IDs:', surveyData.questions);
+        console.log('📥 Loading questions from survey data:', surveyData.questions);
         
-        const loadedQuestions = [];
-        
-        for (const questionId of surveyData.questions) {
-          try {
-            const questionResponse = await fetch(`${API_BASE_URL}/questions/${questionId}`);
-            
-            if (questionResponse.ok) {
-              const questionData = await questionResponse.json();
-              console.log('✅ Loaded question:', questionData);
-              
-              loadedQuestions.push({
-                id: questionData.id,
-                text: questionData.text || "",
-                type: questionData.type || "multiple-choice",
-                options: questionData.options || ["", ""],
-                required: questionData.required || false
-              });
-            } else {
-              console.warn('⚠️ Could not load question:', questionId);
-              // Create placeholder for missing question
-              loadedQuestions.push({
-                id: questionId,
-                text: "",
-                type: "multiple-choice",
-                options: ["", ""],
-                required: false
-              });
-            }
-          } catch (err) {
-            console.error('❌ Error loading question:', questionId, err);
-            // Create placeholder for failed question
-            loadedQuestions.push({
-              id: questionId,
-              text: "",
-              type: "multiple-choice", 
-              options: ["", ""],
-              required: false
-            });
-          }
-        }
+        const loadedQuestions = surveyData.questions.map(questionData => ({
+          id: questionData.id,
+          text: questionData.content || questionData.text || "",
+          type: questionData.type || "multiple-choice",
+          options: questionData.options || ["", ""],
+          required: questionData.required || false
+        }));
         
         setQuestions(loadedQuestions);
-        console.log('📝 All questions loaded:', loadedQuestions);
+        console.log('✅ Loaded questions:', loadedQuestions);
       }
       
     } catch (error) {
       console.error('❌ Error loading survey:', error);
-      if (error.message.includes('404') || error.message.includes('not found')) {
-        console.warn('⚠️ Survey not found, redirecting to create new survey');
-        navigate('/survey-editor');
-        return;
-      }
       alert(`Fehler beim Laden der Umfrage: ${error.message}`);
     }
   };
@@ -160,7 +118,7 @@ export default function SimpleSurveyEditorNew() {
 
   // SIMPLIFIED SAVE - Direct API call without context
   const handleSave = async () => {
-    console.log('🚀 NEUE VERSION: Direct Save gestartet');
+    console.log('🚀 Supabase Save gestartet');
     
     // Validation
     const validQuestions = questions.filter(q => q.text.trim());
@@ -175,99 +133,51 @@ export default function SimpleSurveyEditorNew() {
     try {
       const finalTitle = surveyTitle.trim() || `Umfrage vom ${new Date().toLocaleDateString('de-DE')}`;
       
-      console.log('📤 Step 1: Speichere Fragen einzeln...');
-      
-      // Step 1: Save each question to Questions API and collect IDs
-      const questionIds = [];
-      
-      for (const question of validQuestions) {
-        console.log('💾 Speichere Frage:', question.text);
-        
-        const questionData = {
-          text: question.text,
-          type: question.type,
-          options: question.type === 'multiple-choice' ? question.options.filter(opt => opt.trim()) : [],
-          required: question.required || false
-        };
-        
-        const questionResponse = await fetch(`${API_BASE_URL}/questions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(questionData)
-        });
-        
-        if (!questionResponse.ok) {
-          throw new Error(`Fehler beim Speichern der Frage: ${questionResponse.status}`);
-        }
-        
-        const savedQuestion = await questionResponse.json();
-        questionIds.push(savedQuestion.id);
-        console.log('✅ Frage gespeichert mit ID:', savedQuestion.id);
-      }
-      
-      console.log('📤 Step 2: Erstelle Umfrage mit Fragen-IDs:', questionIds);
-      
-      // Step 2: Create survey with question IDs
+      // Prepare survey data for Supabase
       const surveyData = {
         title: finalTitle,
         description: "",
-        questions: questionIds, // Use IDs instead of full objects
+        questions: validQuestions.map(q => ({
+          content: q.text,
+          type: q.type,
+          options: q.type === 'multiple-choice' ? q.options.filter(opt => opt.trim()) : [],
+          required: q.required || false
+        })),
         resultsVisibleToPlayers: false,
         anonymous: anonymityLevel === "anonymous",
-        anonymityLevel: anonymityLevel, // Store the specific level
-        targetTeams: targetTeams, // Use selected teams
-        active: true,
-        createdAt: new Date().toISOString()
+        anonymityLevel: anonymityLevel,
+        targetTeams: targetTeams,
+        active: true
       };
 
-      console.log('📤 Direct API Call (Survey):', surveyData);
+      console.log('📤 Survey data for Supabase:', surveyData);
 
-      let response;
+      let result;
       if (surveyId) {
         // Update existing survey
         console.log('📝 Updating survey:', surveyId);
-        response = await fetch(`${API_BASE_URL}/surveys/${surveyId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ ...surveyData, id: surveyId })
-        });
+        result = await updateSurvey(surveyId, surveyData);
       } else {
         // Create new survey
         console.log('✨ Creating new survey');
-        response = await fetch(`${API_BASE_URL}/surveys`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(surveyData)
-        });
+        result = await createSurvey(surveyData);
       }
 
-      console.log('📥 Response Status:', response.status);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (result) {
+        console.log('✅ SUCCESS:', result);
+        setSuccessMessage(surveyId ? "✅ Umfrage erfolgreich aktualisiert!" : "✅ Umfrage erfolgreich erstellt!");
+        
+        // Navigate back after 2 seconds
+        setTimeout(() => {
+          navigate('/coach/surveys');
+        }, 2000);
       }
-
-      const result = await response.json();
-      console.log('✅ SUCCESS:', result);
-
-      setSuccessMessage(surveyId ? "✅ Umfrage erfolgreich aktualisiert!" : "✅ Umfrage erfolgreich erstellt!");
-      setLoading(false);
-
-      // Navigate back after 2 seconds
-      setTimeout(() => {
-        navigate('/coach/surveys');
-      }, 2000);
 
     } catch (error) {
-      console.error('❌ Direct Save Error:', error);
-      setLoading(false);
+      console.error('❌ Supabase Save Error:', error);
       alert(`Fehler beim Speichern: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { API_BASE_URL } from "../config/api";
+import { cardio } from "../config/supabase-api";
 
 
 export default function CardioManager() {
@@ -106,12 +106,11 @@ export default function CardioManager() {
 
   const fetchCardioPrograms = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/cardio-programs`);
-      const data = await response.json();
-      setCardioProgramme(data);
+      const data = await cardio.getAll();
+      setCardioProgramme(data || []);
     } catch (error) {
       console.error("Fehler beim Laden der Cardio-Programme:", error);
-      // Fallback zu den initial-Programmen wenn die API nicht verfügbar ist
+      // Fallback zu den initial-Programmen wenn Supabase nicht verfügbar ist
       setCardioProgramme(initialCardioProgramme);
     } finally {
       setLoading(false);
@@ -146,20 +145,10 @@ export default function CardioManager() {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/cardio-programs`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(newProgram)
-      });
-
-      if (response.ok) {
-        const savedProgram = await response.json();
-        setCardioProgramme([...cardioProgramme, savedProgram]);
-        setIsAddingProgram(false);
-        setNewProgramData({ title: "", description: "" });
-      }
+      const savedProgram = await cardio.create(newProgram);
+      setCardioProgramme([...cardioProgramme, savedProgram]);
+      setIsAddingProgram(false);
+      setNewProgramData({ title: "", description: "" });
     } catch (error) {
       console.error("Fehler beim Speichern des Programms:", error);
     }
@@ -183,42 +172,35 @@ export default function CardioManager() {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/cardio-programs/${editingProgram.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updatedProgram)
+      await cardio.update(editingProgram.id, {
+        title: newProgramData.title,
+        description: newProgramData.description
       });
 
-      if (response.ok) {
-        const updatedPrograms = cardioProgramme.map(program => {
-          if (program.id === editingProgram.id) {
-            return updatedProgram;
-          }
-          return program;
-        });
-        
-        setCardioProgramme(updatedPrograms);
-        setEditingProgram(null);
-        setNewProgramData({ title: "", description: "" });
-      }
+      const updatedPrograms = cardioProgramme.map(program => {
+        if (program.id === editingProgram.id) {
+          return {
+            ...program,
+            title: newProgramData.title,
+            description: newProgramData.description
+          };
+        }
+        return program;
+      });
+      
+      setCardioProgramme(updatedPrograms);
+      setEditingProgram(null);
+      setNewProgramData({ title: "", description: "" });
     } catch (error) {
       console.error("Fehler beim Aktualisieren des Programms:", error);
     }
   };
 
-  const handleDeleteProgram = async (programId) => {
+    const handleDeleteProgram = async (programId) => {
     if (window.confirm("Sind Sie sicher, dass Sie dieses Programm löschen möchten?")) {
       try {
-        const response = await fetch(`${API_BASE_URL}/cardio-programs/${programId}`, {
-          method: "DELETE"
-        });
-
-        if (response.ok) {
-          const filteredPrograms = cardioProgramme.filter(program => program.id !== programId);
-          setCardioProgramme(filteredPrograms);
-        }
+        await cardio.delete(programId);
+        setCardioProgramme(cardioProgramme.filter(program => program.id !== programId));
       } catch (error) {
         console.error("Fehler beim Löschen des Programms:", error);
       }
@@ -252,31 +234,25 @@ export default function CardioManager() {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/cardio-programs/${selectedProgram.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updatedProgram)
+      await cardio.update(selectedProgram.id, {
+        workouts: updatedProgram.workouts
       });
 
-      if (response.ok) {
-        const updatedPrograms = cardioProgramme.map(program => {
-          if (program.id === selectedProgram.id) {
-            return updatedProgram;
-          }
-          return program;
-        });
-        
-        setCardioProgramme(updatedPrograms);
-        setIsAddingWorkout(false);
-        setNewWorkoutData({
-          name: "",
-          instruction: "",
-          intensity: "",
-          frequency: ""
-        });
-      }
+      const updatedPrograms = cardioProgramme.map(program => {
+        if (program.id === selectedProgram.id) {
+          return updatedProgram;
+        }
+        return program;
+      });
+      
+      setCardioProgramme(updatedPrograms);
+      setIsAddingWorkout(false);
+      setNewWorkoutData({
+        name: "",
+        instruction: "",
+        intensity: "",
+        frequency: ""
+      });
     } catch (error) {
       console.error("Fehler beim Speichern der Übung:", error);
     }
@@ -313,31 +289,25 @@ export default function CardioManager() {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/cardio-programs/${selectedProgram.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updatedProgram)
+      await cardio.update(selectedProgram.id, {
+        workouts: updatedProgram.workouts
       });
 
-      if (response.ok) {
-        const updatedPrograms = cardioProgramme.map(program => {
-          if (program.id === selectedProgram.id) {
-            return updatedProgram;
-          }
-          return program;
-        });
-        
-        setCardioProgramme(updatedPrograms);
-        setEditingWorkout(null);
-        setNewWorkoutData({
-          name: "",
-          instruction: "",
-          intensity: "",
-          frequency: ""
-        });
-      }
+      const updatedPrograms = cardioProgramme.map(program => {
+        if (program.id === selectedProgram.id) {
+          return updatedProgram;
+        }
+        return program;
+      });
+      
+      setCardioProgramme(updatedPrograms);
+      setEditingWorkout(null);
+      setNewWorkoutData({
+        name: "",
+        instruction: "",
+        intensity: "",
+        frequency: ""
+      });
     } catch (error) {
       console.error("Fehler beim Aktualisieren der Übung:", error);
     }
@@ -352,24 +322,18 @@ export default function CardioManager() {
       };
 
       try {
-        const response = await fetch(`${API_BASE_URL}/cardio-programs/${programId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(updatedProgram)
+        await cardio.update(programId, {
+          workouts: updatedProgram.workouts
         });
 
-        if (response.ok) {
-          const updatedPrograms = cardioProgramme.map(program => {
-            if (program.id === programId) {
-              return updatedProgram;
-            }
-            return program;
-          });
-          
-          setCardioProgramme(updatedPrograms);
-        }
+        const updatedPrograms = cardioProgramme.map(program => {
+          if (program.id === programId) {
+            return updatedProgram;
+          }
+          return program;
+        });
+        
+        setCardioProgramme(updatedPrograms);
       } catch (error) {
         console.error("Fehler beim Löschen der Übung:", error);
       }

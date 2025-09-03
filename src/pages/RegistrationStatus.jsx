@@ -5,7 +5,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { API_BASE_URL } from "../config/api";
+import { users } from "../config/supabase-api";
 
 export default function RegistrationStatus() {
   const { t } = useLanguage();
@@ -34,11 +34,10 @@ export default function RegistrationStatus() {
     setUserStatus(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users`);
-      const users = await response.json();
+      const allUsers = await users.getAll();
       
       // Suche nach Benutzer mit Name und mainTeam (mit automatischem Trimming)
-      const user = users.find(u => 
+      const user = allUsers.find(u => 
         u.name.toLowerCase().trim() === searchData.name.toLowerCase().trim() && 
         u.mainTeam === searchData.mainTeam &&
         u.role === "player"

@@ -6,7 +6,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useNotification } from "../context/NotificationContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { API_BASE_URL } from "../config/api";
+import { reflexions } from "../config/supabase-api";
 
 
 export default function ReflexionDashboard() {
@@ -37,13 +37,7 @@ export default function ReflexionDashboard() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/reflections/${reflectionId}`, {
-        method: "DELETE"
-      });
-
-      if (!response.ok) {
-        throw new Error("Fehler beim Löschen der Reflexion");
-      }
+      await reflexions.delete(reflectionId);
 
       // Aktualisiere die Reflexionen, indem wir sie neu laden
       fetchReflections();

@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../config/api";
+import { sportFood } from "../config/supabase-api";
 
 // SportFood-Kontext erstellen
 const SportFoodContext = createContext();
@@ -19,12 +18,8 @@ export const SportFoodProvider = ({ children }) => {
     setLoading(true);
     try {
       // Kategorien und Items getrennt abrufen
-      const categoriesResponse = await axios.get(`${API_BASE_URL}/sport-food-categories`);
-      const itemsResponse = await axios.get(`${API_BASE_URL}/sport-food-items`);
-      
-      // Daten strukturieren
-      const categories = categoriesResponse.data;
-      const items = itemsResponse.data;
+      const categories = await sportFood.getAllCategories();
+      const items = await sportFood.getAllItems();
       
       // Items nach Kategorie gruppieren
       const organizedData = categories.map(category => {
@@ -70,12 +65,12 @@ export const SportFoodProvider = ({ children }) => {
         name: categoryData.category,
         description: categoryData.description || ""
       };
-      const response = await axios.post(`${API_BASE_URL}/sport-food-categories`, newCategory);
+      const response = await sportFood.createCategory(newCategory);
       
       const newFormattedCategory = {
-        id: response.data.id,
-        category: response.data.name,
-        description: response.data.description,
+        id: response.id,
+        category: response.name,
+        description: response.description,
         items: []
       };
       
@@ -103,12 +98,12 @@ export const SportFoodProvider = ({ children }) => {
         description: categoryData.description || existingCategory.description
       };
       
-      const response = await axios.put(`${API_BASE_URL}/sport-food-categories/${id}`, updatedCategoryData);
+      const response = await sportFood.updateCategory(id, updatedCategoryData);
       
       const updatedCategory = {
         ...existingCategory,
-        category: response.data.name,
-        description: response.data.description
+        category: response.name,
+        description: response.description
       };
       
       setFoodItems(foodItems.map(item => item.id === id ? updatedCategory : item));
@@ -128,13 +123,13 @@ export const SportFoodProvider = ({ children }) => {
     setLoading(true);
     try {
       // Zuerst alle Items in dieser Kategorie löschen
-      const itemsToDelete = await axios.get(`${API_BASE_URL}/sport-food-items?categoryId=${id}`);
-      for (const item of itemsToDelete.data) {
-        await axios.delete(`${API_BASE_URL}/sport-food-items/${item.id}`);
+      const itemsToDelete = await sportFood.getItemsByCategory(id);
+      for (const item of itemsToDelete) {
+        await sportFood.deleteItem(item.id);
       }
       
       // Dann die Kategorie löschen
-      await axios.delete(`${API_BASE_URL}/sport-food-categories/${id}`);
+      await sportFood.deleteCategory(id);
       
       setFoodItems(foodItems.filter(item => item.id !== id));
       setError(null);
@@ -163,14 +158,14 @@ export const SportFoodProvider = ({ children }) => {
         time: itemData.time || "30-60 Minuten"
       };
       
-      const response = await axios.post(`${API_BASE_URL}/sport-food-items`, newItem);
+      const response = await sportFood.createItem(newItem);
       
       const formattedNewItem = {
-        id: response.data.id,
-        name: response.data.name,
-        description: response.data.description,
-        benefits: response.data.benefits,
-        time: response.data.time
+        id: response.id,
+        name: response.name,
+        description: response.description,
+        benefits: response.benefits,
+        time: response.time
       };
       
       // Lokalen State aktualisieren
@@ -206,7 +201,7 @@ export const SportFoodProvider = ({ children }) => {
         time: itemData.time || "30-60 Minuten"
       };
       
-      const response = await axios.put(`${API_BASE_URL}/sport-food-items/${itemId}`, updatedItemData);
+      const response = await sportFood.updateItem(itemId, updatedItemData);
       
       // Lokalen State aktualisieren
       const itemIndex = category.items.findIndex(item => item.id === itemId);
@@ -214,10 +209,10 @@ export const SportFoodProvider = ({ children }) => {
       
       const updatedItems = [...category.items];
       updatedItems[itemIndex] = {
-        id: response.data.id,
-        name: response.data.name,
-        description: response.data.description,
-        benefits: response.data.benefits,
+        id: response.id,
+        name: response.name,
+        description: response.description,
+        benefits: response.benefits,
         time: response.data.time
       };
       
@@ -246,7 +241,7 @@ export const SportFoodProvider = ({ children }) => {
       if (!category) return false;
       
       // Item aus der Datenbank löschen
-      await axios.delete(`${API_BASE_URL}/sport-food-items/${itemId}`);
+      await sportFood.deleteItem(itemId);
       
       // Lokalen State aktualisieren
       const updatedItems = category.items.filter(item => item.id !== itemId);
@@ -335,21 +330,21 @@ export const SportFoodProvider = ({ children }) => {
     setLoading(true);
     try {
       // Prüfen, ob Kategorien existieren
-      const categoriesResponse = await axios.get(`${API_BASE_URL}/sport-food-categories`);
+      const categories = await sportFood.getAllCategories();
       
-      if (categoriesResponse.data.length === 0) {
+      if (categories.length === 0) {
         // Wenn keine Kategorien vorhanden sind, füge die Standarddaten hinzu
         for (const item of defaultFoodItems) {
           // Kategorie erstellen
-          const categoryResponse = await axios.post(`${API_BASE_URL}/sport-food-categories`, {
+          const categoryResponse = await sportFood.createCategory({
             name: item.category,
             description: item.category + " - Ernährungsempfehlungen"
           });
           
           // Items für diese Kategorie erstellen
           for (const foodItem of item.items) {
-            await axios.post(`${API_BASE_URL}/sport-food-items`, {
-              categoryId: categoryResponse.data.id,
+            await sportFood.createItem({
+              categoryId: categoryResponse.id,
               name: foodItem.name,
               description: foodItem.description,
               benefits: foodItem.benefits || "",

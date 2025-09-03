@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../config/api";
+import { users } from "../config/supabase-api";
 
 // Erstellen des Auth-Kontexts
 const AuthContext = createContext();
@@ -52,12 +51,11 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        // Benutzer aus der JSON-DB abrufen (für Coach-Login)
-        const response = await axios.get(`${API_BASE_URL}/users`);
-        const users = response.data;
+        // Benutzer aus Supabase abrufen (für Coach-Login)
+        const allUsers = await users.getAll();
         
         // Überprüfen, ob die Anmeldedaten korrekt sind
-        const matchedUser = users.find(
+        const matchedUser = allUsers.find(
           (u) => u.username === username && u.password === password
         );
         

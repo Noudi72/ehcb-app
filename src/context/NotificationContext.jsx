@@ -1,8 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { useReflexion } from "./ReflexionContext";
 import { useUmfrage } from "./UmfrageContext-new";
-import axios from "axios";
-import { API_BASE_URL } from "../config/api";
+import { notifications } from "../config/supabase-api";
 
 // Erstellen des Benachrichtigungs-Kontexts
 const NotificationContext = createContext();
@@ -34,8 +33,8 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     const fetchServerNotifications = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/notifications`);
-        const serverNotifications = response.data.map(notification => ({
+        const serverNotifications = await notifications.getAll();
+        const formattedNotifications = serverNotifications.map(notification => ({
           ...notification,
           id: `server-${notification.id}`,
           read: notification.read || false
@@ -44,7 +43,7 @@ export const NotificationProvider = ({ children }) => {
         setNotifications(prevNotifications => {
           // Nur Benachrichtigungen hinzufügen, die noch nicht existieren
           const existingIds = prevNotifications.map(n => n.id);
-          const newServerNotifications = serverNotifications.filter(
+          const newServerNotifications = formattedNotifications.filter(
             n => !existingIds.includes(n.id)
           );
           
@@ -133,9 +132,7 @@ export const NotificationProvider = ({ children }) => {
     if (notificationId.startsWith('server-')) {
       const serverNotificationId = notificationId.replace('server-', '');
       try {
-        await axios.patch(`${API_BASE_URL}/notifications/${serverNotificationId}`, {
-          read: true
-        });
+        await notifications.markAsRead(serverNotificationId);
       } catch (err) {
         console.error("Fehler beim Aktualisieren der Benachrichtigung:", err);
       }
@@ -152,7 +149,7 @@ export const NotificationProvider = ({ children }) => {
     if (notificationId.startsWith('server-')) {
       const serverNotificationId = notificationId.replace('server-', '');
       try {
-        await axios.delete(`${API_BASE_URL}/notifications/${serverNotificationId}`);
+        await notifications.delete(serverNotificationId);
       } catch (err) {
         console.error("Fehler beim Entfernen der Benachrichtigung:", err);
       }

@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { API_BASE_URL } from "../config/api";
+import { users, teams } from "../config/supabase-api";
 
 export default function TeamOverview() {
   const { teamName } = useParams();
@@ -23,8 +23,7 @@ export default function TeamOverview() {
 
   const fetchTeams = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/teams`);
-      const data = await response.json();
+      const data = await teams.getAll();
       setTeams(data);
     } catch (err) {
       console.error("Fehler beim Laden der Teams:", err);
@@ -33,8 +32,7 @@ export default function TeamOverview() {
 
   const fetchPlayers = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users`);
-      const data = await response.json();
+      const data = await users.getAll();
       
       // Filtere Spieler für das aktuelle Team
       const teamPlayers = data.filter(user => {
@@ -60,8 +58,7 @@ export default function TeamOverview() {
   const addPlayerToTeam = async (playerId, newTeamId) => {
     try {
       // Hole aktuelle Spielerdaten
-      const playerResponse = await fetch(`${API_BASE_URL}/users/${playerId}`);
-      const player = await playerResponse.json();
+      const player = await users.getById(playerId);
       
       let updatedTeams;
       if (Array.isArray(player.teams)) {
@@ -74,19 +71,9 @@ export default function TeamOverview() {
         updatedTeams = player.team ? [player.team, newTeamId] : [newTeamId];
       }
 
-      const response = await fetch(`${API_BASE_URL}/users/${playerId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          teams: updatedTeams
-        })
+      await users.update(playerId, {
+        teams: updatedTeams
       });
-
-      if (!response.ok) {
-        throw new Error("Fehler beim Hinzufügen des Spielers zum Team");
-      }
 
       // Aktualisiere die lokale Liste
       fetchPlayers();
@@ -97,8 +84,7 @@ export default function TeamOverview() {
 
   const removePlayerFromTeam = async (playerId) => {
     try {
-      const playerResponse = await fetch(`${API_BASE_URL}/users/${playerId}`);
-      const player = await playerResponse.json();
+      const player = await users.getById(playerId);
       
       let updatedTeams;
       if (Array.isArray(player.teams)) {
@@ -108,20 +94,11 @@ export default function TeamOverview() {
         updatedTeams = [];
       }
 
-      const response = await fetch(`${API_BASE_URL}/users/${playerId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          teams: updatedTeams
-        })
+      await users.update(playerId, {
+        teams: updatedTeams
       });
 
-      if (!response.ok) {
-        throw new Error("Fehler beim Entfernen des Spielers vom Team");
-      }
-
+      // Aktualisiere die lokale Liste
       fetchPlayers();
     } catch (err) {
       setError("Fehler beim Entfernen des Spielers: " + err.message);

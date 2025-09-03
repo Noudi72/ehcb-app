@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useCallback, useEffect } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../config/api";
+import { reflexions } from "../config/supabase-api";
 
 // Erstellen des Reflexion-Kontexts
 const ReflexionContext = createContext();
@@ -18,8 +17,8 @@ export const ReflexionProvider = ({ children }) => {
   const fetchReflections = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/reflections`);
-      setReflections(response.data);
+      const data = await reflexions.getAll();
+      setReflections(data || []);
       setError(null);
     } catch (err) {
       setError("Fehler beim Laden der Reflexionen");
@@ -33,11 +32,11 @@ export const ReflexionProvider = ({ children }) => {
   const addReflexion = async (reflexionData) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/reflections`, {
+      const response = await reflexions.create({
         ...reflexionData,
         date: new Date().toISOString(),
       });
-      setReflections([...reflections, response.data]);
+      setReflections([...reflections, response]);
       setError(null);
       return true;
     } catch (err) {

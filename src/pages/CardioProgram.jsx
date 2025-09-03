@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import TabataTimer from "../components/TabataTimer";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { API_BASE_URL } from "../config/api";
+import { cardio } from "../config/supabase-api";
 
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -26,9 +26,8 @@ export default function CardioProgram() {
 
   const fetchCardioPrograms = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/cardio-programs`);
-      const data = await response.json();
-      setCardioProgramme(data);
+      const data = await cardio.getAll();
+      setCardioProgramme(data || []);
     } catch (error) {
       console.error("Fehler beim Laden der Cardio-Programme:", error);
       // Fallback zu den hardcoded Programmen

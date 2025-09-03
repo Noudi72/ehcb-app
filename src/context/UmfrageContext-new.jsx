@@ -269,6 +269,20 @@ export const UmfrageProvider = ({ children }) => {
     }
   };
 
+  // Single survey by ID holen
+  const getSurveyById = async (surveyId) => {
+    try {
+      console.log('📥 Fetching survey by ID from Supabase:', surveyId);
+      const data = await surveys.getById(surveyId);
+      console.log('✅ Survey loaded:', data);
+      return data;
+    } catch (err) {
+      console.error("Fehler beim Laden der Umfrage:", err);
+      setError("Fehler beim Laden der Umfrage: " + err.message);
+      return null;
+    }
+  };
+
   // Umfrage löschen
   const deleteSurvey = async (surveyId) => {
     setLoading(true);
@@ -325,6 +339,7 @@ export const UmfrageProvider = ({ children }) => {
     updateQuestion,
     deleteQuestion,
     createSurvey,
+    getSurveyById,
     updateSurvey,
     deleteSurvey,
     submitSurveyResponse,

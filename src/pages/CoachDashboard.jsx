@@ -6,7 +6,7 @@ import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import PendingRegistrations from "../components/PendingRegistrations";
 import PushNotificationSettings from "../components/PushNotificationSettings";
-import { API_BASE_URL } from "../config/api";
+import { users } from "../config/supabase-api";
 
 export default function CoachDashboard() {
   const { user, logout, isCoach } = useAuth();
@@ -33,10 +33,8 @@ export default function CoachDashboard() {
 
   const fetchPendingRegistrations = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users`);
-      const users = await response.json();
-      const pending = users.filter(u => u.role === "player" && u.status === "pending");
-      setPendingCount(pending.length);
+      const allUsers = await users.getPending();
+      setPendingCount(allUsers.length);
     } catch (error) {
       console.error("Fehler beim Laden der ausstehenden Registrierungen:", error);
     }

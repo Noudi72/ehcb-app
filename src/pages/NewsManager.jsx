@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNews } from "../context/NewsContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
+import { news, users, notifications } from "../config/supabase-api";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
 
@@ -232,19 +233,18 @@ export default function NewsManager() {
   // Funktion zum Senden von Push-Nachrichten an spezifische Teams
   const sendNotificationToTeams = async (targetTeams, notificationData) => {
     try {
-      // Hole alle User aus der Datenbank
-      const usersResponse = await axios.get(`${API_BASE_URL}/users`);
-      const users = usersResponse.data;
+      // Hole alle User aus Supabase
+      const allUsers = await users.getAll();
 
       // Filtere Spieler basierend auf den Ziel-Teams
       let targetUsers = [];
       
       if (targetTeams.length === 0 || targetTeams.includes('all')) {
         // Alle aktiven Spieler
-        targetUsers = users.filter(user => user.role === 'player' && user.active === true);
+        targetUsers = allUsers.filter(user => user.role === 'player' && user.active === true);
       } else {
         // Nur Spieler der ausgewählten Teams
-        targetUsers = users.filter(user => {
+        targetUsers = allUsers.filter(user => {
           if (user.role !== 'player' || user.active !== true) return false;
           
           // Prüfe sowohl teams Array als auch mainTeam Feld für Abwärtskompatibilität
@@ -265,7 +265,7 @@ export default function NewsManager() {
           createdAt: new Date().toISOString()
         };
 
-        await axios.post(`${API_BASE_URL}/notifications`, notification);
+        await notifications.create(notification);
       }
 
       console.log(`Push-Nachrichten an ${targetUsers.length} Spieler gesendet`);

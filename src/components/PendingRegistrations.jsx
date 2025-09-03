@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { API_BASE_URL } from "../config/api";
+import { users, teams } from "../config/supabase-api";
 
 export default function PendingRegistrations({ onUpdate }) {
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -20,9 +20,8 @@ export default function PendingRegistrations({ onUpdate }) {
 
   const fetchPendingUsers = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users`);
-      const data = await response.json();
-      setPendingUsers(data.filter(u => u.role === "player" && u.status === "pending"));
+      const pendingUsersData = await users.getPending();
+      setPendingUsers(pendingUsersData.filter(u => u.role === "player"));
     } catch (err) {
       setError("Fehler beim Laden der ausstehenden Registrierungen");
     } finally {
@@ -32,11 +31,12 @@ export default function PendingRegistrations({ onUpdate }) {
 
   const fetchTeams = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/teams`);
-      const data = await response.json();
-      setTeams(data);
+      const teamsData = await teams.getAll();
+      setTeams(teamsData);
     } catch (err) {
       console.error("Fehler beim Laden der Teams:", err);
+      // Fallback auf Standard-Teams wenn Supabase Teams noch nicht vorhanden
+      setTeams(teamOptions);
     }
   };
 
@@ -47,22 +47,12 @@ export default function PendingRegistrations({ onUpdate }) {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          status: "approved",
-          active: true,
-          teams: selectedTeams,
-          approvedAt: new Date().toISOString()
-        })
+      await users.update(userId, {
+        status: "approved",
+        active: true,
+        teams: selectedTeams,
+        approved_at: new Date().toISOString()
       });
-
-      if (!response.ok) {
-        throw new Error("Fehler beim Genehmigen der Registrierung");
-      }
 
       // Aktualisiere die lokale Liste
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
@@ -84,21 +74,11 @@ export default function PendingRegistrations({ onUpdate }) {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          status: "rejected",
-          active: false,
-          rejectedAt: new Date().toISOString()
-        })
+      await users.update(userId, {
+        status: "rejected",
+        active: false,
+        rejected_at: new Date().toISOString()
       });
-
-      if (!response.ok) {
-        throw new Error("Fehler beim Ablehnen der Registrierung");
-      }
 
       // Aktualisiere die lokale Liste
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
