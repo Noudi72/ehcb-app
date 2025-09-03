@@ -203,6 +203,9 @@ const mockTranslations = {
   }
 };
 
+// Feature-Flag: DeepL-Proxy im Frontend verwenden? Standard: aus in PROD
+const USE_DEEPL_PROXY = (import.meta.env?.VITE_USE_DEEPL_PROXY === 'true');
+
 /**
  * Übersetzt Text mit Mock-Translation oder Backend-Proxy (DeepL API)
  * @param {string} text - Zu übersetzender Text
@@ -215,97 +218,64 @@ export const translateText = async (text, targetLanguage, sourceLanguage = 'de')
     return '';
   }
 
-  // Wenn Zielsprache gleich Quellsprache ist, Original zurückgeben
   if (targetLanguage === sourceLanguage) {
     return text;
   }
 
-  // Cache-Key generieren
   const cacheKey = `${text}_${sourceLanguage}_${targetLanguage}`;
-  
-  console.log(`🔄 Übersetze: "${text}" von ${sourceLanguage} nach ${targetLanguage}`);
-  
-  // Prüfen ob Übersetzung bereits im Cache ist
   if (translationCache.has(cacheKey)) {
-    const cachedResult = translationCache.get(cacheKey);
-    console.log(`📋 Aus Cache: "${text}" -> "${cachedResult}"`);
-    return cachedResult;
+    return translationCache.get(cacheKey);
   }
 
   try {
     const mockKey = `${sourceLanguage}_${targetLanguage}`;
-    console.log(`🔑 Mock-Key: ${mockKey}`);
-    
-    // 1. Exakte Übereinstimmung in Mock-Daten suchen
+
     if (mockTranslations[mockKey] && mockTranslations[mockKey][text]) {
       const translatedText = mockTranslations[mockKey][text];
-      console.log(`✅ Exakte Mock-Übersetzung: "${text}" -> "${translatedText}"`);
       translationCache.set(cacheKey, translatedText);
       return translatedText;
     }
 
-    // 2. Backend-Proxy direkt versuchen (kein zusätzlicher Availability-Call pro Anfrage)
-    try {
-      console.log(`🌐 Versuche Backend-Übersetzung:`, { text, sourceLanguage, targetLanguage });
-
-      const base = API_BASE_URL || '';
-      const key = `${text}__${sourceLanguage}->${targetLanguage}`;
-      // In-Flight-Deduplizierung
-      const doRequest = () => fetch(`${base}/api/translate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: text,
-          targetLanguage: targetLanguage,
-          sourceLanguage: sourceLanguage
-        })
-      });
-
-      let response;
-      if (inFlight.has(key)) {
-        response = await inFlight.get(key);
-      } else {
-        const p = runWithThrottle(doRequest);
-        inFlight.set(key, p);
-        try {
-          response = await p;
-        } finally {
-          inFlight.delete(key);
+    // Nur wenn explizit erlaubt, Backend-Proxy versuchen
+    if (USE_DEEPL_PROXY) {
+      try {
+        const base = API_BASE_URL || '';
+        const key = `${text}__${sourceLanguage}->${targetLanguage}`;
+        const doRequest = () => fetch(`${base}/api/translate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, targetLanguage, sourceLanguage })
+        });
+        let response;
+        if (inFlight.has(key)) {
+          response = await inFlight.get(key);
+        } else {
+          const p = runWithThrottle(doRequest);
+          inFlight.set(key, p);
+          try {
+            response = await p;
+          } finally {
+            inFlight.delete(key);
+          }
         }
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.translatedText) {
-          const translatedText = data.translatedText;
-          console.log(`🚀 Backend-Übersetzung erfolgreich: "${text}" -> "${translatedText}"`);
-
-          // Im Cache speichern
-          translationCache.set(cacheKey, translatedText);
-
-          return translatedText;
+        if (response.ok) {
+          const data = await response.json();
+          if (data.translatedText) {
+            const translatedText = data.translatedText;
+            translationCache.set(cacheKey, translatedText);
+            return translatedText;
+          }
         }
-      } else {
-        console.log(`⚠️ Backend-Response nicht OK (${response.status}), verwende Mock-Übersetzung`);
+      } catch (backendError) {
+        // Ignoriere und fallback
       }
-    } catch (backendError) {
-      console.log(`⚠️ Backend-Fehler (${backendError.message}), verwende Mock-Übersetzung`);
     }
 
-    // 3. Intelligente Wort-für-Wort Mock-Übersetzung
+    // Fallback: Enhanced Mock
     const enhancedTranslation = translateWithEnhancedMock(text, mockKey);
-    
-    console.log(`🔧 Enhanced Mock-Übersetzung: "${text}" -> "${enhancedTranslation}"`);
     translationCache.set(cacheKey, enhancedTranslation);
     return enhancedTranslation;
-
   } catch (error) {
-    console.error(`❌ Übersetzungsfehler:`, error);
-    
-    // Bei Fehlern den ursprünglichen Text zurückgeben
     return text;
   }
 };
@@ -366,44 +336,23 @@ function translateWithEnhancedMock(text, mockKey) {
  * Prüft ob der Backend-Translation-Service verfügbar ist
  */
 export const checkAPIAvailability = async () => {
+  if (!USE_DEEPL_PROXY) {
+    return { backend: false, mock: true, deepl: false, status: 'disabled' };
+  }
   try {
-    // Verwende einen Timeout für die Verfügbarkeitsprüfung
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 Sekunden Timeout
-
-  const base = API_BASE_URL || '';
-  const response = await fetch(`${base}/api/translate`, {
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const base = API_BASE_URL || '';
+    const response = await fetch(`${base}/api/translate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: 'test',
-        targetLanguage: 'en',
-        sourceLanguage: 'de'
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'test', targetLanguage: 'en', sourceLanguage: 'de' }),
       signal: controller.signal
     });
-
     clearTimeout(timeoutId);
-
-    const availability = {
-      backend: response.ok,
-      mock: true, // Mock-Übersetzungen sind immer verfügbar
-      deepl: response.ok, // Backend verwendet DeepL
-      status: response.status
-    };
-
-    console.log('Translation API availability:', availability);
-    return availability;
+    return { backend: response.ok, mock: true, deepl: response.ok, status: response.status };
   } catch (error) {
-    console.error('Backend not available, using mock translations:', error.message);
-    return {
-      backend: false,
-      mock: true,
-      deepl: false,
-      status: 'mock-only'
-    };
+    return { backend: false, mock: true, deepl: false, status: 'mock-only' };
   }
 };
 
