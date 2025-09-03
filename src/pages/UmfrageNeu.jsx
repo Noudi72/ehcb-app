@@ -26,18 +26,49 @@ const UmfrageNeu = () => {
         console.log("📥 Type:", typeof activeSurveys);
         console.log("� Is Array:", Array.isArray(activeSurveys));
         
-        // Filter für Team - AUCH FÜR COACHES
+        // LADE ECHTE FRAGEN für jede Umfrage
+        const surveysWithQuestions = await Promise.all(
+          activeSurveys.map(async (survey) => {
+            if (survey.questions && survey.questions.length > 0) {
+              // Lade vollständige Fragen-Objekte
+              const questionPromises = survey.questions.map(async (questionId) => {
+                try {
+                  const questionResponse = await fetch(`https://ehcb-app-production.up.railway.app/questions/${questionId}`);
+                  return await questionResponse.json();
+                } catch (error) {
+                  console.error(`Fehler beim Laden der Frage ${questionId}:`, error);
+                  return null;
+                }
+              });
+              const fullQuestions = await Promise.all(questionPromises);
+              survey.questions = fullQuestions.filter(q => q !== null);
+            }
+            return survey;
+          })
+        );
+        
+        console.log("📝 Umfragen mit vollständigen Fragen:", surveysWithQuestions);
+        
+        // Filter für Team - EINFACHE COACH-ERKENNUNG
         const userTeams = user?.teams || [];
-        const isCoach = user?.username === 'coach';
+        const isCoach = user?.username === 'coach' || user?.name === 'coach' || user?.role === 'coach';
+        
+        console.log("👤 User Check:", { 
+          username: user?.username, 
+          name: user?.name, 
+          role: user?.role, 
+          isCoach: isCoach,
+          teams: userTeams 
+        });
         
         let filteredSurveys;
         if (isCoach) {
           // Coaches sehen ALLE aktiven Umfragen
-          filteredSurveys = activeSurveys;
+          filteredSurveys = surveysWithQuestions;
           console.log("👨‍💼 Coach sieht alle Umfragen:", filteredSurveys.length);
         } else {
           // Spieler sehen nur team-spezifische Umfragen
-          filteredSurveys = activeSurveys.filter(survey => {
+          filteredSurveys = surveysWithQuestions.filter(survey => {
           filteredSurveys = activeSurveys.filter(survey => {
             if (!survey.targetTeams || survey.targetTeams.length === 0) return true;
             return survey.targetTeams.some(team => userTeams.includes(team));
