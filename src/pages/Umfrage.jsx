@@ -523,7 +523,7 @@ export default function Umfrage() {
             )}
             
             <div className="mb-8">
-              {currentQuestions.length > 0 && activeQuestion < currentQuestions.length && (
+              {selectedSurvey && currentQuestions.length > 0 && (
                 <>
                   <div className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                     {t('survey.questionOf')} {activeQuestion + 1} {t('survey.of')} {currentQuestions.length}
