@@ -77,12 +77,16 @@ export default function Umfrage() {
       
       setActiveSurveys(sortedSurveys);
       console.log("🏁 [VEREINFACHT] Umfragen geladen:", sortedSurveys.map(s => ({ id: s.id, title: s.title })));
+      console.log("📊 State wird gesetzt - activeSurveys:", sortedSurveys.length, "Umfragen");
       
       if (sortedSurveys.length > 0) {
         const latestSurvey = sortedSurveys[0];
-        setSelectedSurvey(latestSurvey);
-        setCurrentQuestions(latestSurvey.questions || []);
+        console.log("🎯 Erste Umfrage automatisch ausgewählt:", latestSurvey.title);
+        // NICHT automatisch auswählen - User soll wählen
+        // setSelectedSurvey(latestSurvey);
+        // setCurrentQuestions(latestSurvey.questions || []);
       } else {
+        console.log("❌ Keine Umfragen verfügbar für diesen Spieler");
         setSelectedSurvey(null);
         setCurrentQuestions([]);
       }
@@ -97,12 +101,15 @@ export default function Umfrage() {
   
   // Umfragen basierend auf User-Daten laden
   useEffect(() => {
+    console.log("🔄 useEffect ausgeführt - User:", user?.name, "Coach:", isCoach);
+    
     // Verwende die neue direkte Methode anstatt der alten
     if (!isCoach && !user) {
       console.log("⏳ Warte auf User-Daten für Team-Filterung...");
       return;
     }
     
+    console.log("✅ Starte Umfrage-Ladung für:", user?.name || 'Coach');
     loadTeamFilteredSurveys();
   }, [user, isCoach]);
   
@@ -414,11 +421,11 @@ export default function Umfrage() {
               </div>
             )}
 
-            {/* Survey Auswahl mit Cards */}
-            {activeSurveys.length > 0 && activeSurveys.length > 1 && !selectedSurvey && (
+            {/* Survey Auswahl mit Cards - IMMER anzeigen wenn Umfragen vorhanden */}
+            {activeSurveys.length > 0 && !selectedSurvey && (
               <div className="mb-6">
                 <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">
-                  {t('survey.chooseSurvey')}
+                  {activeSurveys.length === 1 ? 'Verfügbare Umfrage:' : t('survey.chooseSurvey')}
                 </h2>
                 <div className="space-y-3">
                   {activeSurveys.map(survey => (
@@ -470,7 +477,8 @@ export default function Umfrage() {
               </div>
             )}
             
-            {(activeSurveys.length <= 1 || selectedSurvey) && activeQuestion === 0 && (
+            {/* Umfrage-Beantwortung nur anzeigen wenn eine Umfrage ausgewählt wurde */}
+            {selectedSurvey && activeQuestion === 0 && (
               <div className="mb-6">
                 <label htmlFor="playerName" className="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t('survey.yourName')}
