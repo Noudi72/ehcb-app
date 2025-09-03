@@ -1,97 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useUmfrage } from '../context/UmfrageContext';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
 
 const UmfrageNeu = () => {
   const { user } = useAuth();
-  const [surveys, setSurveys] = useState([]);
+  const { surveys, loading, fetchSurveys, submitSurveyResponse } = useUmfrage();
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [loading, setLoading] = useState(true);
 
-  // Umfragen laden
+  // Umfragen beim Laden der Komponente abrufen
   useEffect(() => {
-    const loadSurveys = async () => {
-      try {
-        console.log("🚀 Lade Umfragen für:", user?.username);
-        
-        // KORREKTE API - wie in der alten Umfrage-Seite
-        const response = await fetch('https://ehcb-app-production.up.railway.app/surveys');
-        const allSurveys = await response.json();
-        const activeSurveys = allSurveys.filter(survey => survey.active);
-        
-        console.log("📥 Alle aktiven Umfragen:", activeSurveys);
-        console.log("📥 Type:", typeof activeSurveys);
-        console.log("� Is Array:", Array.isArray(activeSurveys));
-        
-        // LADE ECHTE FRAGEN für jede Umfrage
-        const surveysWithQuestions = await Promise.all(
-          activeSurveys.map(async (survey) => {
-            if (survey.questions && survey.questions.length > 0) {
-              // Lade vollständige Fragen-Objekte
-              const questionPromises = survey.questions.map(async (questionId) => {
-                try {
-                  const questionResponse = await fetch(`https://ehcb-app-production.up.railway.app/questions/${questionId}`);
-                  return await questionResponse.json();
-                } catch (error) {
-                  console.error(`Fehler beim Laden der Frage ${questionId}:`, error);
-                  return null;
-                }
-              });
-              const fullQuestions = await Promise.all(questionPromises);
-              survey.questions = fullQuestions.filter(q => q !== null);
-            }
-            return survey;
-          })
-        );
-        
-        console.log("📝 Umfragen mit vollständigen Fragen:", surveysWithQuestions);
-        
-        // Filter für Team - EINFACHE COACH-ERKENNUNG
-        const userTeams = user?.teams || [];
-        const isCoach = user?.username === 'coach' || user?.name === 'coach' || user?.role === 'coach';
-        
-        console.log("👤 User Check:", { 
-          username: user?.username, 
-          name: user?.name, 
-          role: user?.role, 
-          isCoach: isCoach,
-          teams: userTeams 
-        });
-        
-        let filteredSurveys;
-        if (isCoach) {
-          // Coaches sehen ALLE aktiven Umfragen
-          filteredSurveys = surveysWithQuestions;
-          console.log("👨‍💼 Coach sieht alle Umfragen:", filteredSurveys.length);
-        } else {
-          // Spieler sehen nur team-spezifische Umfragen
-          filteredSurveys = surveysWithQuestions.filter(survey => {
-          filteredSurveys = activeSurveys.filter(survey => {
-            if (!survey.targetTeams || survey.targetTeams.length === 0) return true;
-            return survey.targetTeams.some(team => userTeams.includes(team));
-          });
-        }
-        
-        console.log("✅ Gefilterte Umfragen:", filteredSurveys);
-        setSurveys(filteredSurveys);
-        setLoading(false);
-      } catch (error) {
-        console.error("❌ Fehler beim Laden:", error);
-        setLoading(false);
-      }
-    };
-
     if (user?.username) {
-      loadSurveys();
+      fetchSurveys();
     }
-  }, [user]);
+  }, [user?.username, fetchSurveys]);
+
+  // Gefilterte Umfragen basierend auf Benutzer und Team
+  const filteredSurveys = React.useMemo(() => {
+    if (!surveys || !Array.isArray(surveys)) return [];
+    
+    // Nur aktive Umfragen anzeigen
+    const activeSurveys = surveys.filter(survey => survey.active);
+    
+    // Team-Filter anwenden
+    const userTeams = user?.teams || [];
+    const isCoach = user?.username === 'coach' || user?.name === 'coach' || user?.role === 'coach';
+    
+    if (isCoach) {
+      // Coaches sehen ALLE aktiven Umfragen
+      return activeSurveys;
+    } else {
+      // Spieler sehen nur team-spezifische Umfragen
+      return activeSurveys.filter(survey => {
+        if (!survey.target_teams || survey.target_teams.length === 0) return true;
+        return survey.target_teams.some(team => userTeams.includes(team));
+      });
+    }
+  }, [surveys, user]);
 
   // Umfrage auswählen
   const selectSurvey = (survey) => {
-    console.log("🎯 Umfrage ausgewählt:", survey);
     setSelectedSurvey(survey);
     setCurrentQuestion(0);
     setAnswers({});
@@ -105,14 +56,13 @@ const UmfrageNeu = () => {
     }));
   };
 
-  // Nächste Frage
+  // Navigation zwischen Fragen
   const nextQuestion = () => {
-    if (currentQuestion < selectedSurvey.questions.length - 1) {
+    if (selectedSurvey?.questions && currentQuestion < selectedSurvey.questions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
     }
   };
 
-  // Vorherige Frage
   const prevQuestion = () => {
     if (currentQuestion > 0) {
       setCurrentQuestion(prev => prev - 1);
@@ -122,22 +72,22 @@ const UmfrageNeu = () => {
   // Umfrage abschicken
   const submitSurvey = async () => {
     try {
-      const response = await fetch('https://ehcb-app-production.up.railway.app/api/survey-responses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          surveyId: selectedSurvey.id,
-          playerName: user?.username || 'Anonym',
-          responses: answers,
-          submittedAt: new Date().toISOString()
-        })
-      });
+      const responseData = {
+        survey_id: selectedSurvey.id,
+        player_name: user?.username || 'Anonym',
+        responses: answers,
+        submitted_at: new Date().toISOString()
+      };
 
-      if (response.ok) {
+      const success = await submitSurveyResponse(responseData);
+      
+      if (success) {
         alert('Umfrage erfolgreich übermittelt!');
         setSelectedSurvey(null);
         setCurrentQuestion(0);
         setAnswers({});
+      } else {
+        alert('Fehler beim Übermitteln der Umfrage.');
       }
     } catch (error) {
       console.error('Fehler beim Übermitteln:', error);
@@ -158,7 +108,7 @@ const UmfrageNeu = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
@@ -170,19 +120,36 @@ const UmfrageNeu = () => {
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Umfragen</h1>
           
-          {/* Kein selectedSurvey - zeige Auswahl */}
+          {/* Debug-Info */}
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
+            <p><strong>User:</strong> {user?.username || 'Nicht eingeloggt'}</p>
+            <p><strong>Surveys loaded:</strong> {surveys?.length || 0}</p>
+            <p><strong>Filtered surveys:</strong> {filteredSurveys?.length || 0}</p>
+          </div>
+
           {!selectedSurvey && (
             <div>
-              {surveys.length === 0 ? (
+              {filteredSurveys.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-600">Keine Umfragen verfügbar.</p>
+                  {surveys && surveys.length > 0 && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Es gibt {surveys.length} Umfragen, aber keine für Ihr Team.
+                    </p>
+                  )}
+                  <button 
+                    onClick={() => fetchSurveys(true)}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    � Neu laden
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium text-gray-700 mb-4">
-                    Verfügbare Umfragen ({surveys.length}):
+                    Verfügbare Umfragen ({filteredSurveys.length}):
                   </h2>
-                  {surveys.map(survey => (
+                  {filteredSurveys.map(survey => (
                     <div
                       key={survey.id}
                       onClick={() => selectSurvey(survey)}
@@ -192,6 +159,11 @@ const UmfrageNeu = () => {
                       <p className="text-sm text-gray-600">{survey.description}</p>
                       <div className="mt-2 text-xs text-gray-500">
                         📋 {survey.questions?.length || 0} Fragen
+                        {survey.target_teams && survey.target_teams.length > 0 && (
+                          <span className="ml-2">
+                            👥 Teams: {survey.target_teams.join(', ')}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -199,8 +171,7 @@ const UmfrageNeu = () => {
               )}
             </div>
           )}
-          
-          {/* selectedSurvey vorhanden - zeige Fragen */}
+
           {selectedSurvey && (
             <div>
               <div className="mb-4 flex items-center justify-between">
@@ -224,7 +195,6 @@ const UmfrageNeu = () => {
                       {selectedSurvey.questions[currentQuestion]?.question || 'Frage nicht verfügbar'}
                     </h3>
                     
-                    {/* Antwort-Input */}
                     <div className="space-y-3">
                       {selectedSurvey.questions[currentQuestion]?.type === 'multiple-choice' ? (
                         selectedSurvey.questions[currentQuestion]?.options?.map((option, index) => (
@@ -252,7 +222,6 @@ const UmfrageNeu = () => {
                     </div>
                   </div>
                   
-                  {/* Navigation */}
                   <div className="flex justify-between">
                     <button
                       onClick={prevQuestion}
