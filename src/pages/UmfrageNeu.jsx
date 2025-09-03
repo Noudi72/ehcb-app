@@ -3,32 +3,61 @@ import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
 import { API_BASE_URL } from '../config/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const UmfrageNeu = () => {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
 
+  const reload = async () => {
+    try {
+      setLoading(true);
+      // Fetch all surveys
+      const res = await fetch(`${API_BASE_URL}/surveys`);
+      const rawSurveys = await res.json();
+      const list = Array.isArray(rawSurveys) ? rawSurveys : [];
+
+      // Fetch all questions and map by id
+      const qRes = await fetch(`${API_BASE_URL}/questions`);
+      const allQuestions = await qRes.json();
+      const questionById = new Map(
+        (Array.isArray(allQuestions) ? allQuestions : []).map(q => [String(q.id), q])
+      );
+
+      // Hydrate each survey's questions (support both array of IDs and embedded questions)
+      const hydrated = list.map(s => {
+        const qIds = Array.isArray(s.questions) && s.questions.length > 0 && typeof s.questions[0] !== 'object'
+          ? s.questions
+          : (Array.isArray(s.questions) ? s.questions.map(q => q.id) : []);
+        const qs = qIds
+          .map(id => questionById.get(String(id)))
+          .filter(Boolean)
+          .map(q => ({
+            ...q,
+            // language-aware text fallback
+            question: (q.translations && q.translations[language]) || q.question || q.text || 'Frage',
+          }));
+        return { ...s, questions: qs };
+      });
+
+      setSurveys(hydrated);
+    } catch (e) {
+      console.error('Fehler beim Laden der Umfragen/Fragen', e);
+      setSurveys([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Umfragen beim Laden der Komponente abrufen
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API_BASE_URL}/surveys`);
-        const all = await res.json();
-        setSurveys(Array.isArray(all) ? all : []);
-      } catch (e) {
-        console.error('Fehler beim Laden der Umfragen', e);
-        setSurveys([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (user?.username) load();
-  }, [user?.username]);
+    if (user?.username) reload();
+  }, [user?.username, language]);
 
   // Gefilterte Umfragen basierend auf Benutzer und Team
   const filteredSurveys = React.useMemo(() => {
@@ -83,16 +112,17 @@ const UmfrageNeu = () => {
       });
       const ok = res.ok;
       if (ok) {
-        alert('Umfrage erfolgreich übermittelt!');
+        alert(t('survey.sent') || 'Umfrage erfolgreich übermittelt!');
         setSelectedSurvey(null);
         setCurrentQuestion(0);
         setAnswers({});
+        reload();
       } else {
-        alert('Fehler beim Übermitteln der Umfrage.');
+        alert(t('survey.submitError') || 'Fehler beim Übermitteln der Umfrage.');
       }
     } catch (error) {
       console.error('Fehler beim Übermitteln:', error);
-      alert('Fehler beim Übermitteln der Umfrage.');
+      alert(t('survey.submitError') || 'Fehler beim Übermitteln der Umfrage.');
     }
   };
 
@@ -103,7 +133,7 @@ const UmfrageNeu = () => {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p>Lade Umfragen...</p>
+            <p>{t('common.loading') || 'Lade Umfragen...'}</p>
           </div>
         </div>
       </div>
@@ -119,7 +149,7 @@ const UmfrageNeu = () => {
       
       <main className="flex-1 flex flex-col items-center px-4 py-8">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Umfragen</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('survey.title') || 'Umfragen'}</h1>
           
           {/* Debug-Info */}
           <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
@@ -132,23 +162,23 @@ const UmfrageNeu = () => {
             <div>
               {filteredSurveys.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-600">Keine Umfragen verfügbar.</p>
+                  <p className="text-gray-600">{t('survey.noneAvailable') || 'Keine Umfragen verfügbar.'}</p>
                   {surveys && surveys.length > 0 && (
                     <p className="text-sm text-gray-500 mt-2">
-                      Es gibt {surveys.length} Umfragen, aber keine für Ihr Team.
+                      {t('survey.noneForTeam', { count: surveys.length }) || `Es gibt ${surveys.length} Umfragen, aber keine für Ihr Team.`}
                     </p>
                   )}
                   <button 
-                    onClick={() => fetchSurveys(true)}
+                    onClick={reload}
                     className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
-                    � Neu laden
+                    ↻ {t('common.reload') || 'Neu laden'}
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium text-gray-700 mb-4">
-                    Verfügbare Umfragen ({filteredSurveys.length}):
+                    {t('survey.available', { count: filteredSurveys.length }) || `Verfügbare Umfragen (${filteredSurveys.length}):`}
                   </h2>
                   {filteredSurveys.map(survey => (
                     <div
@@ -159,7 +189,7 @@ const UmfrageNeu = () => {
                       <h3 className="font-semibold text-gray-900 mb-1">{survey.title}</h3>
                       <p className="text-sm text-gray-600">{survey.description}</p>
                       <div className="mt-2 text-xs text-gray-500">
-                        📋 {survey.questions?.length || 0} Fragen
+                        📋 {survey.questions?.length || 0} {t('survey.questions') || 'Fragen'}
                         {survey.target_teams && survey.target_teams.length > 0 && (
                           <span className="ml-2">
                             👥 Teams: {survey.target_teams.join(', ')}
@@ -180,10 +210,10 @@ const UmfrageNeu = () => {
                   onClick={() => setSelectedSurvey(null)}
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                 >
-                  ← Zurück zur Auswahl
+                  ← {t('survey.backToSelection') || 'Zurück zur Auswahl'}
                 </button>
                 <span className="text-sm text-gray-500">
-                  Frage {currentQuestion + 1} von {selectedSurvey.questions?.length || 0}
+                  {t('survey.question')} {currentQuestion + 1} {t('survey.of')} {selectedSurvey.questions?.length || 0}
                 </span>
               </div>
               
@@ -215,7 +245,7 @@ const UmfrageNeu = () => {
                         <textarea
                           value={answers[selectedSurvey.questions[currentQuestion]?.id] || ''}
                           onChange={(e) => saveAnswer(selectedSurvey.questions[currentQuestion].id, e.target.value)}
-                          placeholder="Ihre Antwort hier eingeben..."
+                          placeholder={t('survey.answerPlaceholder') || 'Ihre Antwort hier eingeben...'}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           rows={4}
                         />
@@ -233,7 +263,7 @@ const UmfrageNeu = () => {
                           : 'bg-gray-600 text-white hover:bg-gray-700'
                       }`}
                     >
-                      Zurück
+                      {t('survey.previous') || 'Zurück'}
                     </button>
                     
                     {currentQuestion < selectedSurvey.questions.length - 1 ? (
@@ -241,21 +271,21 @@ const UmfrageNeu = () => {
                         onClick={nextQuestion}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                       >
-                        Weiter
+                        {t('survey.next') || 'Weiter'}
                       </button>
                     ) : (
                       <button
                         onClick={submitSurvey}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                       >
-                        Absenden
+                        {t('survey.submit') || 'Absenden'}
                       </button>
                     )}
                   </div>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-red-600">Keine Fragen in dieser Umfrage gefunden.</p>
+                  <p className="text-red-600">{t('survey.noQuestions') || 'Keine Fragen in dieser Umfrage gefunden.'}</p>
                 </div>
               )}
             </div>
