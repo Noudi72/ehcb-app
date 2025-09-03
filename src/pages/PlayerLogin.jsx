@@ -38,10 +38,13 @@ export default function PlayerLogin() {
       // Erstelle einen eindeutigen Username basierend auf Namen (mit Trimming)
       const username = `${formData.name.toLowerCase().trim().replace(/\s+/g, "")}`;
       
-      // Prüfe ob User bereits existiert
+      // Prüfe ob User bereits existiert (nach username oder name)
       const response = await fetch(`${API_BASE_URL}/users`);
       const users = await response.json();
-      const existingUser = users.find(u => u.username === username);
+      const existingUser = users.find(u => 
+        u.username === username || 
+        u.name === formData.name.trim()
+      );
 
       if (existingUser) {
         if (existingUser.status === "pending") {
@@ -50,7 +53,8 @@ export default function PlayerLogin() {
           return;
         } else if (existingUser.status === "approved") {
           // User kann sich einloggen
-          await login(user.username, "", existingUser);
+          console.log("🔑 Bestehender User gefunden:", existingUser.name);
+          await login(existingUser.username, "", existingUser);
           navigate("/");
           return;
         } else if (existingUser.status === "rejected") {
