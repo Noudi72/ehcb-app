@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useUmfrage } from '../context/UmfrageContext';
+import { useUmfrage } from "../context/UmfrageContext-new";
 
 // Custom Hook für aggressives Daten-Refresh
 export const useAutoRefresh = (dependencies = []) => {

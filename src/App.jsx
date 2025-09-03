@@ -20,7 +20,7 @@ import AITranslationDemoSimple from "./pages/AITranslationDemoSimple";
 import { AuthProvider } from "./context/AuthContext";
 import { ReflexionProvider } from "./context/ReflexionContext";
 import { NotificationProvider } from "./context/NotificationContext";
-import { UmfrageProvider } from "./context/UmfrageContext";
+import { UmfrageProvider } from "./context/UmfrageContext-new";
 import { SportFoodProvider } from "./context/SportFoodContext";
 import { NewsProvider } from "./context/NewsContext";
 import { ThemeProvider } from "./context/ThemeContext";

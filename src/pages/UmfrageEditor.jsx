@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useUmfrage } from "../context/UmfrageContext";
+import { useUmfrage } from "../context/UmfrageContext-new";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";

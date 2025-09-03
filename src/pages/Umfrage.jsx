@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useUmfrage } from "../context/UmfrageContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../config/api";
@@ -8,7 +7,6 @@ import BackButton from "../components/BackButton";
 
 
 export default function Umfrage() {
-  const { questions, surveys, getActiveSurveysWithQuestions, getTranslatedSurveysWithQuestions, getTranslatedQuestions, submitSurveyResponse, loading, error } = useUmfrage();
   const { t, language } = useLanguage();
   const { user, isCoach } = useAuth();
   const [activeQuestion, setActiveQuestion] = useState(0);
@@ -19,6 +17,21 @@ export default function Umfrage() {
   const [activeSurveys, setActiveSurveys] = useState([]);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   
+  // Neue, einfache Funktion zum Absenden der Umfrage-Antworten
+  const submitSurveyResponse = async (payload) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/survey-responses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, submittedAt: new Date().toISOString() })
+      });
+      return res.ok;
+    } catch (e) {
+      console.error('Fehler beim Speichern der Antwort:', e);
+      return false;
+    }
+  };
+
   // Vereinfachte Team-gefilterte Umfrage-Ladung
   const loadTeamFilteredSurveys = async () => {
     try {
@@ -199,12 +212,11 @@ export default function Umfrage() {
         console.log("Umfrage erfolgreich abgesendet");
         setSubmitted(true);
       } else {
-        console.error("Fehler beim Absenden der Umfrage - Server meldete keinen Erfolg");
-        alert("Beim Absenden der Umfrage ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+        alert(t('survey.submitError') || "Fehler beim Absenden der Umfrage");
       }
     } catch (error) {
-      console.error("Fehler beim Absenden der Umfrage:", error);
-      alert("Beim Absenden der Umfrage ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+      console.error("Fehler beim Senden der Umfrage:", error);
+      alert(t('survey.submitError') || "Fehler beim Absenden der Umfrage");
     }
   };
   
@@ -505,7 +517,7 @@ export default function Umfrage() {
                 {selectedSurvey && selectedSurvey.anonymous && (
                   <div className="mt-3 flex items-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-green-800 dark:text-green-300 border border-green-200 dark:border-green-700">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                     <span className="text-sm">{t('survey.anonymous')}</span>
                   </div>
@@ -514,7 +526,7 @@ export default function Umfrage() {
                 {selectedSurvey && !selectedSurvey.anonymous && (
                   <div className="mt-3 flex items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span className="text-sm">{t('survey.disclaimer')}</span>
                   </div>

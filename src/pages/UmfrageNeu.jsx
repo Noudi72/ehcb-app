@@ -1,44 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useUmfrage } from '../context/UmfrageContext';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
+import { API_BASE_URL } from '../config/api';
 
 const UmfrageNeu = () => {
   const { user } = useAuth();
-  const { surveys, loading, fetchSurveys, submitSurveyResponse } = useUmfrage();
+  const [surveys, setSurveys] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
 
   // Umfragen beim Laden der Komponente abrufen
   useEffect(() => {
-    if (user?.username) {
-      fetchSurveys();
-    }
-  }, [user?.username, fetchSurveys]);
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_BASE_URL}/surveys`);
+        const all = await res.json();
+        setSurveys(Array.isArray(all) ? all : []);
+      } catch (e) {
+        console.error('Fehler beim Laden der Umfragen', e);
+        setSurveys([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user?.username) load();
+  }, [user?.username]);
 
   // Gefilterte Umfragen basierend auf Benutzer und Team
   const filteredSurveys = React.useMemo(() => {
     if (!surveys || !Array.isArray(surveys)) return [];
-    
-    // Nur aktive Umfragen anzeigen
-    const activeSurveys = surveys.filter(survey => survey.active);
-    
-    // Team-Filter anwenden
+    const activeSurveys = surveys.filter(survey => survey.active || survey.status === 'active');
     const userTeams = user?.teams || [];
     const isCoach = user?.username === 'coach' || user?.name === 'coach' || user?.role === 'coach';
-    
-    if (isCoach) {
-      // Coaches sehen ALLE aktiven Umfragen
-      return activeSurveys;
-    } else {
-      // Spieler sehen nur team-spezifische Umfragen
-      return activeSurveys.filter(survey => {
-        if (!survey.target_teams || survey.target_teams.length === 0) return true;
-        return survey.target_teams.some(team => userTeams.includes(team));
-      });
-    }
+    if (isCoach) return activeSurveys;
+    return activeSurveys.filter(survey => {
+      const target = survey.target_teams || survey.targetTeams || [];
+      if (!target || target.length === 0) return true;
+      return target.some(team => userTeams.includes(team));
+    });
   }, [surveys, user]);
 
   // Umfrage auswählen
@@ -50,10 +53,7 @@ const UmfrageNeu = () => {
 
   // Antwort speichern
   const saveAnswer = (questionId, answer) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
 
   // Navigation zwischen Fragen
@@ -64,9 +64,7 @@ const UmfrageNeu = () => {
   };
 
   const prevQuestion = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(prev => prev - 1);
-    }
+    if (currentQuestion > 0) setCurrentQuestion(prev => prev - 1);
   };
 
   // Umfrage abschicken
@@ -78,10 +76,13 @@ const UmfrageNeu = () => {
         responses: answers,
         submitted_at: new Date().toISOString()
       };
-
-      const success = await submitSurveyResponse(responseData);
-      
-      if (success) {
+      const res = await fetch(`${API_BASE_URL}/survey-responses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(responseData)
+      });
+      const ok = res.ok;
+      if (ok) {
         alert('Umfrage erfolgreich übermittelt!');
         setSelectedSurvey(null);
         setCurrentQuestion(0);
@@ -108,7 +109,7 @@ const UmfrageNeu = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />

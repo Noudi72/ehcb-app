@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useUmfrage } from "../context/UmfrageContext";
+import { useUmfrage } from "../context/UmfrageContext-new";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLocation, useNavigate } from "react-router-dom";

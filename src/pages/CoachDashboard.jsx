@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useUmfrage } from "../context/UmfrageContext";
+import { useUmfrage } from "../context/UmfrageContext-new";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import PendingRegistrations from "../components/PendingRegistrations";

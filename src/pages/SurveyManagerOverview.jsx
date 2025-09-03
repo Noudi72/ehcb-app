@@ -1,5 +1,5 @@
 import React from "react";
-import { useUmfrage } from "../context/UmfrageContext";
+import { useUmfrage } from "../context/UmfrageContext-new";
 
 function StatusBadge({ status }) {
   const color = {
