@@ -11,7 +11,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node server-mongodb.js",
+    "start": "node server.cjs",
     "backend": "node server.cjs",
     "backend:mongodb": "node server-mongodb.js",
     "vercel-build": "npm run build"
