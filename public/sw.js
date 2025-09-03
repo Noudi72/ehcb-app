@@ -1,26 +1,68 @@
-// Vereinfachter Service Worker für EHC Biel Spirit App
-// Versionierung: erhöhe diese Zahl oder nutze Datum, um Caches bei Deploys zu invalidieren
-const CACHE_VERSION = new Date().toISOString().split('T')[0].replace(/-/g, ''); // e.g. 20250831
-const CACHE_NAME = `ehc-spirit-${CACHE_VERSION}`;
+// SERVICE WORKER DEAKTIVIERT - DEBUGGING
+// Dieser Service Worker macht nichts, um Caching-Probleme zu vermeiden
 
-// Dynamische Base URL für GitHub Pages Support
-const getBaseUrl = () => {
-  const url = new URL(self.location);
-  // Für GitHub Pages mit Projektseiten wird der Pfad /ehcb-app/ verwendet
-  // Host-unabhängig, nur am Pfad ausrichten
-  if (url.pathname.startsWith('/ehcb-app/')) {
-    return '/ehcb-app';
-  }
-  return '';
-};
+console.log('🚫 SERVICE WORKER DEAKTIVIERT FÜR DEBUGGING');
 
-const BASE_URL = getBaseUrl();
+// Lösche alle existierenden Caches
+self.addEventListener('install', (event) => {
+  console.log('🗑️ Lösche alle Caches...');
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          console.log('🗑️ Lösche Cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      console.log('✅ Alle Caches gelöscht');
+      return self.skipWaiting();
+    })
+  );
+});
 
-const urlsToCache = [
-  `${BASE_URL}/`,
-  `${BASE_URL}/manifest.json`,
-  `${BASE_URL}/u18-team_app-icon.png`
-];
+self.addEventListener('activate', (event) => {
+  console.log('🔄 Service Worker aktiviert - übernehme Kontrolle');
+  event.waitUntil(self.clients.claim());
+});
+
+// Keine Fetch-Interception - alles geht direkt an den Server
+self.addEventListener('fetch', (event) => {
+  // Tu nichts - lass alle Requests normal durchgehen
+});
+
+// SERVICE WORKER DEAKTIVIERT - DEBUGGING
+// Dieser Service Worker macht nichts, um Caching-Probleme zu vermeiden
+
+console.log('🚫 SERVICE WORKER DEAKTIVIERT FÜR DEBUGGING');
+
+// Lösche alle existierenden Caches
+self.addEventListener('install', (event) => {
+  console.log('🗑️ Lösche alle Caches...');
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          console.log('🗑️ Lösche Cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      console.log('✅ Alle Caches gelöscht');
+      return self.skipWaiting();
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('🔄 Service Worker aktiviert - übernehme Kontrolle');
+  event.waitUntil(self.clients.claim());
+});
+
+// Keine Fetch-Interception - alles geht direkt an den Server
+self.addEventListener('fetch', (event) => {
+  // Tu nichts - lass alle Requests normal durchgehen
+});
 
 // Installation des Service Workers
 self.addEventListener('install', (event) => {

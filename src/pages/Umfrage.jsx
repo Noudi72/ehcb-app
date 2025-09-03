@@ -81,7 +81,7 @@ export default function Umfrage() {
       
       if (sortedSurveys.length > 0) {
         const latestSurvey = sortedSurveys[0];
-        console.log("🎯 Erste Umfrage automatisch ausgewählt:", latestSurvey.title);
+        console.log("🎯 NEUE VERSION - Umfrage gefunden, aber NICHT automatisch ausgewählt:", latestSurvey.title);
         // NICHT automatisch auswählen - User soll wählen
         // setSelectedSurvey(latestSurvey);
         // setCurrentQuestions(latestSurvey.questions || []);
