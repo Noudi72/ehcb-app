@@ -17,37 +17,18 @@ const UmfrageNeu = () => {
       try {
         console.log("🚀 Lade Umfragen für:", user?.username);
         
-        // TESTE ZUERST: Verwende den funktionierenden API-Call der im Log Array(3) zurückgibt
-        // Der scheint von einer anderen Komponente zu kommen
+        // KORREKTE API - wie in der alten Umfrage-Seite
+        const response = await fetch('https://ehcb-app-production.up.railway.app/surveys');
+        const allSurveys = await response.json();
+        const activeSurveys = allSurveys.filter(survey => survey.active);
         
-        // NOTFALL-LÖSUNG: Direkte Umfragen ohne API-Call
-        const hardcodedSurveys = [
-          {
-            id: "1",
-            title: "Game Day Umfrage",
-            description: "Bewerte dein Spiel heute",
-            targetTeams: ["u18-elit"],
-            questions: [
-              {
-                id: "q1",
-                question: "Wie war dein Spiel heute?",
-                type: "multiple-choice",
-                options: ["Sehr gut", "Gut", "Okay", "Schlecht"]
-              },
-              {
-                id: "q2", 
-                question: "Was würdest du beim nächsten Mal anders machen?",
-                type: "text"
-              }
-            ]
-          }
-        ];
-        
-        console.log("📋 Hardcoded Surveys:", hardcodedSurveys);
+        console.log("📥 Alle aktiven Umfragen:", activeSurveys);
+        console.log("📥 Type:", typeof activeSurveys);
+        console.log("� Is Array:", Array.isArray(activeSurveys));
         
         // Filter für Team
         const userTeams = user?.teams || [];
-        const filteredSurveys = hardcodedSurveys.filter(survey => {
+        const filteredSurveys = activeSurveys.filter(survey => {
           if (!survey.targetTeams || survey.targetTeams.length === 0) return true;
           return survey.targetTeams.some(team => userTeams.includes(team));
         });
