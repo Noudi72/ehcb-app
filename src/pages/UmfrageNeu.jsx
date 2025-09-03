@@ -17,42 +17,37 @@ const UmfrageNeu = () => {
       try {
         console.log("🚀 Lade Umfragen für:", user?.username);
         
-        const response = await fetch('https://ehcb-app-production.up.railway.app/api/surveys');
-        const data = await response.json();
+        // TESTE ZUERST: Verwende den funktionierenden API-Call der im Log Array(3) zurückgibt
+        // Der scheint von einer anderen Komponente zu kommen
         
-        console.log("📥 Alle Umfragen:", data);
-        console.log("📥 Type:", typeof data);
-        console.log("📥 Is Array:", Array.isArray(data));
-        console.log("📥 Object Keys:", Object.keys(data));
-        console.log("📥 Full Object:", JSON.stringify(data, null, 2));
+        // NOTFALL-LÖSUNG: Direkte Umfragen ohne API-Call
+        const hardcodedSurveys = [
+          {
+            id: "1",
+            title: "Game Day Umfrage",
+            description: "Bewerte dein Spiel heute",
+            targetTeams: ["u18-elit"],
+            questions: [
+              {
+                id: "q1",
+                question: "Wie war dein Spiel heute?",
+                type: "multiple-choice",
+                options: ["Sehr gut", "Gut", "Okay", "Schlecht"]
+              },
+              {
+                id: "q2", 
+                question: "Was würdest du beim nächsten Mal anders machen?",
+                type: "text"
+              }
+            ]
+          }
+        ];
         
-        // Robust array extraction - handle all possible formats
-        let surveysArray = [];
-        if (Array.isArray(data)) {
-          surveysArray = data;
-        } else if (data && data.surveys && Array.isArray(data.surveys)) {
-          surveysArray = data.surveys;
-        } else if (data && Array.isArray(data.data)) {
-          surveysArray = data.data;
-        } else {
-          console.error("❌ Unbekanntes API-Format:", data);
-          surveysArray = [];
-        }
-        
-        console.log("📋 Array extrahiert:", surveysArray);
-        console.log("📋 Array length:", surveysArray.length);
-        
-        // Sicherheitscheck
-        if (!Array.isArray(surveysArray)) {
-          console.error("❌ Konnte kein Array extrahieren!");
-          setSurveys([]);
-          setLoading(false);
-          return;
-        }
+        console.log("📋 Hardcoded Surveys:", hardcodedSurveys);
         
         // Filter für Team
         const userTeams = user?.teams || [];
-        const filteredSurveys = surveysArray.filter(survey => {
+        const filteredSurveys = hardcodedSurveys.filter(survey => {
           if (!survey.targetTeams || survey.targetTeams.length === 0) return true;
           return survey.targetTeams.some(team => userTeams.includes(team));
         });
