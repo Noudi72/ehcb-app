@@ -487,8 +487,8 @@ export default function Umfrage() {
               </div>
             )}
             
-            {/* Umfrage-Beantwortung nur anzeigen wenn eine Umfrage ausgewählt wurde */}
-            {selectedSurvey && activeQuestion === 0 && (
+            {/* FRAGEN SOFORT ANZEIGEN - OHNE NAMENSEINGABE */}
+            {selectedSurvey && currentQuestions.length > 0 && (
               <div className="mb-6">
                 <label htmlFor="playerName" className="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t('survey.yourName')}
