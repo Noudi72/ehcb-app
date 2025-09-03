@@ -5,7 +5,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { API_BASE_URL } from "../config/api";
+import { users } from "../config/supabase-api";
 
 export default function PlayerLogin() {
   const { t } = useLanguage();
@@ -38,10 +38,9 @@ export default function PlayerLogin() {
       // Erstelle einen eindeutigen Username basierend auf Namen (mit Trimming)
       const username = `${formData.name.toLowerCase().trim().replace(/\s+/g, "")}`;
       
-      // Prüfe ob User bereits existiert (nach username oder name)
-      const response = await fetch(`${API_BASE_URL}/users`);
-      const users = await response.json();
-      const existingUser = users.find(u => 
+      // Prüfe ob User bereits existiert via Supabase
+      const allUsers = await users.getAll();
+      const existingUser = allUsers.find(u => 
         u.username === username || 
         u.name === formData.name.trim()
       );
@@ -75,18 +74,12 @@ export default function PlayerLogin() {
         status: "approved", // Approved status für UserManager Aktionen
         teams: [formData.mainTeam], // Automatisch zum gewählten Team zugewiesen
         active: true, // Sofort verfügbar
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       };
 
-      const createResponse = await fetch(`${API_BASE_URL}/users`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(newUser)
-      });
+      const newUserResponse = await users.create(newUser);
 
-      if (!createResponse.ok) {
+      if (!newUserResponse) {
         throw new Error(t('playerLogin.registrationError'));
       }
 

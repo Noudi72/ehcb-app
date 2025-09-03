@@ -241,12 +241,44 @@ export const responses = {
 
 // User Functions
 export const users = {
+  async getAll() {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  },
+
+  async getById(id) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
   async getByUsername(username) {
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('username', username)
       .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  async getPending() {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
     
     if (error) throw error
     return data
@@ -268,6 +300,60 @@ export const users = {
       .from('users')
       .update(updates)
       .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  async delete(id) {
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id)
+    
+    if (error) throw error
+    return true
+  },
+
+  async approve(id, teamAssignment = null) {
+    const updates = { status: 'approved' }
+    if (teamAssignment) {
+      updates.teams = teamAssignment
+    }
+    
+    return await this.update(id, updates)
+  }
+}
+
+// Teams Functions
+export const teams = {
+  async getAll() {
+    const { data, error } = await supabase
+      .from('teams')
+      .select('*')
+      .order('name', { ascending: true })
+    
+    if (error) throw error
+    return data
+  },
+
+  async getById(id) {
+    const { data, error } = await supabase
+      .from('teams')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  async create(team) {
+    const { data, error } = await supabase
+      .from('teams')
+      .insert(team)
       .select()
       .single()
     

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { API_BASE_URL } from "../config/api";
+import { users, teams } from "../config/supabase-api";
 
 export default function UserManager() {
   const { user, isCoach } = useAuth();
@@ -21,9 +21,8 @@ export default function UserManager() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users`);
-      const data = await response.json();
-      setUsers(data.filter(u => u.role === "player")); // Nur Spieler anzeigen
+      const usersData = await users.getAll();
+      setUsers(usersData.filter(u => u.role === "player")); // Nur Spieler anzeigen
     } catch (err) {
       setError("Fehler beim Laden der Benutzer");
     } finally {
@@ -33,13 +32,9 @@ export default function UserManager() {
 
   const fetchTeams = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/teams`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const data = await response.json();
+      const teamsData = await teams.getAll();
       // Sicherstellen, dass data ein Array ist
-      setTeams(Array.isArray(data) ? data : []);
+      setTeams(Array.isArray(teamsData) ? teamsData : []);
     } catch (err) {
       console.error("Fehler beim Laden der Teams:", err);
       // Fallback: Leeres Array setzen
@@ -49,24 +44,16 @@ export default function UserManager() {
 
   const toggleUserActive = async (userId, currentStatus) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          active: !currentStatus
-        })
+      const updatedUser = await users.update(userId, {
+        active: !currentStatus
       });
 
-      if (!response.ok) {
-        throw new Error("Fehler beim Aktualisieren des Benutzers");
+      if (updatedUser) {
+        // Aktualisiere die lokale Liste
+        setUsers(users.map(u => 
+          u.id === userId ? { ...u, active: !currentStatus } : u
+        ));
       }
-
-      // Aktualisiere die lokale Liste
-      setUsers(users.map(u => 
-        u.id === userId ? { ...u, active: !currentStatus } : u
-      ));
     } catch (err) {
       setError("Fehler beim Aktualisieren des Benutzerstatus: " + err.message);
     }
@@ -78,13 +65,7 @@ export default function UserManager() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
-        method: "DELETE"
-      });
-
-      if (!response.ok) {
-        throw new Error("Fehler beim Löschen des Benutzers");
-      }
+      await users.delete(userId);
 
       // Entferne den Benutzer aus der lokalen Liste
       setUsers(users.filter(u => u.id !== userId));
