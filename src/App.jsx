@@ -53,8 +53,7 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/reflexion" element={<Reflexion />} />
-                  <Route path="/umfrage" element={<Umfrage />} />
-                  <Route path="/umfrage-neu" element={<UmfrageNeu />} />
+                  <Route path="/umfrage" element={<UmfrageNeu />} />
                   <Route path="/umfrage-results" element={
                     <ProtectedRoute>
                       <UmfrageResults />
