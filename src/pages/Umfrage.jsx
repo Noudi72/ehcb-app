@@ -78,10 +78,12 @@ export default function Umfrage() {
       setActiveSurveys(sortedSurveys);
       console.log("🏁 [VEREINFACHT] Umfragen geladen:", sortedSurveys.map(s => ({ id: s.id, title: s.title })));
       console.log("📊 State wird gesetzt - activeSurveys:", sortedSurveys.length, "Umfragen");
+      console.log("🔍 DEBUG: selectedSurvey vor if-Block:", selectedSurvey);
       
       if (sortedSurveys.length > 0) {
         const latestSurvey = sortedSurveys[0];
         console.log("🎯 NEUE VERSION - Umfrage gefunden, aber NICHT automatisch ausgewählt:", latestSurvey.title);
+        console.log("🔍 DEBUG: selectedSurvey nach Console-Log:", selectedSurvey);
         // NICHT automatisch auswählen - User soll wählen
         // setSelectedSurvey(latestSurvey);
         // setCurrentQuestions(latestSurvey.questions || []);
@@ -386,6 +388,11 @@ export default function Umfrage() {
   }
   
   // Hauptansicht der Umfrage
+  console.log("🖥️ RENDER - activeSurveys.length:", activeSurveys.length);
+  console.log("🖥️ RENDER - selectedSurvey:", selectedSurvey);
+  console.log("🖥️ RENDER - Soll Umfrage-Auswahl zeigen:", activeSurveys.length > 0 && !selectedSurvey);
+  console.log("🖥️ RENDER - currentQuestions.length:", currentQuestions.length);
+  
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-gray-900 font-sans transition-colors duration-300">
       <Header />
@@ -424,6 +431,7 @@ export default function Umfrage() {
             {/* Survey Auswahl mit Cards - IMMER anzeigen wenn Umfragen vorhanden */}
             {activeSurveys.length > 0 && !selectedSurvey && (
               <div className="mb-6">
+                {console.log("🎯 DEBUG: Zeige Umfrage-Auswahl an. activeSurveys.length:", activeSurveys.length, "selectedSurvey:", selectedSurvey)}
                 <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">
                   {activeSurveys.length === 1 ? 'Verfügbare Umfrage:' : t('survey.chooseSurvey')}
                 </h2>
