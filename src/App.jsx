@@ -4,6 +4,7 @@ import { LanguageProvider } from "./context/LanguageContext";
 import Home from "./pages/Home";
 import Reflexion from "./pages/Reflexion";
 import Umfrage from "./pages/Umfrage";
+import UmfrageNeu from "./pages/UmfrageNeu";
 import SimpleSurveyEditorNew from "./pages/SimpleSurveyEditorNew";
 import UmfrageResults from "./pages/UmfrageResults";
 import SportFood from "./pages/SportFood";
@@ -53,6 +54,7 @@ export default function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/reflexion" element={<Reflexion />} />
                   <Route path="/umfrage" element={<Umfrage />} />
+                  <Route path="/umfrage-neu" element={<UmfrageNeu />} />
                   <Route path="/umfrage-results" element={
                     <ProtectedRoute>
                       <UmfrageResults />
