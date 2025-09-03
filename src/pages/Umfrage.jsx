@@ -16,6 +16,8 @@ export default function Umfrage() {
   const [currentQuestions, setCurrentQuestions] = useState([]);
   const [activeSurveys, setActiveSurveys] = useState([]);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   // Neue, einfache Funktion zum Absenden der Umfrage-Antworten
   const submitSurveyResponse = async (payload) => {
@@ -35,6 +37,8 @@ export default function Umfrage() {
   // Vereinfachte Team-gefilterte Umfrage-Ladung
   const loadTeamFilteredSurveys = async () => {
     try {
+      setError(null);
+      setLoading(true);
       console.log("🚀 VEREINFACHTE UMFRAGE-LADUNG gestartet");
       console.log("🔍 User-Status:", { user: user?.name, isCoach, teams: user?.teams });
       
@@ -69,18 +73,31 @@ export default function Umfrage() {
         console.log(`👨‍💼 Coach oder User ohne Teams sieht alle ${activeSurveys.length} Umfragen`);
       }
       
-      // Lade Fragen für jede Umfrage (VEREINFACHT)
+      // Lade Fragen (Hydration + i18n)
       const questionsResponse = await fetch(`${API_BASE_URL}/questions`);
       const allQuestions = await questionsResponse.json();
-      
-      const surveysWithQuestions = filteredSurveys.map(survey => {
-        const surveyQuestions = survey.questions
-          .map(qId => allQuestions.find(q => q.id == qId))
-          .filter(q => q !== undefined);
-        
+      const questionById = new Map(
+        (Array.isArray(allQuestions) ? allQuestions : []).map(q => [String(q.id), q])
+      );
+
+      const surveysWithQuestions = (Array.isArray(filteredSurveys) ? filteredSurveys : []).map(survey => {
+        // Unterstütze sowohl IDs als auch eingebettete Objekte
+        const qIds = Array.isArray(survey.questions) && survey.questions.length > 0 && typeof survey.questions[0] !== 'object'
+          ? survey.questions
+          : (Array.isArray(survey.questions) ? survey.questions.map(q => q.id) : []);
+
+        const surveyQuestions = qIds
+          .map(id => questionById.get(String(id)))
+          .filter(Boolean)
+          .map(q => ({
+            ...q,
+            // Sprachfallback wie in UmfrageNeu
+            question: (q.translations && q.translations[language]) || q.question || q.text || 'Frage',
+          }));
+
         return {
           ...survey,
-          questions: surveyQuestions
+          questions: surveyQuestions,
         };
       });
       
@@ -111,6 +128,9 @@ export default function Umfrage() {
       setActiveSurveys([]);
       setSelectedSurvey(null);
       setCurrentQuestions([]);
+      setError(error?.message || 'Fehler beim Laden der Umfragen');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -126,7 +146,7 @@ export default function Umfrage() {
     
     console.log("✅ Starte Umfrage-Ladung für:", user?.name || 'Coach');
     loadTeamFilteredSurveys();
-  }, [user, isCoach]);
+  }, [user, isCoach, language]);
   
   // Initialisiere Antworten
   useEffect(() => {
