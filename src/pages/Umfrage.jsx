@@ -392,6 +392,8 @@ export default function Umfrage() {
   console.log("🖥️ RENDER - selectedSurvey:", selectedSurvey);
   console.log("🖥️ RENDER - Soll Umfrage-Auswahl zeigen:", activeSurveys.length > 0 && !selectedSurvey);
   console.log("🖥️ RENDER - currentQuestions.length:", currentQuestions.length);
+  console.log("🖥️ RENDER - activeQuestion:", activeQuestion);
+  console.log("🖥️ RENDER - Soll Fragen zeigen:", currentQuestions.length > 0 && activeQuestion < currentQuestions.length);
   
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-gray-900 font-sans transition-colors duration-300">
