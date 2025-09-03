@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
-import { API_BASE_URL } from '../config/api';
+import { surveys, questions, responses } from '../config/supabase-api';
 import { useLanguage } from '../context/LanguageContext';
 
 const UmfrageNeu = () => {
@@ -17,37 +17,36 @@ const UmfrageNeu = () => {
   const reload = async () => {
     try {
       setLoading(true);
-      // Fetch all surveys
-      const res = await fetch(`${API_BASE_URL}/surveys`);
-      const rawSurveys = await res.json();
+      // Fetch all surveys from Supabase
+      const rawSurveys = await surveys.getAll();
       const list = Array.isArray(rawSurveys) ? rawSurveys : [];
 
-      // Fetch all questions and map by id
-      const qRes = await fetch(`${API_BASE_URL}/questions`);
-      const allQuestions = await qRes.json();
+      // Fetch all questions from Supabase and map by id
+      const allQuestions = await questions.getAll();
       const questionById = new Map(
         (Array.isArray(allQuestions) ? allQuestions : []).map(q => [String(q.id), q])
       );
 
-      // Hydrate each survey's questions (support both array of IDs and embedded questions)
+      // Hydrate each survey's questions
       const hydrated = list.map(s => {
-        const qIds = Array.isArray(s.questions) && s.questions.length > 0 && typeof s.questions[0] !== 'object'
-          ? s.questions
-          : (Array.isArray(s.questions) ? s.questions.map(q => q.id) : []);
+        const qIds = Array.isArray(s.question_ids) ? s.question_ids :
+                    (Array.isArray(s.questions) && s.questions.length > 0 && typeof s.questions[0] !== 'object'
+                      ? s.questions
+                      : (Array.isArray(s.questions) ? s.questions.map(q => q.id) : []));
         const qs = qIds
           .map(id => questionById.get(String(id)))
           .filter(Boolean)
           .map(q => ({
             ...q,
             // language-aware text fallback
-            question: (q.translations && q.translations[language]) || q.question || q.text || 'Frage',
+            question: (q.translations && q.translations[language]) || q.content || q.question || q.text || 'Frage',
           }));
         return { ...s, questions: qs };
       });
 
       setSurveys(hydrated);
     } catch (e) {
-      console.error('Fehler beim Laden der Umfragen/Fragen', e);
+      console.error('Fehler beim Laden der Umfragen/Fragen von Supabase', e);
       setSurveys([]);
     } finally {
       setLoading(false);
@@ -96,7 +95,7 @@ const UmfrageNeu = () => {
     if (currentQuestion > 0) setCurrentQuestion(prev => prev - 1);
   };
 
-  // Umfrage abschicken
+  // Umfrage abschicken via Supabase
   const submitSurvey = async () => {
     try {
       const responseData = {
@@ -105,13 +104,8 @@ const UmfrageNeu = () => {
         responses: answers,
         submitted_at: new Date().toISOString()
       };
-      const res = await fetch(`${API_BASE_URL}/survey-responses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(responseData)
-      });
-      const ok = res.ok;
-      if (ok) {
+      const response = await responses.create(responseData);
+      if (response) {
         alert(t('survey.sent') || 'Umfrage erfolgreich übermittelt!');
         setSelectedSurvey(null);
         setCurrentQuestion(0);

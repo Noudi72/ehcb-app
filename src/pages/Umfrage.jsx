@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
-import { API_BASE_URL } from "../config/api";
+import { surveys, questions, responses } from "../config/supabase-api";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 
@@ -19,72 +19,72 @@ export default function Umfrage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  // Neue, einfache Funktion zum Absenden der Umfrage-Antworten
+  // Supabase-Funktion zum Absenden der Umfrage-Antworten
   const submitSurveyResponse = async (payload) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/survey-responses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, submittedAt: new Date().toISOString() })
+      const response = await responses.create({
+        survey_id: payload.surveyId,
+        player_name: payload.playerName,
+        responses: payload.answers,
+        submitted_at: new Date().toISOString()
       });
-      return res.ok;
+      return response ? true : false;
     } catch (e) {
       console.error('Fehler beim Speichern der Antwort:', e);
       return false;
     }
   };
 
-  // Vereinfachte Team-gefilterte Umfrage-Ladung
+  // Vereinfachte Team-gefilterte Umfrage-Ladung mit Supabase
   const loadTeamFilteredSurveys = async () => {
     try {
       setError(null);
       setLoading(true);
-      console.log("🚀 VEREINFACHTE UMFRAGE-LADUNG gestartet");
+      console.log("🚀 SUPABASE UMFRAGE-LADUNG gestartet");
       console.log("🔍 User-Status:", { user: user?.name, isCoach, teams: user?.teams });
       
-      // Lade alle aktiven Umfragen direkt von der API
-      const response = await fetch(`${API_BASE_URL}/surveys`);
-      const allSurveys = await response.json();
+      // Lade alle aktiven Umfragen von Supabase
+      const allSurveys = await surveys.getAll();
       const activeSurveys = allSurveys.filter(survey => survey.active);
       
-      console.log("📋 Alle aktiven Umfragen:", activeSurveys.map(s => ({ id: s.id, title: s.title, targetTeams: s.targetTeams })));
+      console.log("📋 Alle aktiven Umfragen:", activeSurveys.map(s => ({ id: s.id, title: s.title, target_teams: s.target_teams })));
       
       // VEREINFACHTE Team-Filterung für Spieler
       let filteredSurveys = activeSurveys;
       if (!isCoach && user && user.teams) {
-        console.log("🏒 [VEREINFACHT] Filtere Umfragen für Spieler:", user.name);
+        console.log("🏒 [SUPABASE] Filtere Umfragen für Spieler:", user.name);
         
         filteredSurveys = activeSurveys.filter(survey => {
           // Wenn keine targetTeams definiert sind, zeige die Umfrage allen
-          if (!survey.targetTeams || survey.targetTeams.length === 0) {
-            console.log(`✅ Umfrage "${survey.title}": Für alle Teams (keine targetTeams)`);
+          if (!survey.target_teams || survey.target_teams.length === 0) {
+            console.log(`✅ Umfrage "${survey.title}": Für alle Teams (keine target_teams)`);
             return true;
           }
           
           // Prüfe ob Spieler in einem der Ziel-Teams ist
           const userTeams = Array.isArray(user.teams) ? user.teams : [user.teams];
-          const hasMatchingTeam = survey.targetTeams.some(targetTeam => userTeams.includes(targetTeam));
-          console.log(`${hasMatchingTeam ? '✅' : '❌'} Umfrage "${survey.title}": targetTeams=${JSON.stringify(survey.targetTeams)}, userTeams=${JSON.stringify(userTeams)}, match=${hasMatchingTeam}`);
+          const hasMatchingTeam = survey.target_teams.some(targetTeam => userTeams.includes(targetTeam));
+          console.log(`${hasMatchingTeam ? '✅' : '❌'} Umfrage "${survey.title}": target_teams=${JSON.stringify(survey.target_teams)}, userTeams=${JSON.stringify(userTeams)}, match=${hasMatchingTeam}`);
           return hasMatchingTeam;
         });
         
-        console.log(`🎯 [VEREINFACHT] Von ${activeSurveys.length} Umfragen sind ${filteredSurveys.length} für Spieler sichtbar`);
+        console.log(`🎯 [SUPABASE] Von ${activeSurveys.length} Umfragen sind ${filteredSurveys.length} für Spieler sichtbar`);
       } else {
         console.log(`👨‍💼 Coach oder User ohne Teams sieht alle ${activeSurveys.length} Umfragen`);
       }
       
-      // Lade Fragen (Hydration + i18n)
-      const questionsResponse = await fetch(`${API_BASE_URL}/questions`);
-      const allQuestions = await questionsResponse.json();
+      // Lade Fragen von Supabase (bereits in surveys enthalten)
+      const allQuestions = await questions.getAll();
       const questionById = new Map(
         (Array.isArray(allQuestions) ? allQuestions : []).map(q => [String(q.id), q])
       );
 
       const surveysWithQuestions = (Array.isArray(filteredSurveys) ? filteredSurveys : []).map(survey => {
         // Unterstütze sowohl IDs als auch eingebettete Objekte
-        const qIds = Array.isArray(survey.questions) && survey.questions.length > 0 && typeof survey.questions[0] !== 'object'
-          ? survey.questions
-          : (Array.isArray(survey.questions) ? survey.questions.map(q => q.id) : []);
+        const qIds = Array.isArray(survey.question_ids) ? survey.question_ids : 
+                    (Array.isArray(survey.questions) && survey.questions.length > 0 && typeof survey.questions[0] !== 'object'
+                      ? survey.questions
+                      : (Array.isArray(survey.questions) ? survey.questions.map(q => q.id) : []));
 
         const surveyQuestions = qIds
           .map(id => questionById.get(String(id)))
@@ -92,7 +92,7 @@ export default function Umfrage() {
           .map(q => ({
             ...q,
             // Sprachfallback wie in UmfrageNeu
-            question: (q.translations && q.translations[language]) || q.question || q.text || 'Frage',
+            question: (q.translations && q.translations[language]) || q.content || q.question || q.text || 'Frage',
           }));
 
         return {
@@ -112,7 +112,7 @@ export default function Umfrage() {
       
       if (sortedSurveys.length > 0) {
         const latestSurvey = sortedSurveys[0];
-        console.log("🎯 NEUE VERSION - Umfrage gefunden, aber NICHT automatisch ausgewählt:", latestSurvey.title);
+        console.log("🎯 SUPABASE VERSION - Umfrage gefunden, aber NICHT automatisch ausgewählt:", latestSurvey.title);
         console.log("🔍 DEBUG: selectedSurvey nach Console-Log:", selectedSurvey);
         // NICHT automatisch auswählen - User soll wählen
         // setSelectedSurvey(latestSurvey);
@@ -124,7 +124,7 @@ export default function Umfrage() {
       }
       
     } catch (error) {
-      console.error("❌ Fehler beim vereinfachten Laden der Umfragen:", error);
+      console.error("❌ Fehler beim Laden der Umfragen von Supabase:", error);
       setActiveSurveys([]);
       setSelectedSurvey(null);
       setCurrentQuestions([]);
