@@ -439,32 +439,6 @@ const translations = {
       "registrationSuccess": "Registration successful! You will be notified once a coach approves your registration.",
       "errorPrefix": "Registration error: "
     },
-    // PlayerLogin translations
-    "playerLogin": {
-      "title": "Player Registration",
-      "coachPrompt": "Coach?",
-      "coachLogin": "Sign in here",
-      "description": "Register for the team app.",
-      "approvalNote": "A coach will review your registration and assign you to teams.",
-      "fullName": "Full Name",
-      "namePlaceholder": "e.g. Max Mustermann",
-      "mainTeam": "Main Team",
-      "selectTeam": "Choose your main team",
-      "teamHelp": "Your main team helps the coach with team assignment",
-      "jerseyNumber": "Jersey Number (optional)",
-      "numberPlaceholder": "e.g. 7",
-      "afterRegistration": "After registration:",
-      "step1": "A coach reviews your application",
-      "step2": "You will be assigned to appropriate teams",
-      "step3": "You get app access after approval",
-      "submit": "Submit Registration",
-      "submitting": "Registering...",
-      "alreadyRegistered": "You are already registered and waiting for coach approval.",
-      "registrationRejected": "Your registration was rejected. Please contact the coach.",
-      "registrationError": "Error creating registration",
-      "registrationSuccess": "Registration successful! You will be notified once a coach approves your registration.",
-      "errorPrefix": "Registration error: "
-    },
     // RegistrationStatus translations
     "registrationStatus": {
       "title": "Registration Status",

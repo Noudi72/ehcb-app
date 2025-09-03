@@ -94,10 +94,8 @@ export default function Umfrage() {
     }
   };
   
-  // Lade aktive Umfragen mit ihren Fragen (übersetzt) - ALTE METHODE
+  // Umfragen basierend auf User-Daten laden
   useEffect(() => {
-    const loadTranslatedSurveys = async () => {
-      try {
     // Verwende die neue direkte Methode anstatt der alten
     if (!isCoach && !user) {
       console.log("⏳ Warte auf User-Daten für Team-Filterung...");
