@@ -22,9 +22,13 @@ const UmfrageNeu = () => {
         
         console.log("📥 Alle Umfragen:", data);
         
+        // API gibt {surveys: [...]} zurück, nicht direkt ein Array
+        const surveysArray = data.surveys || data || [];
+        console.log("📋 Array extrahiert:", surveysArray);
+        
         // Filter für Team
         const userTeams = user?.teams || [];
-        const filteredSurveys = data.filter(survey => {
+        const filteredSurveys = surveysArray.filter(survey => {
           if (!survey.targetTeams || survey.targetTeams.length === 0) return true;
           return survey.targetTeams.some(team => userTeams.includes(team));
         });
