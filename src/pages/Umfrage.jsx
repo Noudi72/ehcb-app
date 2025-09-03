@@ -19,10 +19,10 @@ export default function Umfrage() {
   const [activeSurveys, setActiveSurveys] = useState([]);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   
-  // Direkte Team-gefilterte Umfrage-Ladung
+  // Vereinfachte Team-gefilterte Umfrage-Ladung
   const loadTeamFilteredSurveys = async () => {
     try {
-      console.log("🚀 DIREKTE UMFRAGE-LADUNG gestartet");
+      console.log("🚀 VEREINFACHTE UMFRAGE-LADUNG gestartet");
       console.log("🔍 User-Status:", { user: user?.name, isCoach, teams: user?.teams });
       
       // Lade alle aktiven Umfragen direkt von der API
@@ -32,53 +32,51 @@ export default function Umfrage() {
       
       console.log("📋 Alle aktiven Umfragen:", activeSurveys.map(s => ({ id: s.id, title: s.title, targetTeams: s.targetTeams })));
       
-      // Team-Filterung für Spieler
+      // VEREINFACHTE Team-Filterung für Spieler
       let filteredSurveys = activeSurveys;
-      if (!isCoach && user) {
-        console.log("🏒 [DIREKT] Filtere Umfragen für Spieler:", user.name);
+      if (!isCoach && user && user.teams) {
+        console.log("🏒 [VEREINFACHT] Filtere Umfragen für Spieler:", user.name);
         
         filteredSurveys = activeSurveys.filter(survey => {
-          // Wenn keine targetTeams definiert sind oder 'all' enthalten, zeige die Umfrage
-          if (!survey.targetTeams || survey.targetTeams.length === 0 || survey.targetTeams.includes('all')) {
-            console.log(`✅ Umfrage "${survey.title}": Für alle Teams (keine targetTeams oder 'all')`);
+          // Wenn keine targetTeams definiert sind, zeige die Umfrage allen
+          if (!survey.targetTeams || survey.targetTeams.length === 0) {
+            console.log(`✅ Umfrage "${survey.title}": Für alle Teams (keine targetTeams)`);
             return true;
           }
           
           // Prüfe ob Spieler in einem der Ziel-Teams ist
-          const userTeams = user.teams || (user.team ? [user.team] : []);
+          const userTeams = Array.isArray(user.teams) ? user.teams : [user.teams];
           const hasMatchingTeam = survey.targetTeams.some(targetTeam => userTeams.includes(targetTeam));
           console.log(`${hasMatchingTeam ? '✅' : '❌'} Umfrage "${survey.title}": targetTeams=${JSON.stringify(survey.targetTeams)}, userTeams=${JSON.stringify(userTeams)}, match=${hasMatchingTeam}`);
           return hasMatchingTeam;
         });
         
-        console.log(`🎯 [DIREKT] Von ${activeSurveys.length} Umfragen sind ${filteredSurveys.length} für Spieler sichtbar`);
+        console.log(`🎯 [VEREINFACHT] Von ${activeSurveys.length} Umfragen sind ${filteredSurveys.length} für Spieler sichtbar`);
       } else {
-        console.log(`👨‍💼 Coach sieht alle ${activeSurveys.length} Umfragen`);
+        console.log(`👨‍💼 Coach oder User ohne Teams sieht alle ${activeSurveys.length} Umfragen`);
       }
       
-      // Lade Fragen für jede Umfrage
-      const surveysWithQuestions = await Promise.all(
-        filteredSurveys.map(async (survey) => {
-          const questionsResponse = await fetch(`${API_BASE_URL}/questions`);
-          const allQuestions = await questionsResponse.json();
-          
-          const surveyQuestions = survey.questions
-            .map(qId => allQuestions.find(q => q.id == qId))
-            .filter(q => q !== undefined);
-          
-          return {
-            ...survey,
-            questions: surveyQuestions
-          };
-        })
-      );
+      // Lade Fragen für jede Umfrage (VEREINFACHT)
+      const questionsResponse = await fetch(`${API_BASE_URL}/questions`);
+      const allQuestions = await questionsResponse.json();
+      
+      const surveysWithQuestions = filteredSurveys.map(survey => {
+        const surveyQuestions = survey.questions
+          .map(qId => allQuestions.find(q => q.id == qId))
+          .filter(q => q !== undefined);
+        
+        return {
+          ...survey,
+          questions: surveyQuestions
+        };
+      });
       
       const sortedSurveys = [...surveysWithQuestions].sort((a, b) => {
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
       
       setActiveSurveys(sortedSurveys);
-      console.log("🏁 [DIREKT] Umfragen geladen:", sortedSurveys.map(s => ({ id: s.id, title: s.title })));
+      console.log("🏁 [VEREINFACHT] Umfragen geladen:", sortedSurveys.map(s => ({ id: s.id, title: s.title })));
       
       if (sortedSurveys.length > 0) {
         const latestSurvey = sortedSurveys[0];
@@ -90,7 +88,10 @@ export default function Umfrage() {
       }
       
     } catch (error) {
-      console.error("❌ Fehler beim direkten Laden der Umfragen:", error);
+      console.error("❌ Fehler beim vereinfachten Laden der Umfragen:", error);
+      setActiveSurveys([]);
+      setSelectedSurvey(null);
+      setCurrentQuestions([]);
     }
   };
   

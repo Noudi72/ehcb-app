@@ -18,10 +18,10 @@ export default function Home() {
         <div className="text-center mt-4 space-y-3 mb-6 flex-grow">
           <div>
             <Link
-              to="/player-login"
+              to="/player-signin"
               className="inline-block text-sm bg-blue-600 dark:bg-blue-700 text-white py-3 px-8 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors mr-3 font-semibold"
             >
-              {t('header.playerArea')}
+              🏒 Spieler Anmeldung
             </Link>
             <Link
               to="/coach-login"
@@ -31,6 +31,12 @@ export default function Home() {
             </Link>
           </div>
           <div className="mt-3">
+            <Link
+              to="/player-login"
+              className="text-sm text-green-600 dark:text-green-400 hover:underline mr-4"
+            >
+              📝 Erstregistrierung
+            </Link>
             <Link
               to="/registration-status"
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
