@@ -473,40 +473,179 @@ export const responses = {
   }
 }
 
-// Cardio Functions (Fallback - table doesn't exist yet)
+// Cardio Functions - FIXED with fallback to JSON
 export const cardio = {
   async getAll() {
-    console.log('📥 Cardio: returning empty array (table not available in Supabase)');
+    console.log('📥 Cardio: with fallback to db.json');
+    try {
+      // Try Supabase first
+      const { data, error } = await supabase.from('cardio_programs').select('*');
+      if (!error && data?.length > 0) {
+        return data;
+      }
+    } catch (e) {
+      console.log('📥 Supabase cardio_programs not available, using fallback');
+    }
+    
+    // Fallback: load from db.json via JSON server
+    try {
+      const response = await fetch('http://localhost:3001/cardio-programs');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Loaded', data.length, 'cardio programs from JSON fallback');
+        return data;
+      }
+    } catch (e) {
+      console.log('📥 JSON server not available either');
+    }
+    
     return [];
   },
 
   async create(cardioData) {
-    console.log('📥 Cardio: create not available (table not created)');
+    try {
+      // Try Supabase first
+      const { data, error } = await supabase
+        .from('cardio_programs')
+        .insert(cardioData)
+        .select()
+        .single();
+      
+      if (!error) return data;
+    } catch (e) {
+      console.log('📥 Supabase cardio create not available, trying JSON server');
+    }
+    
+    // Fallback to JSON server
+    try {
+      const response = await fetch('/api/cardio-programs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cardioData)
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (e) {
+      console.log('📥 JSON server cardio create also failed');
+    }
+    
     return null;
   }
 }
 
 // Fallback Functions removed - using real Supabase tables below
 
-// SportFood Functions (Fallback - tables don't exist yet)
+// SportFood Functions - FIXED with fallback to JSON
 export const sportFood = {
   async getAll() {
-    console.log('📥 SportFood: returning empty array (table not available in Supabase)');
+    console.log('📥 SportFood: fallback to db.json data');
+    try {
+      // Try Supabase first
+      const { data, error } = await supabase.from('sport_food_items').select('*');
+      if (!error && data?.length > 0) {
+        return data;
+      }
+    } catch (e) {
+      console.log('📥 Supabase sport_food_items not available, using fallback');
+    }
+    
+    // Fallback to JSON server
+    try {
+      const response = await fetch('http://localhost:3001/sport-food-items');
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      }
+    } catch (e) {
+      console.log('📥 JSON server not available either');
+    }
+    
     return [];
   },
 
   async getAllItems() {
-    console.log('📥 SportFood Items: returning empty array (table not available in Supabase)');
+    console.log('📥 SportFood Items: with fallback to db.json');
+    try {
+      // Try Supabase first
+      const { data, error } = await supabase.from('sport_food_items').select('*');
+      if (!error && data?.length > 0) {
+        return data;
+      }
+    } catch (e) {
+      console.log('📥 Supabase sport_food_items not available, using fallback');
+    }
+    
+    // Fallback: load from db.json via JSON server
+    try {
+      const response = await fetch('http://localhost:3001/sport-food-items');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Loaded', data.length, 'sport food items from JSON fallback');
+        return data;
+      }
+    } catch (e) {
+      console.log('📥 JSON server not available either');
+    }
+    
     return [];
   },
 
   async getAllCategories() {
-    console.log('📥 SportFood Categories: returning empty array (table not available in Supabase)');
+    console.log('📥 SportFood Categories: with fallback to db.json');
+    try {
+      // Try Supabase first
+      const { data, error } = await supabase.from('sport_food_categories').select('*');
+      if (!error && data?.length > 0) {
+        return data;
+      }
+    } catch (e) {
+      console.log('📥 Supabase sport_food_categories not available, using fallback');
+    }
+    
+    // Fallback: load from db.json via JSON server  
+    try {
+      const response = await fetch('http://localhost:3001/sport-food-categories');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Loaded', data.length, 'sport food categories from JSON fallback');
+        return data;
+      }
+    } catch (e) {
+      console.log('📥 JSON server not available either');
+    }
+    
     return [];
   },
 
   async create(sportFoodData) {
-    console.log('📥 SportFood: create not available (table not created)');
+    try {
+      // Try Supabase first
+      const { data, error } = await supabase
+        .from('sport_food_items')
+        .insert(sportFoodData)
+        .select()
+        .single();
+      
+      if (!error) return data;
+    } catch (e) {
+      console.log('📥 Supabase create not available, trying JSON server');
+    }
+    
+    // Fallback to JSON server
+    try {
+      const response = await fetch('/api/sport-food-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sportFoodData)
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (e) {
+      console.log('📥 JSON server create also failed');
+    }
+    
     return null;
   }
 }

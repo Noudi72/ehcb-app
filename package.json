@@ -22,7 +22,7 @@
     "axios": "^1.11.0",
     "chart.js": "^4.5.0",
     "cloudinary": "^1.41.3",
-    "dotenv": "^17.2.1",
+    "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "express-fileupload": "^1.5.2",
     "formidable": "^3.5.1",
