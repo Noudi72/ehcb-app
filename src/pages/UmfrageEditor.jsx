@@ -370,6 +370,29 @@ export default function UmfrageEditor() {
         // Fragen neu laden
         await fetchQuestions();
         
+        // Wenn es eine neue Frage ist (nicht im Edit-Modus), füge sie zur aktuellen Umfrage hinzu
+        if (!editMode && result.id) {
+          if (currentSurvey) {
+            // Nur hinzufügen, wenn die Frage noch nicht enthalten ist
+            if (!currentSurvey.questions?.includes(result.id)) {
+              setCurrentSurvey({
+                ...currentSurvey,
+                questions: [...(currentSurvey.questions || []), result.id]
+              });
+            }
+          } else {
+            // Neue Umfrage erstellen, falls noch keine existiert
+            setCurrentSurvey({
+              title: "Neue Umfrage",
+              description: "",
+              questions: [result.id],
+              resultsVisibleToPlayers: false,
+              active: true,
+              anonymous: false
+            });
+          }
+        }
+        
         // Formular zurücksetzen
         resetForm();
         
@@ -583,35 +606,39 @@ export default function UmfrageEditor() {
                 📋 Umfrage-Editor
               </h1>
               {surveyId && currentSurvey && (
-                <div className="text-gray-400 text-sm mt-1 p-2 bg-gray-800 rounded">
-                  <p>Bearbeite: "<strong>{currentSurvey.title || "⚠️ Kein Titel geladen"}</strong>"</p>
-                  <p className="text-xs">Survey ID: {surveyId} | Loaded ID: {currentSurvey.id} | Active: {currentSurvey.active ? "✅" : "❌"}</p>
-                </div>
+                <>
+                  <div className="text-gray-400 text-sm mt-1 p-2 bg-gray-800 rounded">
+                    <p>Bearbeite: "<strong>{currentSurvey.title || "⚠️ Kein Titel geladen"}</strong>"</p>
+                    <p className="text-xs">Survey ID: {surveyId} | Loaded ID: {currentSurvey.id} | Active: {currentSurvey.active ? "✅" : "❌"}</p>
+                  </div>
+                </>
               )}
             </div>
             
             {/* Step-by-Step Navigation */}
-            <div className="flex items-center space-x-2">
-              {[
-                { step: 1, label: "Einstellungen", icon: "⚙️" },
-                { step: 2, label: "Fragen", icon: "❓" },
-                { step: 3, label: "Vorschau", icon: "👁️" },
-                { step: 4, label: "Status", icon: "🚀" }
-              ].map((item) => (
-                <button
-                  key={item.step}
-                  onClick={() => setCurrentStep(item.step)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 ${
-                    currentStep === item.step
-                      ? "bg-blue-600 text-white shadow-lg"
-                      : "bg-gray-600 text-gray-300 hover:bg-gray-500"
-                  }`}
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
+            {surveyId && currentSurvey && (
+              <div className="flex items-center space-x-2">
+                {[
+                  { step: 1, label: "Einstellungen", icon: "⚙️" },
+                  { step: 2, label: "Fragen", icon: "❓" },
+                  { step: 3, label: "Vorschau", icon: "👁️" },
+                  { step: 4, label: "Status", icon: "🚀" }
+                ].map((item) => (
+                  <button
+                    key={item.step}
+                    onClick={() => setCurrentStep(item.step)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 ${
+                      currentStep === item.step
+                        ? "bg-blue-600 text-white shadow-lg"
+                        : "bg-gray-600 text-gray-300 hover:bg-gray-500"
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {error && (
@@ -1201,23 +1228,46 @@ export default function UmfrageEditor() {
                       </p>
                     )}
                     <div className="mt-4 flex items-center text-blue-100 text-sm">
-                      <span className="mr-4">📊 {questions.length} Frage{questions.length !== 1 ? 'n' : ''}</span>
-                      {currentSurvey?.anonymous && <span className="mr-4">🔒 Anonym</span>}
-                      <span>⏱️ ca. {Math.max(1, Math.ceil(questions.length * 0.5))} Minute{Math.ceil(questions.length * 0.5) !== 1 ? 'n' : ''}</span>
+                      {(() => {
+                        const surveyQuestionCount = currentSurvey?.questions
+                          ? currentSurvey.questions
+                              .map(questionId => questions.find(q => q.id === questionId))
+                              .filter(Boolean).length
+                          : 0;
+                        return (
+                          <>
+                            <span className="mr-4">📊 {surveyQuestionCount} Frage{surveyQuestionCount !== 1 ? 'n' : ''}</span>
+                            {currentSurvey?.anonymous && <span className="mr-4">🔒 Anonym</span>}
+                            <span>⏱️ ca. {Math.max(1, Math.ceil(surveyQuestionCount * 0.5))} Minute{Math.ceil(surveyQuestionCount * 0.5) !== 1 ? 'n' : ''}</span>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 
                   {/* Fragen-Vorschau */}
                   <div className="p-6 bg-gray-50">
-                    {questions.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="text-6xl mb-4">📝</div>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Noch keine Fragen</h3>
-                        <p className="text-gray-500">Gehe zurück zu Schritt 2, um Fragen hinzuzufügen.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-8">
-                        {questions.map((question, index) => (
+                    {(() => {
+                      // Hole die vollständigen Frage-Objekte basierend auf den IDs in currentSurvey.questions
+                      const surveyQuestions = currentSurvey?.questions
+                        ? currentSurvey.questions
+                            .map(questionId => questions.find(q => q.id === questionId))
+                            .filter(Boolean) // Entferne undefined Einträge
+                        : [];
+
+                      if (surveyQuestions.length === 0) {
+                        return (
+                          <div className="text-center py-12">
+                            <div className="text-6xl mb-4">📝</div>
+                            <h3 className="text-xl font-semibold text-gray-700 mb-2">Noch keine Fragen</h3>
+                            <p className="text-gray-500">Gehe zurück zu Schritt 2, um Fragen hinzuzufügen.</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-8">
+                          {surveyQuestions.map((question, index) => (
                           <div key={question.id} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                             {/* Frage Header */}
                             <div className="mb-4">
@@ -1348,7 +1398,8 @@ export default function UmfrageEditor() {
                           </p>
                         </div>
                       </div>
-                    )}
+                        );
+                    })()}
                   </div>
                 </div>
 
@@ -1782,7 +1833,6 @@ export default function UmfrageEditor() {
                 </div>
               )}
             </div>
-          )}
 
           {/* Erstellen-Tab */}
           {/* Legacy Content - wird nach und nach in die Schritte integriert */}
@@ -2439,7 +2489,6 @@ export default function UmfrageEditor() {
           )}
         </div>
       </main>
-      
     </div>
   );
 }

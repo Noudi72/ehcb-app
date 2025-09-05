@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 
 const LanguageSwitcher = ({ className = "" }) => {
   const { language, changeLanguage, currentLanguage } = useLanguage();
+  const { isDarkMode } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
   const languages = [
@@ -36,15 +38,25 @@ const LanguageSwitcher = ({ className = "" }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+        <div className={`absolute top-full right-0 mt-2 w-48 rounded-lg shadow-lg border py-1 z-50 ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-600' 
+            : 'bg-white border-gray-200'
+        }`}>
           {languages.map((language) => (
             <button
               key={language.code}
               onClick={() => handleLanguageChange(language.code)}
-              className={`w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center space-x-3 transition-colors duration-150 ${
+              className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 transition-colors duration-150 ${
                 language.code === currentLanguage.code 
-                  ? 'bg-blue-50 text-blue-700 font-medium' 
-                  : 'text-gray-700'
+                  ? `${isDarkMode 
+                      ? 'bg-blue-900 text-blue-100' 
+                      : 'bg-blue-50 text-blue-700'
+                    } font-medium` 
+                  : `${isDarkMode 
+                      ? 'text-gray-200' 
+                      : 'text-gray-700'
+                    }`
               }`}
             >
               <span className="text-lg">{language.flag}</span>

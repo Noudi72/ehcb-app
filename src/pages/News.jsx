@@ -3,9 +3,11 @@ import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
+import TranslationButton from "../components/TranslationButton";
 import { useAuth } from "../context/AuthContext";
 import { useNews } from "../context/NewsContext";
 import { useToast } from "../context/ToastContext";
+import { useLanguage } from "../context/LanguageContext";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -13,6 +15,7 @@ export default function News() {
   const { isCoach } = useAuth();
   const { newsItems, addNewsItem, deleteNewsItem, clearAllNews, loading, fetchNews } = useNews();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState({
     title: "",
@@ -462,6 +465,9 @@ export default function News() {
           </div>
         </div>
       </main>
+
+      {/* Translation Button */}
+      <TranslationButton position="bottom-right" />
 
       {/* Keyboard shortcuts help */}
       <KeyboardShortcuts />

@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import TabataTimer from "../components/TabataTimer";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
+import TranslationButton from "../components/TranslationButton";
 import { cardio } from "../config/supabase-api";
 
 import jsPDF from "jspdf";
@@ -11,6 +13,7 @@ import html2canvas from "html2canvas";
 
 export default function CardioProgram() {
   const { isCoach } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [showTimer, setShowTimer] = useState(false);
@@ -588,7 +591,8 @@ export default function CardioProgram() {
         </div>
       </main>
 
-      
+      {/* Translation Button */}
+      <TranslationButton position="bottom-right" />
       
       {showTimer && selectedWorkout && (
         <TabataTimer 

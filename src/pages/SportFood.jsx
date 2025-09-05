@@ -2,15 +2,18 @@ import React from "react";
 import { useSportFood } from "../context/SportFoodContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
+import TranslationButton from "../components/TranslationButton";
 
 
 export default function SportFood() {
   const { foodItems, loading, error } = useSportFood();
   const { isCoach } = useAuth();
   const { isDarkMode } = useTheme();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   return (
@@ -88,6 +91,8 @@ export default function SportFood() {
         </div>
       </main>
 
+      {/* Translation Button - außer auf externen Seiten */}
+      <TranslationButton position="bottom-right" />
       
     </div>
   );
