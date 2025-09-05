@@ -63,26 +63,27 @@ export default function UmfrageEditor() {
   // Bestehende Umfrage laden, wenn surveyId in URL vorhanden ist
   useEffect(() => {
     if (surveyId && surveys && surveys.length > 0) {
-      console.log("🔍 Suche Umfrage mit ID:", surveyId);
-      console.log("📋 Verfügbare Umfragen:", surveys);
+      console.log("🔍 Suche Umfrage mit ID:", surveyId, "Typ:", typeof surveyId);
+      console.log("📋 Verfügbare Umfragen:", surveys.map(s => ({id: s.id, title: s.title, active: s.active})));
       
-      const existingSurvey = surveys.find(s => s.id === surveyId);
+      // Konvertiere surveyId zu Number für Vergleich, da URL-Parameter immer Strings sind
+      const surveyIdNum = parseInt(surveyId, 10);
+      const existingSurvey = surveys.find(s => s.id === surveyIdNum || s.id === surveyId);
+      
       if (existingSurvey) {
         console.log("✅ Bestehende Umfrage gefunden:", existingSurvey);
         
-        // Exakte Kopie der bestehenden Umfrage - so wie sie erstellt wurde
+        // Verwende die Original-Daten direkt ohne unnötige Transformationen
         const loadedSurvey = {
-          id: existingSurvey.id,
+          ...existingSurvey,
+          // Sichere Fallbacks für fehlende Felder
           title: existingSurvey.title || "",
           description: existingSurvey.description || "",
           questions: existingSurvey.questions || [],
           target_teams: existingSurvey.target_teams || [],
-          resultsVisibleToPlayers: Boolean(existingSurvey.resultsVisibleToPlayers),
+          resultsVisibleToPlayers: Boolean(existingSurvey.resultsVisibleToPlayers || existingSurvey.results_visible_to_players),
           anonymous: Boolean(existingSurvey.anonymous),
-          active: Boolean(existingSurvey.active),
-          // Übernehme auch weitere Felder falls vorhanden
-          createdAt: existingSurvey.createdAt,
-          updatedAt: existingSurvey.updatedAt
+          active: Boolean(existingSurvey.active)
         };
         
         console.log("📝 Setze currentSurvey:", loadedSurvey);
@@ -93,7 +94,7 @@ export default function UmfrageEditor() {
         console.log("✅ Umfrage erfolgreich geladen für Bearbeitung");
       } else {
         console.warn("❌ Umfrage mit ID", surveyId, "nicht gefunden");
-        console.log("📋 Verfügbare IDs:", surveys.map(s => s.id));
+        console.log("📋 Verfügbare IDs:", surveys.map(s => `${s.id} (${typeof s.id})`));
       }
     } else if (!surveyId) {
       // Nur bei neuen Umfragen eine leere Umfrage initialisieren
