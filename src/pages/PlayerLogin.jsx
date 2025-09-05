@@ -9,289 +9,183 @@ import { users } from "../config/supabase-api";
 
 export default function PlayerLogin() {
   const { t } = useLanguage();
-  const [formData, setFormData] = useState({
-    name: "",
-    password: "",
-    playerNumber: "",
-    mainTeam: ""
-  });
+  const [playerName, setPlayerName] = useState("");
+  const [selectedTeams, setSelectedTeams] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const { login } = useAuth();
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
 
-  const teams = [
+  const availableTeams = [
     { id: "u16-elit", name: "U16-Elit" },
     { id: "u18-elit", name: "U18-Elit" },
     { id: "u21-elit", name: "U21-Elit" }
   ];
 
+  const handleTeamChange = (teamId) => {
+    setSelectedTeams(prev => 
+      prev.includes(teamId) 
+        ? prev.filter(id => id !== teamId)
+        : [...prev, teamId]
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!playerName.trim()) {
+      setError("Bitte geben Sie Ihren Namen ein.");
+      return;
+    }
+
+    if (selectedTeams.length === 0) {
+      setError("Bitte wählen Sie mindestens ein Team aus.");
+      return;
+    }
+
     setLoading(true);
     setError("");
-    setSuccess("");
 
     try {
-      // Erstelle einen eindeutigen Username basierend auf Namen (mit Trimming)
-      const username = `${formData.name.toLowerCase().trim().replace(/\s+/g, "")}`;
+      // Prüfe ob Spieler bereits existiert
+      const existingUser = await users.getByName(playerName);
       
-      // Prüfe ob User bereits existiert via Supabase
-      const allUsers = await users.getAll();
-      const existingUser = allUsers.find(u => 
-        u.username === username || 
-        u.name === formData.name.trim()
-      );
-
       if (existingUser) {
-        if (existingUser.status === "pending") {
-          setError(t('playerLogin.alreadyRegistered'));
-          setLoading(false);
-          return;
-        } else if (existingUser.status === "approved") {
-          // User kann sich einloggen
-          console.log("🔑 Bestehender User gefunden:", existingUser.name);
-          await login(existingUser.username, "", existingUser);
-          navigate("/");
-          return;
-        } else if (existingUser.status === "rejected") {
-          setError(t('playerLogin.registrationRejected'));
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Erstelle neue Registrierung  
-      const newUser = {
-        username: username,
-        name: formData.name.trim(),
-        password: formData.password, // Spieler wählt eigenes Passwort
-        playerNumber: formData.playerNumber,
-        mainTeam: formData.mainTeam,
-        role: "player",
-        status: "approved", // Approved status für UserManager Aktionen
-        teams: [formData.mainTeam], // Automatisch zum gewählten Team zugewiesen
-        active: true, // Sofort verfügbar
-        created_at: new Date().toISOString()
-      };
-
-      const newUserResponse = await users.create(newUser);
-
-      if (!newUserResponse) {
-        throw new Error(t('playerLogin.registrationError'));
-      }
-
-      // Sofortige Anmeldung - kein Warten nötig
-      setSuccess(`🎉 Willkommen ${formData.name}! Du bist jetzt registriert und kannst die App nutzen.`);
-      setError("");
-
-      // Automatisches Login nach 2 Sekunden
-      setTimeout(() => {
-        login({
-          username: username,
-          name: formData.name,
-          role: "player",
-          teams: [formData.mainTeam]
+        // Spieler existiert bereits - aktualisiere Teams und logge ein
+        const updatedUser = await users.update(existingUser.id, {
+          teams: selectedTeams,
+          last_login: new Date().toISOString()
         });
-        navigate('/');
-      }, 2000);
-      
-      // Form zurücksetzen
-      setFormData({
-        name: "",
-        password: "",
-        playerNumber: "",
-        mainTeam: ""
-      });
-
+        await login(updatedUser || existingUser);
+        navigate("/");
+      } else {
+        // Neuen Spieler erstellen und direkt einloggen
+        const newUser = await users.create({
+          username: playerName, // username für Supabase-Kompatibilität
+          name: playerName,     // name für Anzeige
+          role: "player",
+          teams: selectedTeams
+        });
+        
+        await login(newUser);
+        navigate("/");
+      }
     } catch (err) {
-      setError(t('playerLogin.errorPrefix') + err.message);
+      console.error("❌ Login error:", err);
+      setError("Fehler beim Anmelden. Bitte versuchen Sie es erneut.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
   return (
-    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#f8fafc]'}`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <Header />
+      <BackButton />
       
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className={`w-full max-w-md rounded-lg shadow-md p-6 ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
+      <main className="max-w-md mx-auto pt-20 px-4">
+        <div className={`p-6 rounded-lg shadow-lg ${
+          isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
         }`}>
-          <div className="flex items-center justify-between mb-6">
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-[#0a2240]'}`}>{t('playerLogin.title')}</h1>
-            <BackButton to="/" />
-          </div>
-
-          <div className="mb-4 text-center">
-            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              {t('playerLogin.coachPrompt')} <a href="/coach-login" className={`hover:underline font-medium ${
-                isDarkMode ? 'text-blue-400' : 'text-blue-600'
-              }`}>{t('playerLogin.coachLogin')}</a>
-            </p>
-          </div>
-          
-          <p className={`mb-6 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            {t('playerLogin.description')}<br/>
-            <span className={`text-sm ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{t('playerLogin.approvalNote')}</span>
-          </p>
+          <h1 className={`text-2xl font-bold mb-6 text-center ${
+            isDarkMode ? 'text-white' : 'text-gray-800'
+          }`}>
+            🏒 Spieler Anmeldung
+          </h1>
 
           {error && (
-            <div className={`px-4 py-3 rounded mb-4 ${
-              isDarkMode ? 'bg-red-900 border-red-700 text-red-300' : 'bg-red-50 border-red-200 text-red-700'
-            }`}>
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               {error}
-            </div>
-          )}
-
-          {success && (
-            <div className={`px-4 py-3 rounded mb-4 ${
-              isDarkMode ? 'bg-green-900 border-green-700 text-green-300' : 'bg-green-50 border-green-200 text-green-700'
-            }`}>
-              {success}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className={`block text-sm font-medium mb-1 ${
+              <label htmlFor="playerName" className={`block text-sm font-medium mb-1 ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                {t('playerLogin.fullName')} *
+                Spielername *
               </label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
+                id="playerName"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
                 required
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
                 }`}
-                placeholder={t('playerLogin.namePlaceholder')}
+                placeholder="z.B. testspieler2"
+                disabled={loading}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className={`block text-sm font-medium mb-1 ${
+              <label className={`block text-sm font-medium mb-2 ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                Passwort wählen *
+                Teams * (mindestens eines auswählen)
               </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
-                }`}
-                placeholder="Dein eigenes Passwort eingeben"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="mainTeam" className={`block text-sm font-medium mb-1 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {t('playerLogin.mainTeam')} *
-              </label>
-              <select
-                id="mainTeam"
-                name="mainTeam"
-                value={formData.mainTeam}
-                onChange={handleChange}
-                required
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                }`}
-              >
-                <option value="">{t('playerLogin.selectTeam')}</option>
-                {teams.map(team => (
-                  <option key={team.id} value={team.id}>
-                    {team.name}
-                  </option>
+              <div className="grid grid-cols-1 gap-2">
+                {availableTeams.map(team => (
+                  <label
+                    key={team.id}
+                    className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${
+                      selectedTeams.includes(team.id)
+                        ? isDarkMode
+                          ? 'bg-blue-900 border-blue-600 text-blue-200'
+                          : 'bg-blue-50 border-blue-500 text-blue-700'
+                        : isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTeams.includes(team.id)}
+                      onChange={() => handleTeamChange(team.id)}
+                      disabled={loading}
+                      className="mr-3"
+                    />
+                    <span className="font-medium">{team.name}</span>
+                  </label>
                 ))}
-              </select>
-              <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {t('playerLogin.teamHelp')}
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="playerNumber" className={`block text-sm font-medium mb-1 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {t('playerLogin.jerseyNumber')}
-              </label>
-              <input
-                type="number"
-                id="playerNumber"
-                name="playerNumber"
-                value={formData.playerNumber}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300'
-                }`}
-                placeholder={t('playerLogin.numberPlaceholder')}
-                min="1"
-                max="99"
-              />
-            </div>
-
-            <div className={`p-4 rounded-lg border ${
-              isDarkMode ? 'bg-blue-900 border-blue-700' : 'bg-blue-50 border-blue-200'
-            }`}>
-              <div className="flex items-start">
-                <svg className={`w-5 h-5 mt-0.5 mr-2 ${
-                  isDarkMode ? 'text-blue-400' : 'text-blue-500'
-                }`} fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <div>
-                  <p className={`text-sm font-medium ${
-                    isDarkMode ? 'text-blue-300' : 'text-blue-800'
-                  }`}>{t('playerLogin.afterRegistration')}</p>
-                  <ul className={`text-sm mt-1 space-y-1 ${
-                    isDarkMode ? 'text-blue-200' : 'text-blue-700'
-                  }`}>
-                    <li>• {t('playerLogin.step1')}</li>
-                    <li>• {t('playerLogin.step2')}</li>
-                    <li>• {t('playerLogin.step3')}</li>
-                  </ul>
-                </div>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-2 px-4 rounded-md transition-colors disabled:opacity-50 ${
-                isDarkMode
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-[#0a2240] text-white hover:bg-[#083056]'
-              }`}
+              className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
+                loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
+              } text-white`}
             >
-              {loading ? t('playerLogin.submitting') : t('playerLogin.submit')}
+              {loading ? 'Anmelden...' : 'Anmelden'}
             </button>
           </form>
+
+          <div className={`mt-6 p-4 rounded-md ${
+            isDarkMode ? 'bg-gray-700' : 'bg-blue-50'
+          }`}>
+            <h3 className={`font-medium mb-2 ${
+              isDarkMode ? 'text-blue-300' : 'text-blue-800'
+            }`}>
+              ℹ️ So einfach geht's:
+            </h3>
+            <ul className={`text-sm space-y-1 ${
+              isDarkMode ? 'text-gray-300' : 'text-blue-700'
+            }`}>
+              <li>• Namen eingeben</li>
+              <li>• Team(s) auswählen</li>
+              <li>• Sofort Zugang zur App</li>
+              <li>• Umfragen werden automatisch an Ihre Teams gesendet</li>
+            </ul>
+          </div>
         </div>
       </main>
-      
-      
     </div>
   );
 }

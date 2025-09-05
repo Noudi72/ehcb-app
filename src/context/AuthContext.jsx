@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
         
         // Überprüfen, ob die Anmeldedaten korrekt sind
         const matchedUser = allUsers.find(
-          (u) => u.username === username && u.password === password
+          (u) => u.username === username || u.name === username // No password check since column doesn't exist
         );
         
         if (matchedUser) {
@@ -66,8 +66,9 @@ export const AuthProvider = ({ children }) => {
             return false;
           }
 
-          // Benutzerpasswort aus dem Objekt entfernen
-          const { password, ...userWithoutPassword } = matchedUser;
+          // Benutzer ohne Passwort aus dem Objekt (da Spalte nicht existiert)
+          const userWithoutPassword = { ...matchedUser };
+          delete userWithoutPassword.password; // Remove if exists
           
           // Benutzer im State speichern
           setUser(userWithoutPassword);

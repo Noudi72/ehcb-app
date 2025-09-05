@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   // For GitHub Pages project site: https://<user>.github.io/ehcb-app/
   // Set base to the repository name so assets resolve correctly.
-  base: '/ehcb-app/',
+  base: process.env.NODE_ENV === 'production' ? '/ehcb-app/' : '/',
   server: {
     open: true,
     host: true, // Host auf '0.0.0.0' setzen, um alle Netzwerkschnittstellen zu öffnen

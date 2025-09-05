@@ -4,7 +4,6 @@ import { LanguageProvider } from "./context/LanguageContext";
 import Home from "./pages/Home";
 import Reflexion from "./pages/Reflexion";
 import UmfrageNeu from "./pages/UmfrageNeu";
-import SimpleSurveyEditorNew from "./pages/SimpleSurveyEditorNew";
 import UmfrageResults from "./pages/UmfrageResults";
 import SportFood from "./pages/SportFood";
 import SportFoodManager from "./pages/SportFoodManager";
@@ -17,7 +16,7 @@ import Statistics from "./pages/Statistics";
 import { AuthProvider } from "./context/AuthContext";
 import { ReflexionProvider } from "./context/ReflexionContext";
 import { NotificationProvider } from "./context/NotificationContext";
-import { UmfrageProvider } from "./context/UmfrageContext-new";
+import { UmfrageProvider } from "./context/UmfrageContext";
 import { SportFoodProvider } from "./context/SportFoodContext";
 import { NewsProvider } from "./context/NewsContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -30,9 +29,12 @@ import QuestionManager from "./pages/QuestionManager";
 import UmfrageHub from "./pages/UmfrageHub";
 import CoachResultsView from "./pages/CoachResultsView";
 import PlayerLogin from "./pages/PlayerLogin";
-import PlayerLoginSimple from "./pages/PlayerLoginSimple";
 import RegistrationStatus from "./pages/RegistrationStatus";
 import UserManager from "./pages/UserManager";
+import UmfrageEditor from "./pages/UmfrageEditor";
+import SimpleSurveyEditor from "./pages/SimpleSurveyEditor";
+import SurveyManager from "./pages/SurveyManager";
+import ActiveSurveyManager from "./pages/ActiveSurveyManager";
 import ProtectedRoute from "./components/ProtectedRoute";
 import InstallPrompt from "./components/InstallPrompt";
 
@@ -98,7 +100,6 @@ export default function App() {
                   <Route path="/news" element={<News />} />
                   <Route path="/coach-login" element={<CoachLogin />} />
                   <Route path="/player-login" element={<PlayerLogin />} />
-                  <Route path="/player-signin" element={<PlayerLoginSimple />} />
                   <Route path="/registration-status" element={<RegistrationStatus />} />
                   <Route path="/coach/dashboard" element={
                     <ProtectedRoute coachOnly={true}>
@@ -122,7 +123,7 @@ export default function App() {
                   } />
                   <Route path="/coach/surveys" element={
                     <ProtectedRoute coachOnly={true}>
-                      <QuestionManager />
+                      <SurveyManager />
                     </ProtectedRoute>
                   } />
                   <Route path="/coach/questions" element={
@@ -132,7 +133,7 @@ export default function App() {
                   } />
                   <Route path="/coach/active-surveys" element={
                     <ProtectedRoute coachOnly={true}>
-                      <QuestionManager />
+                      <ActiveSurveyManager />
                     </ProtectedRoute>
                   } />
                   <Route path="/coach/user-manager" element={
@@ -142,12 +143,22 @@ export default function App() {
                   } />
                   <Route path="/coach/survey-editor" element={
                     <ProtectedRoute coachOnly={true}>
-                      <SimpleSurveyEditorNew />
+                      <UmfrageEditor />
                     </ProtectedRoute>
                   } />
                   <Route path="/coach/survey-editor/:surveyId" element={
                     <ProtectedRoute coachOnly={true}>
-                      <SimpleSurveyEditorNew />
+                      <UmfrageEditor />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/coach/simple-survey-editor" element={
+                    <ProtectedRoute coachOnly={true}>
+                      <SimpleSurveyEditor />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/coach/simple-survey-editor/:surveyId" element={
+                    <ProtectedRoute coachOnly={true}>
+                      <SimpleSurveyEditor />
                     </ProtectedRoute>
                   } />
                   <Route path="/coach/survey-results" element={

@@ -1,0 +1,29 @@
+{
+  "survey": {
+    "title": "Survey",
+    "selectSurvey": "Please select a survey:",
+    "startSurvey": "Start Survey",
+    "yourName": "Your Name",
+    "enterName": "Enter name...",
+    "questionOf": "Question",
+    "of": "of",
+    "previous": "Previous",
+    "next": "Next",
+    "submit": "Submit",
+    "thankYou": "Thank you!",
+    "submitted": "Your answers have been successfully submitted.",
+    "backToHome": "Back to Home",
+    "noActiveSurveys": "No active surveys available at the moment.",
+    "nameRequired": "Please enter your name",
+    "selectSurveyRequired": "Please select a survey",
+    "loading": "Loading...",
+    "error": "Error loading data"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "back": "Back",
+    "cancel": "Cancel",
+    "submit": "Submit"
+  }
+}

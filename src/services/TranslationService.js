@@ -69,6 +69,11 @@ export class TranslationService {
     console.log('DeepL API called via proxy:', { text, targetLanguage, sourceLanguage });
 
     try {
+      // Railway API deaktiviert - return original text
+      console.warn('🚫 Translation Service deaktiviert (Railway API nicht verfügbar)');
+      return text; // Fallback: Original Text zurückgeben
+      
+      /* DEAKTIVIERT:
       console.log('Sending request to DeepL proxy:', `${API_BASE_URL}/api/translate`);
       
       const response = await fetch(`${API_BASE_URL}/api/translate`, {
@@ -100,6 +105,7 @@ export class TranslationService {
       }
       
       throw new Error('Invalid DeepL proxy response format');
+      */
     } catch (error) {
       console.error('DeepL API error:', error);
       throw error;

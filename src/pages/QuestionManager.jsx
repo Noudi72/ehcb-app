@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useUmfrage } from "../context/UmfrageContext-new";
+import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNotification } from "../context/NotificationContext";
@@ -921,7 +921,9 @@ export default function QuestionManager() {
     const loadData = async () => {
       try {
         setLoading(true);
-        await fetchSurveys();
+        if (fetchSurveys && typeof fetchSurveys === 'function') {
+          await fetchSurveys();
+        }
       } catch (err) {
         setError("Fehler beim Laden der Daten");
         console.error(err);
@@ -933,7 +935,7 @@ export default function QuestionManager() {
     if (isCoach) {
       loadData();
     }
-  }, [isCoach, fetchSurveys]);
+  }, [isCoach]); // FIXED: Removed fetchSurveys dependency
 
   // Filter und Suche für Umfragen
   const filteredSurveys = surveys.filter(survey => {
@@ -969,7 +971,9 @@ export default function QuestionManager() {
     if (window.confirm(`Möchtest du die Umfrage "${title}" wirklich löschen?`)) {
       try {
         await deleteSurvey(survey.id);
-        await fetchSurveys();
+        if (fetchSurveys && typeof fetchSurveys === 'function') {
+          await fetchSurveys();
+        }
       } catch (err) {
         setError("Fehler beim Löschen der Umfrage");
         console.error(err);
@@ -989,7 +993,9 @@ export default function QuestionManager() {
       };
       
       await updateSurvey(survey.id, updatedSurvey);
-      await fetchSurveys();
+      if (fetchSurveys && typeof fetchSurveys === 'function') {
+        await fetchSurveys();
+      }
     } catch (err) {
       setError("Fehler beim Ändern des Status");
       console.error(err);

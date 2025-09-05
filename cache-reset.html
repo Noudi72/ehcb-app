@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EHCB App - Cache Reset</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f8fafc;
+      color: #334155;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #0a2240;
+      margin-bottom: 20px;
+    }
+    .status {
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    .success { background: #d1fae5; color: #065f46; }
+    .error { background: #fee2e2; color: #991b1b; }
+    .warning { background: #fef3c7; color: #92400e; }
+    .info { background: #dbeafe; color: #1e40af; }
+    button {
+      background: #0a2240;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px 5px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+    .danger {
+      background: #dc2626;
+    }
+    .danger:hover {
+      background: #b91c1c;
+    }
+    .server-status {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .server-card {
+      flex: 1;
+      padding: 15px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .online { border-color: #10b981; background: #f0fdf4; }
+    .offline { border-color: #ef4444; background: #fef2f2; }
+    pre {
+      background: #f1f5f9;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏒 EHCB App - System Reset</h1>
+    
+    <div id="server-status" class="server-status">
+      <div class="server-card">
+        <h3>JSON Server (3001)</h3>
+        <div id="json-status">Prüfe...</div>
+      </div>
+      <div class="server-card">
+        <h3>Vite Server (5174)</h3>
+        <div id="vite-status">Prüfe...</div>
+      </div>
+    </div>
+
+    <div class="status info">
+      <strong>Problem:</strong> App zeigt "offline" trotz laufender Server?<br>
+      <strong>Lösung:</strong> Cache und ServiceWorker komplett zurücksetzen
+    </div>
+
+    <h3>🔧 Schnelle Fixes:</h3>
+    
+    <button onclick="clearAllCache()">🗑️ Kompletten Cache leeren</button>
+    <button onclick="reloadApp()">🔄 App neu laden</button>
+    <button onclick="hardReload()">⚡ Hard Reload</button>
+    
+    <h3>🚨 Erweiterte Reparatur:</h3>
+    
+    <button onclick="clearServiceWorker()" class="danger">🔧 ServiceWorker entfernen</button>
+    <button onclick="clearLocalStorage()" class="danger">📱 LocalStorage leeren</button>
+    <button onclick="fullReset()" class="danger">💥 Komplett Reset</button>
+
+    <h3>📊 Debug Info:</h3>
+    <pre id="debug-info">Lade Debug-Informationen...</pre>
+
+    <div class="status warning">
+      <strong>Nach dem Reset:</strong><br>
+      1. Browser komplett schließen<br>
+      2. Browser neu öffnen<br>
+      3. http://localhost:5174 aufrufen<br>
+      4. Hard Reload (Ctrl+F5 oder Cmd+Shift+R)
+    </div>
+  </div>
+
+  <script>
+    // Server Status prüfen
+    async function checkServers() {
+      try {
+        const jsonResponse = await fetch('http://localhost:3001/surveys');
+        document.getElementById('json-status').innerHTML = jsonResponse.ok ? 
+          '<span style="color: #10b981;">✅ Online</span>' : 
+          '<span style="color: #ef4444;">❌ Offline</span>';
+        document.querySelector('.server-card').classList.add(jsonResponse.ok ? 'online' : 'offline');
+      } catch (e) {
+        document.getElementById('json-status').innerHTML = '<span style="color: #ef4444;">❌ Offline</span>';
+        document.querySelector('.server-card').classList.add('offline');
+      }
+
+      try {
+        const viteResponse = await fetch('http://localhost:5174');
+        document.getElementById('vite-status').innerHTML = viteResponse.ok ? 
+          '<span style="color: #10b981;">✅ Online</span>' : 
+          '<span style="color: #ef4444;">❌ Offline</span>';
+        document.querySelectorAll('.server-card')[1].classList.add(viteResponse.ok ? 'online' : 'offline');
+      } catch (e) {
+        document.getElementById('vite-status').innerHTML = '<span style="color: #ef4444;">❌ Offline</span>';
+        document.querySelectorAll('.server-card')[1].classList.add('offline');
+      }
+    }
+
+    // Debug Info sammeln
+    function updateDebugInfo() {
+      const info = {
+        userAgent: navigator.userAgent,
+        online: navigator.onLine,
+        cookieEnabled: navigator.cookieEnabled,
+        serviceWorker: 'serviceWorker' in navigator,
+        localStorage: typeof(Storage) !== "undefined",
+        sessionStorage: typeof(sessionStorage) !== "undefined",
+        cacheSize: localStorage.length,
+        timestamp: new Date().toISOString()
+      };
+      document.getElementById('debug-info').textContent = JSON.stringify(info, null, 2);
+    }
+
+    // Cache-Management Funktionen
+    async function clearAllCache() {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        alert('✅ Browser Cache geleert');
+      }
+    }
+
+    function reloadApp() {
+      window.location.href = 'http://localhost:5174';
+    }
+
+    function hardReload() {
+      window.location.href = 'http://localhost:5174?_=' + Date.now();
+    }
+
+    async function clearServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(reg => reg.unregister()));
+        alert('✅ ServiceWorker entfernt');
+      }
+    }
+
+    function clearLocalStorage() {
+      localStorage.clear();
+      sessionStorage.clear();
+      alert('✅ LocalStorage geleert');
+    }
+
+    async function fullReset() {
+      if (confirm('⚠️ Kompletter Reset - sind Sie sicher?')) {
+        // Cache leeren
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+        
+        // ServiceWorker entfernen
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(reg => reg.unregister()));
+        }
+        
+        // Storage leeren
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        alert('💥 Kompletter Reset durchgeführt!\n\nSchließen Sie jetzt den Browser komplett und öffnen Sie ihn neu.');
+      }
+    }
+
+    // Initialisierung
+    checkServers();
+    updateDebugInfo();
+    setInterval(checkServers, 5000); // Alle 5 Sekunden prüfen
+  </script>
+</body>
+</html>

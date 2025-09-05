@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useUmfrage } from "../context/UmfrageContext-new";
+import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -22,11 +22,9 @@ export default function CoachResultsView() {
   // Daten abrufen
   useEffect(() => {
     fetchSurveys();
-    fetchResponses();
+    fetchResponses(); 
     fetchQuestions();
-  }, [fetchSurveys, fetchResponses, fetchQuestions]);
-
-  // Umfrage auswählen
+  }, []); // EMPTY DEPENDENCY - Only run ONCE!  // Umfrage auswählen
   const handleSelectSurvey = (survey) => {
     setSelectedSurvey(survey);
   };

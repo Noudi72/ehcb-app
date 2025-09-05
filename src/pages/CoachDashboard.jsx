@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useUmfrage } from "../context/UmfrageContext-new";
+import { useUmfrage } from "../context/UmfrageContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import PendingRegistrations from "../components/PendingRegistrations";
+import PlayerManagement from "../components/PlayerManagement";
 import PushNotificationSettings from "../components/PushNotificationSettings";
-import { users } from "../config/supabase-api";
+import { users, surveys as surveysAPI } from "../config/supabase-api";
 
 export default function CoachDashboard() {
   const { user, logout, isCoach } = useAuth();
-  const { surveys, responses, questions, fetchSurveys, fetchResponses, fetchQuestions } = useUmfrage();
+  const { surveys, responses, questions, loadUmfragen, loadResponses, loadQuestions } = useUmfrage() || {};
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     activeSurveys: 0,
@@ -19,17 +20,39 @@ export default function CoachDashboard() {
     participationRate: 0
   });
   const [pendingCount, setPendingCount] = useState(0);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const tabs = [
+    { id: 'overview', label: '📊 Übersicht', icon: '📊' },
+    { id: 'players', label: '👥 Spielerverwaltung', icon: '👥' },
+    { id: 'pending', label: '⏳ Freigaben', icon: '⏳' },
+    { id: 'notifications', label: '🔔 Benachrichtigungen', icon: '🔔' }
+  ];
 
   useEffect(() => {
-    fetchSurveys();
-    fetchResponses();
-    fetchQuestions();
+    const loadData = async () => {
+      try {
+        if (loadUmfragen && typeof loadUmfragen === 'function') {
+          await loadUmfragen();
+        }
+        if (loadResponses && typeof loadResponses === 'function') {
+          await loadResponses();
+        }
+        if (loadQuestions && typeof loadQuestions === 'function') {
+          await loadQuestions();
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Dashboard-Daten:', error);
+      }
+    };
+    
+    loadData();
     fetchPendingRegistrations();
     
     // Auto-refresh pending registrations every 30 seconds
     const interval = setInterval(fetchPendingRegistrations, 30000);
     return () => clearInterval(interval);
-  }, [fetchSurveys, fetchResponses, fetchQuestions]);
+  }, []); // EMPTY DEPENDENCY - Only run ONCE!
 
   const fetchPendingRegistrations = async () => {
     try {
@@ -65,7 +88,7 @@ export default function CoachDashboard() {
       title: "Umfragen verwalten",
       description: "Umfragen erstellen, bearbeiten und verwalten",
       icon: "edit",
-      path: "/coach/questions",
+      path: "/coach/surveys",
       color: "bg-purple-500 hover:bg-purple-600",
       iconBg: "bg-purple-100 group-hover:bg-purple-200",
       iconColor: "text-purple-600",
@@ -243,37 +266,60 @@ export default function CoachDashboard() {
               Abmelden
             </button>
           </div>
-          
-          {/* Schnellübersicht Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.activeSurveys}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Aktive Umfragen</div>
-            </div>
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.totalResponses}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Gesammelte Antworten</div>
-            </div>
-            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalQuestions}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Verfügbare Fragen</div>
-            </div>
-            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.participationRate}%</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Teilnahmequote</div>
-            </div>
-          </div>
 
-          {/* Umfrage-Management Bereich */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-[#0a2240] dark:text-blue-400 mb-4">Umfrage-Management</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {surveyManagementItems.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleNavigate(item.path)}
-                  className="group cursor-pointer bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200 border-b-4 border-transparent hover:border-gray-300 dark:hover:border-gray-500"
-                  style={{"--hover-border": item.borderColor}}
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200 dark:border-gray-600 mb-6">
+            <nav className="flex space-x-8">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+          <div>
+              {/* Schnellübersicht Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.activeSurveys}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">Aktive Umfragen</div>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.totalResponses}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">Gesammelte Antworten</div>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalQuestions}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">Verfügbare Fragen</div>
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                  <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.participationRate}%</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">Teilnahmequote</div>
+                </div>
+              </div>
+
+              {/* Umfrage-Management Bereich */}
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-[#0a2240] dark:text-blue-400 mb-4">Umfrage-Management</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {surveyManagementItems.map((item, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleNavigate(item.path)}
+                      className="group cursor-pointer bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200 border-b-4 border-transparent hover:border-gray-300 dark:hover:border-gray-500"
+                      style={{"--hover-border": item.borderColor}}
                 >
                   <div className="flex items-center mb-3">
                     <div className={`w-12 h-12 ${item.iconBg} rounded-lg flex items-center justify-center transition-colors`}>
@@ -344,10 +390,43 @@ export default function CoachDashboard() {
           <div className="mt-8">
             <PushNotificationSettings />
           </div>
+          </div>
+        )}
+
+      {/* Players Tab Content */}
+      {activeTab === 'players' && (
+        <div>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-[#0a2240] dark:text-blue-400 mb-2">Spieler Verwaltung</h1>
+            <p className="text-gray-600 dark:text-gray-400">Verwalten Sie Ihre Spieler, bearbeiten Sie Teams und kontrollieren Sie den Zugang.</p>
+          </div>
+          <PlayerManagement />
         </div>
-      </main>
+      )}
+
+      {/* Pending Tab Content */}
+      {activeTab === 'pending' && (
+        <div>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-[#0a2240] dark:text-blue-400 mb-2">Ausstehende Registrierungen</h1>
+            <p className="text-gray-600 dark:text-gray-400">Überprüfen und genehmigen Sie neue Spieler-Registrierungen.</p>
+          </div>
+          <PendingRegistrations onUpdate={fetchPendingRegistrations} />
+        </div>
+      )}
+
+      {/* Notifications Tab Content */}
+      {activeTab === 'notifications' && (
+        <div>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-[#0a2240] dark:text-blue-400 mb-2">Benachrichtigungen</h1>
+            <p className="text-gray-600 dark:text-gray-400">Verwalten Sie Push-Benachrichtigungen und Mitteilungen an Ihre Teams.</p>
+          </div>
+          <PushNotificationSettings />
+        </div>
+      )}
       
-      
+    </main>
     </div>
   );
 }

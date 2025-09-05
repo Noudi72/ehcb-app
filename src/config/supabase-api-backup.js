@@ -205,27 +205,6 @@ export const users = {
     }
   },
 
-  async getByName(playerName) {
-    try {
-      console.log('📥 Fetching user by name:', playerName);
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('name', playerName)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when not found
-      
-      if (error && !error.message.includes('multiple rows')) {
-        console.warn('⚠️ User by name error (but continuing):', error.message);
-        return null;
-      }
-      
-      return data;
-    } catch (error) {
-      console.warn('⚠️ User by name: returning null, error:', error.message);
-      return null;
-    }
-  },
-
   async getPending() {
     try {
       console.log('📥 Fetching pending users from Supabase...');
@@ -251,21 +230,12 @@ export const users = {
     try {
       console.log('📥 Creating user in Supabase:', userData);
       
-      // Remove fields that might not exist in the database schema
-      const { active, email, ...safeUserData } = userData;
-      
-      // Only include fields that definitely exist
-      const cleanUserData = {
-        name: safeUserData.name,
-        password: safeUserData.password,
-        team: safeUserData.team,
-        status: safeUserData.status || 'pending',
-        role: safeUserData.role || 'player'
-      };
+      // Remove 'active' field if it exists and the column doesn't exist in schema
+      const { active, ...userDataWithoutActive } = userData;
       
       const { data, error } = await supabase
         .from('users')
-        .insert(cleanUserData)
+        .insert(userDataWithoutActive)
         .select()
         .single();
       
@@ -282,20 +252,12 @@ export const users = {
 
   async update(id, updates) {
     try {
-      // Remove fields that might not exist in the database schema
-      const { active, email, ...safeUpdates } = updates;
-      
-      // Only include safe fields
-      const cleanUpdates = {};
-      if (safeUpdates.name) cleanUpdates.name = safeUpdates.name;
-      if (safeUpdates.password) cleanUpdates.password = safeUpdates.password;
-      if (safeUpdates.team) cleanUpdates.team = safeUpdates.team;
-      if (safeUpdates.status) cleanUpdates.status = safeUpdates.status;
-      if (safeUpdates.role) cleanUpdates.role = safeUpdates.role;
+      // Remove 'active' field if it exists and the column doesn't exist in schema
+      const { active, ...updatesWithoutActive } = updates;
       
       const { data, error } = await supabase
         .from('users')
-        .update(cleanUpdates)
+        .update(updatesWithoutActive)
         .eq('id', id)
         .select()
         .single();
@@ -486,7 +448,31 @@ export const cardio = {
   }
 }
 
-// Fallback Functions removed - using real Supabase tables below
+// Reflexions Functions (Fallback - table doesn't exist yet)
+export const reflexions = {
+  async getAll() {
+    console.log('📥 Reflexions: returning empty array (table not available in Supabase)');
+    return [];
+  },
+
+  async create(reflexionData) {
+    console.log('📥 Reflexions: create not available (table not created)');
+    return null;
+  }
+}
+
+// Notifications Functions (Fallback - table doesn't exist yet)
+export const notifications = {
+  async getAll() {
+    console.log('📥 Notifications: returning empty array (table not available in Supabase)');
+    return [];
+  },
+
+  async create(notificationData) {
+    console.log('📥 Notifications: create not available (table not created)');
+    return null;
+  }
+}
 
 // SportFood Functions (Fallback - tables don't exist yet)
 export const sportFood = {

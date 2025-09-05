@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { users, teams } from "../config/supabase-api";
+import { users, teams as teamsAPI } from "../config/supabase-api";
 
 export default function TeamOverview() {
   const { teamName } = useParams();
@@ -23,7 +23,7 @@ export default function TeamOverview() {
 
   const fetchTeams = async () => {
     try {
-      const data = await teams.getAll();
+      const data = await teamsAPI.getAll();
       setTeams(data);
     } catch (err) {
       console.error("Fehler beim Laden der Teams:", err);

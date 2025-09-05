@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useUmfrage } from "../context/UmfrageContext-new";
+import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Header from "../components/Header";
@@ -262,7 +262,7 @@ export default function UmfrageHub() {
     if (isCoach) {
       loadSurveys();
     }
-  }, [isCoach, fetchSurveys]);
+  }, [isCoach]); // FIXED: Removed fetchSurveys dependency
 
   // Filter und Suche
   const filteredSurveys = surveys.filter(survey => {

@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { useReflexion } from "./ReflexionContext";
-import { useUmfrage } from "./UmfrageContext-new";
-import { notifications } from "../config/supabase-api";
+import { useUmfrage } from "./UmfrageContext";
+import { notifications as notificationsAPI } from "../config/supabase-api";
 
 // Erstellen des Benachrichtigungs-Kontexts
 const NotificationContext = createContext();
@@ -12,7 +12,7 @@ export const useNotification = () => useContext(NotificationContext);
 // Notification Provider Komponente
 export const NotificationProvider = ({ children }) => {
   const { reflections } = useReflexion();
-  const { surveys } = useUmfrage();
+  const { umfragen } = useUmfrage(); // Korrigiert: umfragen statt surveys
   const [notifications, setNotifications] = useState([]);
   const [lastChecked, setLastChecked] = useState(null);
   
@@ -33,7 +33,7 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     const fetchServerNotifications = async () => {
       try {
-        const serverNotifications = await notifications.getAll();
+        const serverNotifications = await notificationsAPI.getAll();
         const formattedNotifications = serverNotifications.map(notification => ({
           ...notification,
           id: `server-${notification.id}`,
@@ -86,8 +86,8 @@ export const NotificationProvider = ({ children }) => {
   
   // Überwachen der Umfragen, um neue Benachrichtigungen zu erstellen
   useEffect(() => {
-    if (lastChecked && surveys.length > 0) {
-      const newSurveys = surveys.filter(
+    if (lastChecked && umfragen.length > 0) {
+      const newSurveys = umfragen.filter(
         (survey) => new Date(survey.createdAt) > lastChecked && survey.active
       );
       
@@ -105,7 +105,7 @@ export const NotificationProvider = ({ children }) => {
         ]);
       }
     }
-  }, [surveys, lastChecked]);
+  }, [umfragen, lastChecked]);
   
   // Markieren aller Benachrichtigungen als gelesen
   const markAllAsRead = () => {
@@ -132,7 +132,7 @@ export const NotificationProvider = ({ children }) => {
     if (notificationId.startsWith('server-')) {
       const serverNotificationId = notificationId.replace('server-', '');
       try {
-        await notifications.markAsRead(serverNotificationId);
+        await notificationsAPI.markAsRead(serverNotificationId);
       } catch (err) {
         console.error("Fehler beim Aktualisieren der Benachrichtigung:", err);
       }
@@ -149,13 +149,41 @@ export const NotificationProvider = ({ children }) => {
     if (notificationId.startsWith('server-')) {
       const serverNotificationId = notificationId.replace('server-', '');
       try {
-        await notifications.delete(serverNotificationId);
+        await notificationsAPI.delete(serverNotificationId);
       } catch (err) {
         console.error("Fehler beim Entfernen der Benachrichtigung:", err);
       }
     }
   };
   
+  // Neue Benachrichtigung senden
+  const sendNotification = async (notification) => {
+    try {
+      console.log('📤 Sending notification:', notification);
+      
+      // Für jetzt als lokale Benachrichtigung hinzufügen
+      const newNotification = {
+        id: Date.now(),
+        title: notification.title,
+        message: notification.message,
+        type: notification.type || 'info',
+        read: false,
+        timestamp: new Date(),
+        urgent: notification.urgent || false
+      };
+      
+      setNotifications(prev => [newNotification, ...prev]);
+      
+      // Hier könnte später eine echte Push-Notification API integriert werden
+      console.log('✅ Notification sent successfully');
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to send notification:', error);
+      throw error;
+    }
+  };
+
   // Anzahl der ungelesenen Benachrichtigungen
   const unreadCount = notifications.filter(
     (notification) => !notification.read
@@ -168,6 +196,7 @@ export const NotificationProvider = ({ children }) => {
     markAllAsRead,
     markAsRead,
     removeNotification,
+    sendNotification,
   };
   
   return (

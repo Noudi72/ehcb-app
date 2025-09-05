@@ -1,0 +1,29 @@
+{
+  "survey": {
+    "title": "Umfrage",
+    "selectSurvey": "Bitte wähle eine Umfrage aus:",
+    "startSurvey": "Umfrage starten",
+    "yourName": "Dein Name",
+    "enterName": "Name eingeben...",
+    "questionOf": "Frage",
+    "of": "von",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "submit": "Absenden",
+    "thankYou": "Vielen Dank!",
+    "submitted": "Deine Antworten wurden erfolgreich übermittelt.",
+    "backToHome": "Zurück zur Startseite",
+    "noActiveSurveys": "Derzeit sind keine aktiven Umfragen verfügbar.",
+    "nameRequired": "Bitte gib deinen Namen ein",
+    "selectSurveyRequired": "Bitte wähle eine Umfrage aus",
+    "loading": "Lädt...",
+    "error": "Fehler beim Laden der Daten"
+  },
+  "common": {
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "back": "Zurück",
+    "cancel": "Abbrechen",
+    "submit": "Absenden"
+  }
+}

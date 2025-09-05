@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import { users, teams } from "../config/supabase-api";
+import { users as usersAPI, teams as teamsAPI } from "../config/supabase-api";
 
 export default function UserManager() {
   const { user, isCoach } = useAuth();
@@ -21,7 +22,7 @@ export default function UserManager() {
 
   const fetchUsers = async () => {
     try {
-      const usersData = await users.getAll();
+      const usersData = await usersAPI.getAll();
       setUsers(usersData.filter(u => u.role === "player")); // Nur Spieler anzeigen
     } catch (err) {
       setError("Fehler beim Laden der Benutzer");
@@ -32,7 +33,7 @@ export default function UserManager() {
 
   const fetchTeams = async () => {
     try {
-      const teamsData = await teams.getAll();
+      const teamsData = await teamsAPI.getAll();
       // Sicherstellen, dass data ein Array ist
       setTeams(Array.isArray(teamsData) ? teamsData : []);
     } catch (err) {
@@ -44,7 +45,7 @@ export default function UserManager() {
 
   const toggleUserActive = async (userId, currentStatus) => {
     try {
-      const updatedUser = await users.update(userId, {
+      const updatedUser = await usersAPI.update(userId, {
         active: !currentStatus
       });
 
@@ -65,7 +66,7 @@ export default function UserManager() {
     }
 
     try {
-      await users.delete(userId);
+      await usersAPI.delete(userId);
 
       // Entferne den Benutzer aus der lokalen Liste
       setUsers(users.filter(u => u.id !== userId));
@@ -99,6 +100,49 @@ export default function UserManager() {
     return true;
   });
 
+  const addTestUsers = async () => {
+    const testUsers = [
+      {
+        name: 'Max Mustermann',
+        username: 'max.mustermann',
+        email: 'max@ehcb.ch',
+        role: 'player',
+        teams: ['U18-Elit'],
+        active: true
+      },
+      {
+        name: 'Anna Schmidt',
+        username: 'anna.schmidt',
+        email: 'anna@ehcb.ch',
+        role: 'player',
+        teams: ['U16-Elit'],
+        active: true
+      },
+      {
+        name: 'Tom Weber',
+        username: 'tom.weber',
+        email: 'tom@ehcb.ch',
+        role: 'player',
+        teams: ['U21-Elit'],
+        active: false
+      }
+    ];
+
+    try {
+      setLoading(true);
+      for (const testUser of testUsers) {
+        await usersAPI.create(testUser);
+      }
+      await fetchUsers(); // Reload the user list
+      setError(""); // Clear any errors
+      alert('Testbenutzer wurden erfolgreich hinzugefügt!');
+    } catch (err) {
+      setError('Fehler beim Hinzufügen der Testbenutzer: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user || !isCoach) {
     return (
       <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#f8fafc]'}`}>
@@ -122,7 +166,15 @@ export default function UserManager() {
         <div className={`shadow-md rounded-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between mb-6">
             <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-[#0a2240]'}`}>Benutzer-Verwaltung</h1>
-            <BackButton to="/coach/dashboard" />
+            <div className="flex gap-2">
+              <button
+                onClick={addTestUsers}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+              >
+                + Testdaten hinzufügen
+              </button>
+              <BackButton to="/coach/dashboard" />
+            </div>
           </div>
 
           {error && (

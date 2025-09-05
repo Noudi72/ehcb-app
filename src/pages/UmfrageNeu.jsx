@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
-import { surveys, questions, responses } from '../config/supabase-api';
+import { surveys as surveysAPI, questions as questionsAPI, responses as responsesAPI } from '../config/supabase-api';
 import { useLanguage } from '../context/LanguageContext';
 
 const UmfrageNeu = () => {
@@ -18,11 +18,11 @@ const UmfrageNeu = () => {
     try {
       setLoading(true);
       // Fetch all surveys from Supabase
-      const rawSurveys = await surveys.getAll();
+      const rawSurveys = await surveysAPI.getAll();
       const list = Array.isArray(rawSurveys) ? rawSurveys : [];
 
       // Fetch all questions from Supabase and map by id
-      const allQuestions = await questions.getAll();
+      const allQuestions = await questionsAPI.getAll();
       const questionById = new Map(
         (Array.isArray(allQuestions) ? allQuestions : []).map(q => [String(q.id), q])
       );
@@ -104,7 +104,7 @@ const UmfrageNeu = () => {
         responses: answers,
         submitted_at: new Date().toISOString()
       };
-      const response = await responses.create(responseData);
+      const response = await responsesAPI.create(responseData);
       if (response) {
         alert(t('survey.sent') || 'Umfrage erfolgreich übermittelt!');
         setSelectedSurvey(null);
@@ -145,13 +145,6 @@ const UmfrageNeu = () => {
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('survey.title') || 'Umfragen'}</h1>
           
-          {/* Debug-Info */}
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
-            <p><strong>User:</strong> {user?.username || 'Nicht eingeloggt'}</p>
-            <p><strong>Surveys loaded:</strong> {surveys?.length || 0}</p>
-            <p><strong>Filtered surveys:</strong> {filteredSurveys?.length || 0}</p>
-          </div>
-
           {!selectedSurvey && (
             <div>
               {filteredSurveys.length === 0 ? (
@@ -159,7 +152,7 @@ const UmfrageNeu = () => {
                   <p className="text-gray-600">{t('survey.noneAvailable') || 'Keine Umfragen verfügbar.'}</p>
                   {surveys && surveys.length > 0 && (
                     <p className="text-sm text-gray-500 mt-2">
-                      {t('survey.noneForTeam', { count: surveys.length }) || `Es gibt ${surveys.length} Umfragen, aber keine für Ihr Team.`}
+                      {`Es gibt ${surveys.length} Umfragen, aber keine für Ihr Team.`}
                     </p>
                   )}
                   <button 
@@ -172,7 +165,7 @@ const UmfrageNeu = () => {
               ) : (
                 <div className="space-y-4">
                   <h2 className="text-lg font-medium text-gray-700 mb-4">
-                    {t('survey.available', { count: filteredSurveys.length }) || `Verfügbare Umfragen (${filteredSurveys.length}):`}
+                    {`Verfügbare Umfragen (${filteredSurveys.length}):`}
                   </h2>
                   {filteredSurveys.map(survey => (
                     <div

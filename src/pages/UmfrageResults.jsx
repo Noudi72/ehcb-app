@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useUmfrage } from "../context/UmfrageContext-new";
+import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -25,7 +25,7 @@ export default function UmfrageResults() {
     fetchSurveys();
     fetchResponses();
     fetchQuestions();
-  }, [fetchSurveys, fetchResponses, fetchQuestions]);
+  }, []); // EMPTY DEPENDENCY - Only run ONCE!
 
   // URL-Parameter auslesen
   const queryParams = new URLSearchParams(location.search);

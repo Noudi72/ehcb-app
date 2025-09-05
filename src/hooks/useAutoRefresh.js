@@ -1,19 +1,23 @@
 import { useEffect } from 'react';
-import { useUmfrage } from "../context/UmfrageContext-new";
+import { useUmfrage } from "../context/UmfrageContext";
 
 // Custom Hook für aggressives Daten-Refresh
 export const useAutoRefresh = (dependencies = []) => {
-  const { fetchSurveys } = useUmfrage();
+  const { fetchSurveys } = useUmfrage() || {};
 
   useEffect(() => {
     // Immediate force refresh when component mounts
-    console.log('🔄 Auto-refreshing surveys data...');
-    fetchSurveys(true);
+    if (fetchSurveys && typeof fetchSurveys === 'function') {
+      console.log('🔄 Auto-refreshing surveys data...');
+      fetchSurveys();
+    }
     
     // Set up interval to refresh every 10 seconds to combat server caching
     const interval = setInterval(() => {
-      console.log('⏰ Interval refresh...');
-      fetchSurveys(true);
+      if (fetchSurveys && typeof fetchSurveys === 'function') {
+        console.log('⏰ Interval refresh...');
+        fetchSurveys();
+      }
     }, 10000);
     
     return () => clearInterval(interval);
@@ -22,9 +26,9 @@ export const useAutoRefresh = (dependencies = []) => {
   // Also refresh when page becomes visible (user returns to tab)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
+      if (!document.hidden && fetchSurveys && typeof fetchSurveys === 'function') {
         console.log('👁️ Page visible - refreshing...');
-        fetchSurveys(true);
+        fetchSurveys();
       }
     };
     

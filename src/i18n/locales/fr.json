@@ -1,0 +1,29 @@
+{
+  "survey": {
+    "title": "Sondage",
+    "selectSurvey": "Veuillez sélectionner un sondage:",
+    "startSurvey": "Commencer le sondage",
+    "yourName": "Votre nom",
+    "enterName": "Entrez le nom...",
+    "questionOf": "Question",
+    "of": "de",
+    "previous": "Précédent",
+    "next": "Suivant", 
+    "submit": "Soumettre",
+    "thankYou": "Merci!",
+    "submitted": "Vos réponses ont été soumises avec succès.",
+    "backToHome": "Retour à l'accueil",
+    "noActiveSurveys": "Aucun sondage actif disponible pour le moment.",
+    "nameRequired": "Veuillez entrer votre nom",
+    "selectSurveyRequired": "Veuillez sélectionner un sondage",
+    "loading": "Chargement...",
+    "error": "Erreur lors du chargement des données"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "back": "Retour",
+    "cancel": "Annuler",
+    "submit": "Soumettre"
+  }
+}

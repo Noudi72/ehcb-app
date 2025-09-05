@@ -8,7 +8,6 @@ import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { news, users, notifications } from "../config/supabase-api";
 import axios from "axios";
-import { API_BASE_URL } from "../config/api";
 
 export default function NewsManager() {
   const { isCoach } = useAuth();
@@ -74,8 +73,14 @@ export default function NewsManager() {
   const uploadFile = async () => {
     if (!formData.file) return null;
     
+    // Railway API deaktiviert - Upload nicht verfügbar
+    console.warn('🚫 File Upload deaktiviert (Railway API nicht verfügbar)');
+    throw new Error('File Upload Service nicht verfügbar');
+    
+    /* DEAKTIVIERT:
     const fileType = formData.type;
     const endpoint = `${API_BASE_URL}/api/upload/${fileType}`;
+    */
     
     const formDataObj = new FormData();
     formDataObj.append('file', formData.file);

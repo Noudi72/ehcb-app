@@ -1,8 +1,8 @@
 // Translation Service für EHC Biel-Bienne Spirit App
 // Vereinfachte Mock-Implementation für Tests
 
-// Einheitliche Backend-URL über zentrale API-Konfiguration
-import { API_BASE_URL } from './api';
+// Mock API_BASE_URL since api.js was removed
+const API_BASE_URL = null; // Disabled - using Supabase instead
 
 // Client-seitiges Throttling für Backend-Requests (max. 2 parallel, kleiner Jitter)
 const MAX_CONCURRENT = 2;

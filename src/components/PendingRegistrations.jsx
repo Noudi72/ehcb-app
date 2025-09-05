@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { users, teams } from "../config/supabase-api";
+import { users as usersAPI } from "../config/supabase-api";
 
 export default function PendingRegistrations({ onUpdate }) {
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -20,7 +20,7 @@ export default function PendingRegistrations({ onUpdate }) {
 
   const fetchPendingUsers = async () => {
     try {
-      const pendingUsersData = await users.getPending();
+      const pendingUsersData = await usersAPI.getPending();
       setPendingUsers(pendingUsersData.filter(u => u.role === "player"));
     } catch (err) {
       setError("Fehler beim Laden der ausstehenden Registrierungen");
@@ -31,8 +31,9 @@ export default function PendingRegistrations({ onUpdate }) {
 
   const fetchTeams = async () => {
     try {
-      const teamsData = await teams.getAll();
-      setTeams(teamsData);
+      // Da teams.getAll() nicht mehr verfügbar ist, verwenden wir direkt die Fallback-Teams
+      console.log("🏒 Teams: Using fallback teams since teams API not available");
+      setTeams(teamOptions);
     } catch (err) {
       console.error("Fehler beim Laden der Teams:", err);
       // Fallback auf Standard-Teams wenn Supabase Teams noch nicht vorhanden
@@ -47,7 +48,7 @@ export default function PendingRegistrations({ onUpdate }) {
     }
 
     try {
-      await users.update(userId, {
+      await usersAPI.update(userId, {
         status: "approved",
         active: true,
         teams: selectedTeams,
@@ -74,7 +75,7 @@ export default function PendingRegistrations({ onUpdate }) {
     }
 
     try {
-      await users.update(userId, {
+      await usersAPI.update(userId, {
         status: "rejected",
         active: false,
         rejected_at: new Date().toISOString()

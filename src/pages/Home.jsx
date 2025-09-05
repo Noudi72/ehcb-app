@@ -6,8 +6,15 @@ import { useTheme } from "../context/ThemeContext";
 import Header from "../components/Header";
 
 export default function Home() {
-  const { isAuthenticated, isCoach, user } = useAuth();
+  const authContext = useAuth();
   const { t } = useLanguage();
+
+  // Null-Prüfung für AuthContext
+  if (!authContext) {
+    return <div>Loading...</div>;
+  }
+
+  const { isAuthenticated, isCoach, user } = authContext;
 
   return (
     <div className="min-h-screen bg-[#f9fbfd] dark:bg-gray-900 flex flex-col transition-colors duration-300">
@@ -18,7 +25,7 @@ export default function Home() {
         <div className="text-center mt-4 space-y-3 mb-6 flex-grow">
           <div>
             <Link
-              to="/player-signin"
+              to="/player-login"
               className="inline-block text-sm bg-blue-600 dark:bg-blue-700 text-white py-3 px-8 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors mr-3 font-semibold"
             >
               🏒 Spieler Anmeldung
@@ -31,12 +38,6 @@ export default function Home() {
             </Link>
           </div>
           <div className="mt-3">
-            <Link
-              to="/player-login"
-              className="text-sm text-green-600 dark:text-green-400 hover:underline mr-4"
-            >
-              📝 Erstregistrierung
-            </Link>
             <Link
               to="/registration-status"
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline"

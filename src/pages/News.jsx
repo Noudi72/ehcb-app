@@ -6,7 +6,6 @@ import KeyboardShortcuts from "../components/KeyboardShortcuts";
 import { useAuth } from "../context/AuthContext";
 import { useNews } from "../context/NewsContext";
 import { useToast } from "../context/ToastContext";
-import { API_BASE_URL } from "../config/api";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
