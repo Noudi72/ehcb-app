@@ -590,9 +590,113 @@ export default function UmfrageEditor() {
             <div className="space-y-6">{/* Content für Schritt 1 wird hier eingefügt */}</div>
           )}
 
+          {/* Schritt 1: Umfrage-Einstellungen */}
+          {currentStep === 1 && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-white mb-2">⚙️ Schritt 1: Umfrage-Einstellungen</h2>
+                <p className="text-gray-400">Lege die grundlegenden Einstellungen für deine Umfrage fest.</p>
+              </div>
+              
+              {/* Temporär: Verwende die bestehende surveys Tab Logik */}
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <p className="text-yellow-300 mb-4">🚧 Einstellungen werden gerade überarbeitet...</p>
+                <button
+                  onClick={() => setCurrentStep(2)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Weiter zu Fragen →
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Schritt 2: Fragen bearbeiten */}
           {currentStep === 2 && (
             <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-white mb-2">❓ Schritt 2: Fragen hinzufügen</h2>
+                <p className="text-gray-400">Erstelle die Fragen für deine Umfrage.</p>
+              </div>
+              
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <p className="text-yellow-300 mb-4">🚧 Fragen-Editor wird gerade überarbeitet...</p>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  >
+                    ← Zurück zu Einstellungen
+                  </button>
+                  <button
+                    onClick={() => setCurrentStep(3)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Weiter zu Vorschau →
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Schritt 3: Vorschau */}
+          {currentStep === 3 && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-white mb-2">👁️ Schritt 3: Vorschau</h2>
+                <p className="text-gray-400">Sieh dir deine Umfrage an, bevor du sie veröffentlichst.</p>
+              </div>
+              
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <p className="text-yellow-300 mb-4">🚧 Vorschau wird gerade entwickelt...</p>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  >
+                    ← Zurück zu Fragen
+                  </button>
+                  <button
+                    onClick={() => setCurrentStep(4)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Weiter zu Status →
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Schritt 4: Status & Veröffentlichung */}
+          {currentStep === 4 && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-white mb-2">🚀 Schritt 4: Veröffentlichung</h2>
+                <p className="text-gray-400">Aktiviere deine Umfrage und mache sie für Spieler verfügbar.</p>
+              </div>
+              
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <p className="text-yellow-300 mb-4">🚧 Veröffentlichung wird gerade überarbeitet...</p>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setCurrentStep(3)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  >
+                    ← Zurück zu Vorschau
+                  </button>
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    ✅ Fertig - Zur Übersicht
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Legacy Content - Wird nach und nach in die Schritte integriert */}
+          <div className="hidden">
               {questions.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <p>Es wurden noch keine Fragen erstellt.</p>
@@ -677,7 +781,8 @@ export default function UmfrageEditor() {
           )}
 
           {/* Erstellen-Tab */}
-          {activeTab === "create" && (
+          {/* Legacy Content - wird nach und nach in die Schritte integriert */}
+          {false && activeTab === "create" && (
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -886,7 +991,7 @@ export default function UmfrageEditor() {
           )}
           
           {/* Surveys-Tab */}
-          {activeTab === "surveys" && (
+          {false && activeTab === "surveys" && (
             <div>
               <form onSubmit={handleSaveSurvey} className="space-y-8">
                 <div className="bg-[#1e2532] rounded-lg p-6 border border-gray-600">
