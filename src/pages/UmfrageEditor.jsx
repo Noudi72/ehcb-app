@@ -36,8 +36,8 @@ export default function UmfrageEditor() {
   // Zustand für die zu bearbeitende Umfrage
   const [currentSurvey, setCurrentSurvey] = useState(null);
 
-  // Zustand für UI-Steuerelemente
-  const [activeTab, setActiveTab] = useState("questions");
+  // Zustand für UI-Steuerelemente - Neue logische Struktur
+  const [currentStep, setCurrentStep] = useState(1); // 1=Einstellungen, 2=Fragen, 3=Vorschau, 4=Status
   const [editMode, setEditMode] = useState(false);
   const [editId, setEditId] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -50,8 +50,12 @@ export default function UmfrageEditor() {
         // Lade alle Fragen und Umfragen
         await Promise.all([fetchQuestions(), fetchSurveys()]);
         
-        // Standardmäßig den Umfrage-Tab anzeigen
-        setActiveTab("surveys");
+        // Bestimme den Start-Schritt basierend auf dem Kontext
+        if (surveyId) {
+          setCurrentStep(1); // Bei bestehender Umfrage: Einstellungen anzeigen
+        } else {
+          setCurrentStep(1); // Bei neuer Umfrage: Auch mit Einstellungen beginnen
+        }
       } catch (err) {
         console.error("Fehler beim Laden der Daten:", err);
       }
@@ -89,8 +93,8 @@ export default function UmfrageEditor() {
         console.log("📝 Setze currentSurvey:", loadedSurvey);
         setCurrentSurvey(loadedSurvey);
         
-        // Zeige die Umfrage im Bearbeitungs-Modus an
-        setActiveTab("surveys");
+        // Bei bestehender Umfrage direkt zu Einstellungen
+        setCurrentStep(1);
         console.log("✅ Umfrage erfolgreich geladen für Bearbeitung");
       } else {
         console.warn("❌ Umfrage mit ID", surveyId, "nicht gefunden");
@@ -503,23 +507,35 @@ export default function UmfrageEditor() {
               <h1 className="text-3xl font-bold text-white flex items-center">
                 📋 Umfrage-Editor
               </h1>
-              {surveyId && currentSurvey?.title && (
-                <p className="text-gray-400 text-sm mt-1">
-                  Bearbeite: "{currentSurvey.title}"
-                </p>
+              {surveyId && currentSurvey && (
+                <div className="text-gray-400 text-sm mt-1 p-2 bg-gray-800 rounded">
+                  <p>Bearbeite: "<strong>{currentSurvey.title || "⚠️ Kein Titel geladen"}</strong>"</p>
+                  <p className="text-xs">Survey ID: {surveyId} | Loaded ID: {currentSurvey.id} | Active: {currentSurvey.active ? "✅" : "❌"}</p>
+                </div>
               )}
             </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setActiveTab("surveys")}
-                className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                  activeTab === "surveys"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-gray-600 text-gray-300 hover:bg-gray-500"
-                }`}
-              >
-                {surveyId ? "📝 Umfrage bearbeiten" : "✨ Umfrage erstellen"}
-              </button>
+            
+            {/* Step-by-Step Navigation */}
+            <div className="flex items-center space-x-2">
+              {[
+                { step: 1, label: "Einstellungen", icon: "⚙️" },
+                { step: 2, label: "Fragen", icon: "❓" },
+                { step: 3, label: "Vorschau", icon: "👁️" },
+                { step: 4, label: "Status", icon: "🚀" }
+              ].map((item) => (
+                <button
+                  key={item.step}
+                  onClick={() => setCurrentStep(item.step)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 ${
+                    currentStep === item.step
+                      ? "bg-blue-600 text-white shadow-lg"
+                      : "bg-gray-600 text-gray-300 hover:bg-gray-500"
+                  }`}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -569,8 +585,13 @@ export default function UmfrageEditor() {
             </div>
           )}
 
-          {/* Fragen-Tab */}
-          {activeTab === "questions" && (
+          {/* Schritt 1: Umfrage-Einstellungen */}
+          {currentStep === 1 && (
+            <div className="space-y-6">{/* Content für Schritt 1 wird hier eingefügt */}</div>
+          )}
+
+          {/* Schritt 2: Fragen bearbeiten */}
+          {currentStep === 2 && (
             <div>
               {questions.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
