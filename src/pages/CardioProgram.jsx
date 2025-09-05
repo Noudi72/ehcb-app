@@ -26,33 +26,39 @@ export default function CardioProgram() {
 
   const fetchCardioPrograms = async () => {
     try {
+      console.log('🏃 Loading cardio programs...');
+      setLoading(true);
       const data = await cardio.getAll();
-      setCardioProgramme(data || []);
-    } catch (error) {
-      console.error("Fehler beim Laden der Cardio-Programme:", error);
-      // Fallback zu den hardcoded Programmen
-      setCardioProgramme([
-        {
-          id: 1,
-          title: "Grundlagenausdauer",
-          description: "Aufbau der aeroben Ausdauer mit langen Einheiten",
-          workouts: [
-            {
-              id: 1,
-              name: "Dauerlauf",
-              instruction: "30-45 Minuten kontinuierlicher Lauf in gemäßigtem Tempo",
-              intensity: "60-70% der max. Herzfrequenz",
-              frequency: "2-3x pro Woche"
-            },
-            {
-              id: 2,
-              name: "Fahrrad-Training",
-              instruction: "45-60 Minuten Radfahren in kontinuierlichem Tempo",
-              intensity: "60-70% der max. Herzfrequenz",
-              frequency: "1-2x pro Woche"
-            }
-          ]
-        },
+      console.log('📊 Cardio data received:', data?.length || 0);
+      
+      if (data && data.length > 0) {
+        setCardioProgramme(data);
+        console.log('✅ Using Supabase/JSON cardio data');
+      } else {
+        console.log('🔄 No data from API, using fallback programs');
+        // Fallback zu den hardcoded Programmen
+        setCardioProgramme([
+          {
+            id: 1,
+            title: "Grundlagenausdauer",
+            description: "Aufbau der aeroben Ausdauer mit langen Einheiten",
+            workouts: [
+              {
+                id: 1,
+                name: "Dauerlauf",
+                instruction: "30-45 Minuten kontinuierlicher Lauf in gemäßigtem Tempo",
+                intensity: "60-70% der max. Herzfrequenz",
+                frequency: "2-3x pro Woche"
+              },
+              {
+                id: 2,
+                name: "Fahrrad-Training",
+                instruction: "45-60 Minuten Radfahren in kontinuierlichem Tempo",
+                intensity: "60-70% der max. Herzfrequenz",
+                frequency: "1-2x pro Woche"
+              }
+            ]
+          },
         {
           id: 2,
           title: "Intervalltraining",
@@ -77,6 +83,76 @@ export default function CardioProgram() {
         {
           id: 3,
           title: "Eishockey-spezifische Ausdauer",
+          description: "Simulation von Spielsituationen zur Verbesserung der Erholungsfähigkeit",
+          workouts: [
+            {
+              id: 5,
+              name: "Wechsel-Simulation",
+              instruction: "45 Sekunden hohe Intensität (Sprints, Richtungswechsel), 90 Sekunden aktive Erholung, 10-12 Wiederholungen",
+              intensity: "85-95% während der Arbeitsphase, 50-60% während der Erholung",
+              frequency: "1-2x pro Woche"
+            },
+            {
+              id: 6,
+              name: "Agilitäts-Parcours",
+              instruction: "Durchlaufen eines Parcours mit Richtungswechseln, Sprüngen und kurzen Sprints, 6-8 Durchgänge",
+              intensity: "85-90% der maximalen Intensität",
+              frequency: "1x pro Woche"
+            }
+          ]
+        }
+      ]);
+      }
+    } catch (error) {
+      console.error("❌ Fehler beim Laden der Cardio-Programme:", error);
+      // Fallback zu den hardcoded Programmen
+      console.log('🔄 Using fallback cardio programs due to error');
+      setCardioProgramme([
+        {
+          id: 1,
+          title: "Grundlagenausdauer",
+          description: "Aufbau der aeroben Ausdauer mit langen Einheiten",
+          workouts: [
+            {
+              id: 1,
+              name: "Dauerlauf",
+              instruction: "30-45 Minuten kontinuierlicher Lauf in gemäßigtem Tempo",
+              intensity: "60-70% der max. Herzfrequenz",
+              frequency: "2-3x pro Woche"
+            },
+            {
+              id: 2,
+              name: "Fahrrad-Training", 
+              instruction: "45-60 Minuten Radfahren in kontinuierlichem Tempo",
+              intensity: "60-70% der max. Herzfrequenz",
+              frequency: "1-2x pro Woche"
+            }
+          ]
+        },
+        {
+          id: 2,
+          title: "Intervalltraining",
+          description: "Verbesserung der anaeroben Schwelle und Erholungsfähigkeit",
+          workouts: [
+            {
+              id: 3,
+              name: "Sprint-Intervalle",
+              instruction: "10x 30 Sekunden Sprint, 90 Sekunden Erholung",
+              intensity: "90-100% Intensität in Sprints, langsames Joggen in Pausen", 
+              frequency: "1-2x pro Woche"
+            },
+            {
+              id: 4,
+              name: "Tabata-Training",
+              instruction: "8 Runden: 20 Sekunden maximale Anstrengung, 10 Sekunden Pause",
+              intensity: "Nahezu maximale Intensität",
+              frequency: "1x pro Woche"
+            }
+          ]
+        },
+        {
+          id: 3,
+          title: "Eishockey-spezifische Ausdauer", 
           description: "Simulation von Spielsituationen zur Verbesserung der Erholungsfähigkeit",
           workouts: [
             {

@@ -17,9 +17,21 @@ export const SportFoodProvider = ({ children }) => {
   const fetchFoodItems = useCallback(async () => {
     setLoading(true);
     try {
+      console.log('🍎 Loading sport food data...');
+      
       // Kategorien und Items getrennt abrufen
       const categories = await sportFood.getAllCategories();
       const items = await sportFood.getAllItems();
+      
+      console.log('📊 Loaded categories:', categories?.length || 0);
+      console.log('📊 Loaded items:', items?.length || 0);
+      
+      if (!categories || categories.length === 0) {
+        console.log('⚠️ No categories found, using default data');
+        setFoodItems(defaultFoodItems);
+        setError(null);
+        return;
+      }
       
       // Items nach Kategorie gruppieren
       const organizedData = categories.map(category => {
@@ -38,13 +50,15 @@ export const SportFoodProvider = ({ children }) => {
         };
       });
       
+      console.log('✅ Organized sport food data:', organizedData.length, 'categories');
       setFoodItems(organizedData);
       setError(null);
     } catch (err) {
-      console.error("Fehler beim Laden der Sport Food-Daten:", err);
+      console.error("❌ Fehler beim Laden der Sport Food-Daten:", err);
       setError("Fehler beim Laden der Ernährungsempfehlungen.");
       
       // Wenn noch keine Daten in der DB vorhanden sind, verwenden wir die Standarddaten
+      console.log('🔄 Using fallback default data');
       setFoodItems(defaultFoodItems);
     } finally {
       setLoading(false);

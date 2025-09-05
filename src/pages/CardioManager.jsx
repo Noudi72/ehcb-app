@@ -106,11 +106,21 @@ export default function CardioManager() {
 
   const fetchCardioPrograms = async () => {
     try {
+      console.log('🏃 CardioManager: Loading cardio programs...');
       const data = await cardio.getAll();
-      setCardioProgramme(data || []);
+      console.log('📊 CardioManager: Cardio data received:', data?.length || 0);
+      
+      if (data && data.length > 0) {
+        setCardioProgramme(data);
+        console.log('✅ CardioManager: Using API data');
+      } else {
+        console.log('🔄 CardioManager: No API data, using fallback');
+        setCardioProgramme(initialCardioProgramme);
+      }
     } catch (error) {
-      console.error("Fehler beim Laden der Cardio-Programme:", error);
+      console.error("❌ CardioManager: Fehler beim Laden der Cardio-Programme:", error);
       // Fallback zu den initial-Programmen wenn Supabase nicht verfügbar ist
+      console.log('🔄 CardioManager: Using fallback due to error');
       setCardioProgramme(initialCardioProgramme);
     } finally {
       setLoading(false);
