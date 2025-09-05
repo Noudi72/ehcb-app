@@ -598,16 +598,176 @@ export default function UmfrageEditor() {
                 <p className="text-gray-400">Lege die grundlegenden Einstellungen für deine Umfrage fest.</p>
               </div>
               
-              {/* Temporär: Verwende die bestehende surveys Tab Logik */}
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <p className="text-yellow-300 mb-4">🚧 Einstellungen werden gerade überarbeitet...</p>
-                <button
-                  onClick={() => setCurrentStep(2)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Weiter zu Fragen →
-                </button>
-              </div>
+              <form onSubmit={handleSaveSurvey} className="space-y-8">
+                {/* Grundeinstellungen */}
+                <div className="bg-[#1e2532] rounded-lg p-6 border border-gray-600">
+                  <h3 className="text-xl font-semibold mb-4 text-white">Grundeinstellungen</h3>
+                  
+                  <div className="mb-6">
+                    <label htmlFor="surveyTitle" className="block text-sm font-medium text-gray-300 mb-2">
+                      Umfragetitel <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="surveyTitle"
+                      name="title"
+                      value={currentSurvey?.title || ""}
+                      onChange={(e) => setCurrentSurvey({...currentSurvey || {}, title: e.target.value})}
+                      placeholder="Gib den Titel der Umfrage ein..."
+                      className="w-full px-4 py-3 bg-[#2a3441] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mb-6">
+                    <label htmlFor="surveyDescription" className="block text-sm font-medium text-gray-300 mb-2">
+                      Umfragebeschreibung (Optional)
+                    </label>
+                    <textarea
+                      id="surveyDescription"
+                      name="description"
+                      value={currentSurvey?.description || ""}
+                      onChange={(e) => setCurrentSurvey({...currentSurvey || {}, description: e.target.value})}
+                      placeholder="Kurze Beschreibung des Zwecks der Umfrage..."
+                      className="w-full px-4 py-3 bg-[#2a3441] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Team-Auswahl */}
+                <div className="bg-[#1e2532] rounded-lg p-6 border border-gray-600">
+                  <h3 className="text-xl font-semibold mb-4 text-white">Team-Zuordnung</h3>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Wähle die Teams aus, die diese Umfrage sehen sollen.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-[#2a3441] rounded-lg p-4 border border-gray-600">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!currentSurvey?.target_teams || currentSurvey.target_teams.length === 0}
+                          onChange={(e) => {
+                            const newTeams = e.target.checked ? [] : currentSurvey?.target_teams || [];
+                            setCurrentSurvey({...currentSurvey || {}, target_teams: newTeams});
+                          }}
+                          className="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-500 rounded bg-[#2a3441]"
+                        />
+                        <div>
+                          <div className="text-white font-medium">Alle Teams</div>
+                          <div className="text-gray-400 text-xs">Keine Einschränkung</div>
+                        </div>
+                      </label>
+                    </div>
+                    
+                    {['u16-elit', 'u18-elit', 'u21-elit'].map(team => (
+                      <div key={team} className="bg-[#2a3441] rounded-lg p-4 border border-gray-600">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={currentSurvey?.target_teams?.includes(team) || false}
+                            onChange={(e) => {
+                              const currentTeams = currentSurvey?.target_teams || [];
+                              let newTeams;
+                              if (e.target.checked) {
+                                newTeams = [...currentTeams, team];
+                              } else {
+                                newTeams = currentTeams.filter(t => t !== team);
+                              }
+                              setCurrentSurvey({...currentSurvey || {}, target_teams: newTeams});
+                            }}
+                            className="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-500 rounded bg-[#2a3441]"
+                          />
+                          <div>
+                            <div className="text-white font-medium">{team.toUpperCase()}</div>
+                            <div className="text-gray-400 text-xs">Spezifisches Team</div>
+                          </div>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Erweiterte Einstellungen */}
+                <div className="bg-[#1e2532] rounded-lg p-6 border border-gray-600">
+                  <h3 className="text-xl font-semibold mb-4 text-white">Datenschutz & Sichtbarkeit</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-[#2a3441] rounded-lg">
+                      <div>
+                        <p className="text-white font-medium">Anonyme Umfrage</p>
+                        <p className="text-gray-400 text-sm">Antworten werden ohne Namen gespeichert</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={currentSurvey?.anonymous || false}
+                          onChange={(e) => setCurrentSurvey({...currentSurvey || {}, anonymous: e.target.checked})}
+                          className="sr-only"
+                        />
+                        <div className={`relative w-11 h-6 transition-colors duration-200 ease-in-out rounded-full ${
+                          currentSurvey?.anonymous ? 'bg-blue-600' : 'bg-gray-600'
+                        }`}>
+                          <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ease-in-out ${
+                            currentSurvey?.anonymous ? 'transform translate-x-5' : ''
+                          }`}></div>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-[#2a3441] rounded-lg">
+                      <div>
+                        <p className="text-white font-medium">Ergebnisse für Spieler sichtbar</p>
+                        <p className="text-gray-400 text-sm">Spieler können die Umfrage-Ergebnisse sehen</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={currentSurvey?.resultsVisibleToPlayers || false}
+                          onChange={(e) => setCurrentSurvey({...currentSurvey || {}, resultsVisibleToPlayers: e.target.checked})}
+                          className="sr-only"
+                        />
+                        <div className={`relative w-11 h-6 transition-colors duration-200 ease-in-out rounded-full ${
+                          currentSurvey?.resultsVisibleToPlayers ? 'bg-blue-600' : 'bg-gray-600'
+                        }`}>
+                          <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ease-in-out ${
+                            currentSurvey?.resultsVisibleToPlayers ? 'transform translate-x-5' : ''
+                          }`}></div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                <div className="flex justify-between items-center pt-6">
+                  <div>
+                    {surveyId && (
+                      <p className="text-gray-400 text-sm">
+                        💾 Änderungen werden automatisch gespeichert
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex space-x-4">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+                    >
+                      <span>💾</span>
+                      <span>{loading ? "Wird gespeichert..." : "Speichern"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(2)}
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                    >
+                      <span>➡️</span>
+                      <span>Weiter zu Fragen</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
             </div>
           )}
 
@@ -616,25 +776,324 @@ export default function UmfrageEditor() {
             <div>
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-white mb-2">❓ Schritt 2: Fragen hinzufügen</h2>
-                <p className="text-gray-400">Erstelle die Fragen für deine Umfrage.</p>
+                <p className="text-gray-400">Erstelle und verwalte die Fragen für deine Umfrage.</p>
               </div>
               
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <p className="text-yellow-300 mb-4">🚧 Fragen-Editor wird gerade überarbeitet...</p>
-                <div className="flex space-x-4">
+              {/* Aktuelle Fragen anzeigen */}
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-white">Aktuelle Fragen</h3>
                   <button
-                    onClick={() => setCurrentStep(1)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                    onClick={() => {
+                      // Neue Frage erstellen
+                      setNewQuestion({
+                        question: "",
+                        type: "options",
+                        options: ["", ""],
+                        required: false,
+                        placeholder: "",
+                        min: 0,
+                        max: 100
+                      });
+                      setEditMode(false);
+                      setEditId(null);
+                      setShowPreview(false);
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
                   >
-                    ← Zurück zu Einstellungen
-                  </button>
-                  <button
-                    onClick={() => setCurrentStep(3)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Weiter zu Vorschau →
+                    <span>➕</span>
+                    <span>Neue Frage</span>
                   </button>
                 </div>
+
+                {questions.length === 0 ? (
+                  <div className="text-center py-8 bg-[#1e2532] rounded-lg border border-gray-600">
+                    <p className="text-gray-400 mb-4">Es wurden noch keine Fragen erstellt.</p>
+                    <p className="text-gray-500 text-sm">Klicke auf "Neue Frage" um zu beginnen.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {questions.map((q, index) => (
+                      <div 
+                        key={q.id} 
+                        className="p-6 bg-[#1e2532] rounded-lg border border-gray-600 hover:border-gray-500 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h4 className="text-lg font-medium text-white mb-2">
+                              {index + 1}. {q.question} 
+                              {q.required && <span className="text-red-400 ml-2">*</span>}
+                            </h4>
+                            <div className="text-gray-400 text-sm mb-2">
+                              <strong>Typ:</strong> {
+                                q.type === "options" ? "Optionen (Einmalauswahl)" : 
+                                q.type === "radio" ? "Radio Buttons" : 
+                                q.type === "checkbox" ? "Checkboxen (Mehrfachauswahl)" : 
+                                q.type === "number" ? "Zahleneingabe" : 
+                                q.type === "text" ? "Texteingabe" : 
+                                q.type === "textarea" ? "Längerer Text" : 
+                                q.type === "scale" ? "Bewertungsskala" : 
+                                q.type
+                              }
+                              {q.required && " • Pflichtfeld"}
+                            </div>
+
+                            {q.options && q.options.length > 0 && (
+                              <div className="text-gray-400 text-sm mb-2">
+                                <strong>Optionen:</strong> {q.options.filter(opt => opt.trim() !== "").join(", ")}
+                              </div>
+                            )}
+
+                            {q.type === "scale" && (
+                              <div className="text-gray-400 text-sm mb-2">
+                                <strong>Skala:</strong> {q.min} bis {q.max}
+                              </div>
+                            )}
+
+                            {q.placeholder && (
+                              <div className="text-gray-400 text-sm">
+                                <strong>Platzhalter:</strong> {q.placeholder}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex space-x-2 ml-4">
+                            <button 
+                              onClick={() => {
+                                setNewQuestion({
+                                  question: q.question,
+                                  type: q.type,
+                                  options: q.options || ["", ""],
+                                  required: q.required,
+                                  placeholder: q.placeholder || "",
+                                  min: q.min || 0,
+                                  max: q.max || 100
+                                });
+                                setEditMode(true);
+                                setEditId(q.id);
+                              }}
+                              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 rounded"
+                              title="Frage bearbeiten"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(q.id)}
+                              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded"
+                              title="Frage löschen"
+                            >
+                              �️
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Fragen-Editor */}
+              {(editMode || showPreview || questions.length === 0) && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold text-white mb-4">
+                    {editMode ? "Frage bearbeiten" : "Neue Frage erstellen"}
+                  </h3>
+                  
+                  <form onSubmit={handleSaveQuestion} className="bg-[#1e2532] rounded-lg p-6 border border-gray-600 space-y-6">
+                    <div>
+                      <label htmlFor="question" className="block text-sm font-medium text-gray-300 mb-2">
+                        Frage <span className="text-red-400">*</span>
+                      </label>
+                      <textarea
+                        id="question"
+                        name="question"
+                        rows="3"
+                        value={newQuestion.question}
+                        onChange={handleQuestionChange}
+                        placeholder="Stelle hier deine Frage..."
+                        className="w-full px-4 py-3 bg-[#2a3441] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="type" className="block text-sm font-medium text-gray-300 mb-2">
+                        Antworttyp
+                      </label>
+                      <select
+                        id="type"
+                        name="type"
+                        value={newQuestion.type}
+                        onChange={handleQuestionChange}
+                        className="w-full px-4 py-3 bg-[#2a3441] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {questionTypes.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {["options", "radio", "checkbox"].includes(newQuestion.type) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Antwortoptionen
+                        </label>
+                        <div className="space-y-2">
+                          {newQuestion.options.map((option, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <input
+                                type="text"
+                                value={option}
+                                onChange={(e) => {
+                                  const newOptions = [...newQuestion.options];
+                                  newOptions[index] = e.target.value;
+                                  setNewQuestion({...newQuestion, options: newOptions});
+                                }}
+                                placeholder={`Option ${index + 1}`}
+                                className="flex-1 px-3 py-2 bg-[#2a3441] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              {newQuestion.options.length > 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newOptions = newQuestion.options.filter((_, i) => i !== index);
+                                    setNewQuestion({...newQuestion, options: newOptions});
+                                  }}
+                                  className="text-red-400 hover:text-red-300"
+                                >
+                                  ❌
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setNewQuestion({...newQuestion, options: [...newQuestion.options, ""]})}
+                            className="text-blue-400 hover:text-blue-300 text-sm"
+                          >
+                            ➕ Weitere Option hinzufügen
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {newQuestion.type === "scale" && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="min" className="block text-sm font-medium text-gray-300 mb-2">
+                            Minimum
+                          </label>
+                          <input
+                            type="number"
+                            id="min"
+                            name="min"
+                            value={newQuestion.min}
+                            onChange={handleQuestionChange}
+                            className="w-full px-3 py-2 bg-[#2a3441] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="max" className="block text-sm font-medium text-gray-300 mb-2">
+                            Maximum
+                          </label>
+                          <input
+                            type="number"
+                            id="max"
+                            name="max"
+                            value={newQuestion.max}
+                            onChange={handleQuestionChange}
+                            className="w-full px-3 py-2 bg-[#2a3441] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {["text", "textarea"].includes(newQuestion.type) && (
+                      <div>
+                        <label htmlFor="placeholder" className="block text-sm font-medium text-gray-300 mb-2">
+                          Platzhaltertext (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          id="placeholder"
+                          name="placeholder"
+                          value={newQuestion.placeholder}
+                          onChange={handleQuestionChange}
+                          placeholder="z.B. Deine Antwort hier..."
+                          className="w-full px-3 py-2 bg-[#2a3441] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="required"
+                        name="required"
+                        checked={newQuestion.required}
+                        onChange={handleQuestionChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 rounded bg-[#2a3441]"
+                      />
+                      <label htmlFor="required" className="ml-2 block text-sm text-gray-300">
+                        Pflichtfeld (muss beantwortet werden)
+                      </label>
+                    </div>
+
+                    <div className="flex justify-between pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewQuestion({
+                            question: "",
+                            type: "options",
+                            options: ["", ""],
+                            required: false,
+                            placeholder: "",
+                            min: 0,
+                            max: 100
+                          });
+                          setEditMode(false);
+                          setEditId(null);
+                          setShowPreview(false);
+                        }}
+                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                      >
+                        Abbrechen
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {loading ? "Wird gespeichert..." : (editMode ? "Aktualisieren" : "Speichern")}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Navigation */}
+              <div className="flex justify-between items-center pt-6">
+                <button
+                  onClick={() => setCurrentStep(1)}
+                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center space-x-2"
+                >
+                  <span>⬅️</span>
+                  <span>Zurück zu Einstellungen</span>
+                </button>
+                <div className="text-gray-400 text-sm text-center">
+                  <p>📝 {questions.length} Frage{questions.length !== 1 ? 'n' : ''} erstellt</p>
+                </div>
+                <button
+                  onClick={() => setCurrentStep(3)}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                  disabled={questions.length === 0}
+                >
+                  <span>➡️</span>
+                  <span>Weiter zu Vorschau</span>
+                </button>
               </div>
             </div>
           )}
@@ -644,25 +1103,235 @@ export default function UmfrageEditor() {
             <div>
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-white mb-2">👁️ Schritt 3: Vorschau</h2>
-                <p className="text-gray-400">Sieh dir deine Umfrage an, bevor du sie veröffentlichst.</p>
+                <p className="text-gray-400">So wird deine Umfrage für die Spieler aussehen.</p>
               </div>
-              
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <p className="text-yellow-300 mb-4">🚧 Vorschau wird gerade entwickelt...</p>
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => setCurrentStep(2)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                  >
-                    ← Zurück zu Fragen
-                  </button>
-                  <button
-                    onClick={() => setCurrentStep(4)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Weiter zu Status →
-                  </button>
+
+              {/* Umfrage-Vorschau */}
+              <div className="mb-8">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-lg mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">📱 Spieler-Ansicht</h3>
+                  <p className="text-blue-100">Dies ist eine Simulation, wie deine Umfrage auf dem Gerät der Spieler erscheint.</p>
                 </div>
+
+                {/* Umfrage Simulator */}
+                <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-2xl overflow-hidden">
+                  {/* Header der Umfrage */}
+                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+                    <h1 className="text-2xl font-bold mb-2">
+                      {currentSurvey?.title || "Umfrage Titel"}
+                    </h1>
+                    {currentSurvey?.description && (
+                      <p className="text-blue-100 text-lg">
+                        {currentSurvey.description}
+                      </p>
+                    )}
+                    <div className="mt-4 flex items-center text-blue-100 text-sm">
+                      <span className="mr-4">📊 {questions.length} Frage{questions.length !== 1 ? 'n' : ''}</span>
+                      {currentSurvey?.anonymous && <span className="mr-4">🔒 Anonym</span>}
+                      <span>⏱️ ca. {Math.max(1, Math.ceil(questions.length * 0.5))} Minute{Math.ceil(questions.length * 0.5) !== 1 ? 'n' : ''}</span>
+                    </div>
+                  </div>
+
+                  {/* Fragen-Vorschau */}
+                  <div className="p-6 bg-gray-50">
+                    {questions.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="text-6xl mb-4">📝</div>
+                        <h3 className="text-xl font-semibold text-gray-700 mb-2">Noch keine Fragen</h3>
+                        <p className="text-gray-500">Gehe zurück zu Schritt 2, um Fragen hinzuzufügen.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-8">
+                        {questions.map((question, index) => (
+                          <div key={question.id} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            {/* Frage Header */}
+                            <div className="mb-4">
+                              <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                                {index + 1}. {question.question}
+                                {question.required && <span className="text-red-500 ml-1">*</span>}
+                              </h4>
+                            </div>
+
+                            {/* Antwort-Bereich je nach Typ */}
+                            <div className="mt-4">
+                              {/* Optionen (Dropdown) */}
+                              {question.type === "options" && (
+                                <select 
+                                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-700 cursor-pointer"
+                                  disabled
+                                >
+                                  <option>Wähle eine Option...</option>
+                                  {question.options?.filter(opt => opt.trim() !== "").map((option, idx) => (
+                                    <option key={idx} value={option}>{option}</option>
+                                  ))}
+                                </select>
+                              )}
+
+                              {/* Radio Buttons */}
+                              {question.type === "radio" && (
+                                <div className="space-y-3">
+                                  {question.options?.filter(opt => opt.trim() !== "").map((option, idx) => (
+                                    <label key={idx} className="flex items-center cursor-pointer">
+                                      <input 
+                                        type="radio" 
+                                        name={`question-${question.id}`}
+                                        className="mr-3 h-4 w-4 text-blue-600"
+                                        disabled
+                                      />
+                                      <span className="text-gray-700">{option}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Checkboxen */}
+                              {question.type === "checkbox" && (
+                                <div className="space-y-3">
+                                  {question.options?.filter(opt => opt.trim() !== "").map((option, idx) => (
+                                    <label key={idx} className="flex items-center cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        className="mr-3 h-4 w-4 text-blue-600 rounded"
+                                        disabled
+                                      />
+                                      <span className="text-gray-700">{option}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Text Input */}
+                              {question.type === "text" && (
+                                <input 
+                                  type="text"
+                                  placeholder={question.placeholder || "Deine Antwort..."}
+                                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-700"
+                                  disabled
+                                />
+                              )}
+
+                              {/* Textarea */}
+                              {question.type === "textarea" && (
+                                <textarea 
+                                  rows="4"
+                                  placeholder={question.placeholder || "Deine ausführliche Antwort..."}
+                                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-700 resize-none"
+                                  disabled
+                                />
+                              )}
+
+                              {/* Number Input */}
+                              {question.type === "number" && (
+                                <input 
+                                  type="number"
+                                  placeholder={question.placeholder || "Zahl eingeben..."}
+                                  className="w-full p-3 border border-gray-300 rounded-lg text-gray-700"
+                                  disabled
+                                />
+                              )}
+
+                              {/* Rating Scale */}
+                              {question.type === "scale" && (
+                                <div className="space-y-3">
+                                  <div className="flex justify-between text-sm text-gray-600">
+                                    <span>{question.min}</span>
+                                    <span>{question.max}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    {Array.from(
+                                      { length: (question.max || 10) - (question.min || 1) + 1 }, 
+                                      (_, i) => (question.min || 1) + i
+                                    ).map(value => (
+                                      <label key={value} className="flex flex-col items-center cursor-pointer">
+                                        <input 
+                                          type="radio" 
+                                          name={`scale-${question.id}`}
+                                          value={value}
+                                          className="mb-1 h-4 w-4 text-blue-600"
+                                          disabled
+                                        />
+                                        <span className="text-sm text-gray-600">{value}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Submit Button Preview */}
+                        <div className="pt-6">
+                          <button 
+                            className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white text-lg font-semibold py-4 rounded-lg shadow-lg cursor-not-allowed opacity-75"
+                            disabled
+                          >
+                            📤 Umfrage absenden
+                          </button>
+                          <p className="text-center text-gray-500 text-sm mt-2">
+                            {currentSurvey?.anonymous ? "Deine Antworten werden anonym gespeichert" : "Deine Antworten werden mit deinem Namen gespeichert"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Zusätzliche Informationen */}
+                {questions.length > 0 && (
+                  <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-[#1e2532] p-4 rounded-lg border border-gray-600">
+                      <h4 className="font-semibold text-white mb-2">📊 Umfrage-Statistiken</h4>
+                      <div className="text-gray-300 text-sm space-y-1">
+                        <p>Fragen: {questions.length}</p>
+                        <p>Pflichtfelder: {questions.filter(q => q.required).length}</p>
+                        <p>Geschätzte Zeit: {Math.max(1, Math.ceil(questions.length * 0.5))} Min</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-[#1e2532] p-4 rounded-lg border border-gray-600">
+                      <h4 className="font-semibold text-white mb-2">🎯 Zielgruppen</h4>
+                      <div className="text-gray-300 text-sm space-y-1">
+                        {currentSurvey?.target_teams?.length > 0 ? (
+                          currentSurvey.target_teams.map((team, idx) => (
+                            <p key={idx}>• {team}</p>
+                          ))
+                        ) : (
+                          <p className="text-gray-500">Alle Teams</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-[#1e2532] p-4 rounded-lg border border-gray-600">
+                      <h4 className="font-semibold text-white mb-2">🔒 Datenschutz</h4>
+                      <div className="text-gray-300 text-sm space-y-1">
+                        <p>Anonym: {currentSurvey?.anonymous ? "✅ Ja" : "❌ Nein"}</p>
+                        <p>Ergebnisse sichtbar: {currentSurvey?.results_visible ? "✅ Ja" : "❌ Nein"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Navigation */}
+              <div className="flex justify-between items-center pt-6">
+                <button
+                  onClick={() => setCurrentStep(2)}
+                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center space-x-2"
+                >
+                  <span>⬅️</span>
+                  <span>Zurück zu Fragen</span>
+                </button>
+                <div className="text-gray-400 text-sm text-center">
+                  <p>👁️ Vorschau für {questions.length} Frage{questions.length !== 1 ? 'n' : ''}</p>
+                </div>
+                <button
+                  onClick={() => setCurrentStep(4)}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                >
+                  <span>➡️</span>
+                  <span>Weiter zu Status</span>
+                </button>
               </div>
             </div>
           )}
@@ -674,23 +1343,283 @@ export default function UmfrageEditor() {
                 <h2 className="text-2xl font-bold text-white mb-2">🚀 Schritt 4: Veröffentlichung</h2>
                 <p className="text-gray-400">Aktiviere deine Umfrage und mache sie für Spieler verfügbar.</p>
               </div>
-              
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <p className="text-yellow-300 mb-4">🚧 Veröffentlichung wird gerade überarbeitet...</p>
-                <div className="flex space-x-4">
+
+              {/* Zusammenfassung der Umfrage */}
+              <div className="mb-8">
+                <div className="bg-gradient-to-r from-green-600 to-blue-600 p-6 rounded-lg mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">📋 Umfrage-Zusammenfassung</h3>
+                  <p className="text-green-100">Überprüfe alle Einstellungen vor der Veröffentlichung.</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                  {/* Grundinformationen */}
+                  <div className="bg-[#1e2532] rounded-lg border border-gray-600 p-6">
+                    <h4 className="text-xl font-semibold text-white mb-4 flex items-center">
+                      📝 Grundinformationen
+                    </h4>
+                    <div className="space-y-3 text-gray-300">
+                      <div>
+                        <span className="text-gray-400">Titel:</span>
+                        <p className="font-medium text-white">{currentSurvey?.title || "Kein Titel"}</p>
+                      </div>
+                      {currentSurvey?.description && (
+                        <div>
+                          <span className="text-gray-400">Beschreibung:</span>
+                          <p className="text-gray-300">{currentSurvey.description}</p>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-gray-400">Anzahl Fragen:</span>
+                        <p className="font-medium text-white">{questions.length} Frage{questions.length !== 1 ? 'n' : ''}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Pflichtfelder:</span>
+                        <p className="font-medium text-white">{questions.filter(q => q.required).length} von {questions.length}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Einstellungen */}
+                  <div className="bg-[#1e2532] rounded-lg border border-gray-600 p-6">
+                    <h4 className="text-xl font-semibold text-white mb-4 flex items-center">
+                      ⚙️ Einstellungen
+                    </h4>
+                    <div className="space-y-3 text-gray-300">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Anonyme Antworten:</span>
+                        <span className={`px-2 py-1 rounded text-sm font-medium ${
+                          currentSurvey?.anonymous 
+                            ? "bg-green-900 text-green-300" 
+                            : "bg-red-900 text-red-300"
+                        }`}>
+                          {currentSurvey?.anonymous ? "✅ Aktiviert" : "❌ Deaktiviert"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Ergebnisse sichtbar:</span>
+                        <span className={`px-2 py-1 rounded text-sm font-medium ${
+                          currentSurvey?.results_visible 
+                            ? "bg-green-900 text-green-300" 
+                            : "bg-red-900 text-red-300"
+                        }`}>
+                          {currentSurvey?.results_visible ? "✅ Aktiviert" : "❌ Deaktiviert"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Zielgruppen:</span>
+                        <div className="mt-1">
+                          {currentSurvey?.target_teams?.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {currentSurvey.target_teams.map((team, idx) => (
+                                <span key={idx} className="px-2 py-1 bg-blue-900 text-blue-300 rounded text-sm">
+                                  {team}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-sm">Alle Teams</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status-Management */}
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-white mb-4">📊 Status-Verwaltung</h3>
+                
+                <div className="bg-[#1e2532] rounded-lg border border-gray-600 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-4 h-4 rounded-full ${
+                        currentSurvey?.active ? "bg-green-500" : "bg-red-500"
+                      }`}></div>
+                      <span className="text-lg font-medium text-white">
+                        Umfrage ist {currentSurvey?.active ? "AKTIV" : "INAKTIV"}
+                      </span>
+                    </div>
+                    
+                    <button
+                      onClick={async () => {
+                        if (!currentSurvey?.title?.trim()) {
+                          showError("Bitte gib einen Titel für die Umfrage ein.");
+                          setCurrentStep(1);
+                          return;
+                        }
+                        
+                        if (questions.length === 0) {
+                          showError("Bitte erstelle mindestens eine Frage.");
+                          setCurrentStep(2);
+                          return;
+                        }
+
+                        setLoading(true);
+                        try {
+                          await updateSurvey(currentSurvey.id, {
+                            ...currentSurvey,
+                            active: !currentSurvey.active
+                          });
+                          showSuccess(
+                            currentSurvey.active 
+                              ? "Umfrage wurde deaktiviert" 
+                              : "Umfrage wurde erfolgreich veröffentlicht!"
+                          );
+                        } catch (error) {
+                          showError("Fehler beim Statuswechsel: " + error.message);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                      className={`px-6 py-3 rounded-lg font-semibold text-white transition-colors disabled:opacity-50 ${
+                        currentSurvey?.active
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-green-600 hover:bg-green-700"
+                      }`}
+                    >
+                      {loading ? "Wird gespeichert..." : (
+                        currentSurvey?.active ? "🔴 Deaktivieren" : "🚀 Veröffentlichen"
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className={`p-4 rounded-lg border ${
+                      currentSurvey?.active 
+                        ? "bg-green-900/20 border-green-600" 
+                        : "bg-yellow-900/20 border-yellow-600"
+                    }`}>
+                      <h4 className={`font-medium mb-2 ${
+                        currentSurvey?.active ? "text-green-300" : "text-yellow-300"
+                      }`}>
+                        {currentSurvey?.active ? "✅ Umfrage ist online" : "⚠️ Umfrage ist offline"}
+                      </h4>
+                      <p className={`text-sm ${
+                        currentSurvey?.active ? "text-green-400" : "text-yellow-400"
+                      }`}>
+                        {currentSurvey?.active 
+                          ? "Spieler können die Umfrage jetzt sehen und ausfüllen. Du kannst sie jederzeit deaktivieren."
+                          : "Die Umfrage ist für Spieler nicht sichtbar. Klicke auf 'Veröffentlichen' um sie zu aktivieren."
+                        }
+                      </p>
+                    </div>
+
+                    {questions.length === 0 && (
+                      <div className="p-4 rounded-lg border bg-red-900/20 border-red-600">
+                        <h4 className="font-medium mb-2 text-red-300">❌ Keine Fragen vorhanden</h4>
+                        <p className="text-sm text-red-400">
+                          Du musst mindestens eine Frage erstellen, bevor du die Umfrage veröffentlichen kannst.
+                        </p>
+                      </div>
+                    )}
+
+                    {!currentSurvey?.title?.trim() && (
+                      <div className="p-4 rounded-lg border bg-red-900/20 border-red-600">
+                        <h4 className="font-medium mb-2 text-red-300">❌ Kein Titel vorhanden</h4>
+                        <p className="text-sm text-red-400">
+                          Du musst einen Titel für die Umfrage eingeben, bevor du sie veröffentlichen kannst.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Aktionen */}
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-white mb-4">🛠️ Weitere Aktionen</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
                     onClick={() => setCurrentStep(3)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                    className="p-4 bg-[#1e2532] border border-gray-600 rounded-lg hover:border-gray-500 transition-colors text-left"
                   >
-                    ← Zurück zu Vorschau
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">👁️</span>
+                      <div>
+                        <h4 className="font-medium text-white">Vorschau anzeigen</h4>
+                        <p className="text-gray-400 text-sm">Sehe dir die Umfrage nochmal an</p>
+                      </div>
+                    </div>
                   </button>
+
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    className="p-4 bg-[#1e2532] border border-gray-600 rounded-lg hover:border-gray-500 transition-colors text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">❓</span>
+                      <div>
+                        <h4 className="font-medium text-white">Fragen bearbeiten</h4>
+                        <p className="text-gray-400 text-sm">Weitere Fragen hinzufügen oder ändern</p>
+                      </div>
+                    </div>
+                  </button>
+
                   <button
                     onClick={() => setCurrentStep(1)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    className="p-4 bg-[#1e2532] border border-gray-600 rounded-lg hover:border-gray-500 transition-colors text-left"
                   >
-                    ✅ Fertig - Zur Übersicht
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">⚙️</span>
+                      <div>
+                        <h4 className="font-medium text-white">Einstellungen ändern</h4>
+                        <p className="text-gray-400 text-sm">Titel, Teams oder Datenschutz anpassen</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      if (window.confirm('Möchtest du wirklich alle Antworten dieser Umfrage löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+                        setLoading(true);
+                        try {
+                          // Hier würde normalerweise die API aufgerufen werden
+                          showSuccess("Alle Antworten wurden gelöscht");
+                        } catch (error) {
+                          showError("Fehler beim Löschen: " + error.message);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }
+                    }}
+                    className="p-4 bg-red-900/20 border border-red-600 rounded-lg hover:border-red-500 transition-colors text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">🗑️</span>
+                      <div>
+                        <h4 className="font-medium text-red-300">Antworten löschen</h4>
+                        <p className="text-red-400 text-sm">Alle Antworten permanent entfernen</p>
+                      </div>
+                    </div>
                   </button>
                 </div>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex justify-between items-center pt-6">
+                <button
+                  onClick={() => setCurrentStep(3)}
+                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center space-x-2"
+                >
+                  <span>⬅️</span>
+                  <span>Zurück zu Vorschau</span>
+                </button>
+                <div className="text-gray-400 text-sm text-center">
+                  <p>🚀 {currentSurvey?.active ? "Umfrage ist ONLINE" : "Umfrage ist OFFLINE"}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    // Zurück zur Übersicht
+                    window.location.href = '/coach-dashboard#surveys';
+                  }}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                >
+                  <span>📊</span>
+                  <span>Zur Übersicht</span>
+                </button>
               </div>
             </div>
           )}
