@@ -417,6 +417,81 @@ export default function UmfrageEditor() {
     showSuccess(`Frage "${question.question.substring(0, 30)}..." zur Umfrage hinzugefügt`);
   };
 
+  // Handler für das Speichern von Fragen (für Step 2)
+  const handleSaveQuestion = async (e) => {
+    e.preventDefault();
+    
+    if (!newQuestion.question.trim()) {
+      showError("Bitte gib eine Frage ein.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let result;
+      if (editMode && editId) {
+        // Bei Bearbeitung PUT-Methode direkt aufrufen mit der bestehenden ID
+        console.log("Aktualisiere bestehende Frage mit ID:", editId);
+        result = await updateQuestion(editId, {
+          ...newQuestion,
+          id: editId
+        });
+      } else {
+        // Bei neuer Frage POST-Methode aufrufen
+        const newId = `question_${Date.now()}`;
+        console.log("Erstelle neue Frage mit ID:", newId);
+        result = await addQuestion({
+          ...newQuestion,
+          id: newId
+        });
+      }
+      
+      if (result) {
+        showSuccess(editMode ? "Frage wurde aktualisiert!" : "Neue Frage wurde hinzugefügt!");
+        
+        // Fragen neu laden
+        await fetchQuestions();
+        
+        // Editor zurücksetzen
+        setNewQuestion({
+          question: "",
+          type: "options",
+          options: ["", ""],
+          required: false,
+          placeholder: "",
+          min: 0,
+          max: 100
+        });
+        setEditMode(false);
+        setEditId(null);
+        setShowPreview(false);
+      }
+    } catch (err) {
+      console.error("Fehler beim Speichern der Frage:", err);
+      showError("Fehler beim Speichern der Frage: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler für das Löschen von Fragen
+  const handleDelete = async (id) => {
+    if (window.confirm("Möchtest du diese Frage wirklich löschen?")) {
+      setLoading(true);
+      try {
+        const success = await deleteQuestion(id);
+        if (success) {
+          showSuccess("Frage wurde gelöscht!");
+          await fetchQuestions();
+        }
+      } catch (err) {
+        showError("Fehler beim Löschen: " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   // Render-Funktion für die Vorschau der Frage
   const renderQuestionPreview = () => {
     switch (newQuestion.type) {

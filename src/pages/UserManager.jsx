@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/ThemeContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
@@ -13,7 +12,10 @@ export default function UserManager() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState("all"); // all, active, inactive, pending, approved
+  const [success, setSuccess] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [editingUser, setEditingUser] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -23,9 +25,9 @@ export default function UserManager() {
   const fetchUsers = async () => {
     try {
       const usersData = await usersAPI.getAll();
-      setUsers(usersData.filter(u => u.role === "player")); // Nur Spieler anzeigen
+      setUsers(usersData.filter(u => u.role === "player"));
     } catch (err) {
-      setError("Fehler beim Laden der Benutzer");
+      setError("Fehler beim Laden der Spieler");
     } finally {
       setLoading(false);
     }
@@ -34,13 +36,22 @@ export default function UserManager() {
   const fetchTeams = async () => {
     try {
       const teamsData = await teamsAPI.getAll();
-      // Sicherstellen, dass data ein Array ist
       setTeams(Array.isArray(teamsData) ? teamsData : []);
     } catch (err) {
       console.error("Fehler beim Laden der Teams:", err);
-      // Fallback: Leeres Array setzen
       setTeams([]);
     }
+  };
+
+  const showSuccess = (message) => {
+    setSuccess(message);
+    setError("");
+    setTimeout(() => setSuccess(""), 5000);
+  };
+
+  const showError = (message) => {
+    setError(message);
+    setSuccess("");
   };
 
   const toggleUserActive = async (userId, currentStatus) => {
@@ -50,46 +61,68 @@ export default function UserManager() {
       });
 
       if (updatedUser) {
-        // Aktualisiere die lokale Liste
         setUsers(users.map(u => 
           u.id === userId ? { ...u, active: !currentStatus } : u
         ));
+        showSuccess(`Spieler wurde ${!currentStatus ? 'aktiviert' : 'deaktiviert'}`);
       }
     } catch (err) {
-      setError("Fehler beim Aktualisieren des Benutzerstatus: " + err.message);
+      showError("Fehler beim Aktualisieren des Status: " + err.message);
     }
   };
 
   const deleteUser = async (userId, userName) => {
-    if (!window.confirm(`Bist du sicher, dass du den Benutzer "${userName}" dauerhaft löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
+    if (!window.confirm(`Bist du sicher, dass du "${userName}" dauerhaft löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
       return;
     }
 
     try {
       await usersAPI.delete(userId);
-
-      // Entferne den Benutzer aus der lokalen Liste
       setUsers(users.filter(u => u.id !== userId));
-      setError(""); // Clear any previous errors
+      showSuccess(`Spieler "${userName}" wurde gelöscht`);
     } catch (err) {
-      setError("Fehler beim Löschen des Benutzers: " + err.message);
+      showError("Fehler beim Löschen: " + err.message);
     }
   };
 
-  const getTeamNames = (teamIds) => {
-    if (!teamIds || !Array.isArray(teamIds)) {
-      // Backward compatibility - falls noch das alte single team format verwendet wird
-      if (typeof teamIds === 'string') {
-        const team = Array.isArray(teams) ? teams.find(t => t.id === teamIds) : null;
-        return team ? team.name : teamIds;
-      }
-      return "-";
+  const startEdit = (player) => {
+    setEditingUser({
+      id: player.id,
+      name: player.name,
+      username: player.username,
+      teams: player.teams || [],
+      active: player.active,
+      status: player.status || "approved"
+    });
+    setShowEditModal(true);
+  };
+
+  const saveUser = async () => {
+    if (!editingUser.name.trim() || !editingUser.username.trim()) {
+      showError("Name und Benutzername sind erforderlich");
+      return;
     }
-    
-    return teamIds.map(teamId => {
-      const team = Array.isArray(teams) ? teams.find(t => t.id === teamId) : null;
-      return team ? team.name : teamId;
-    }).join(", ");
+
+    try {
+      const updatedUser = await usersAPI.update(editingUser.id, {
+        name: editingUser.name,
+        username: editingUser.username,
+        teams: editingUser.teams,
+        active: editingUser.active,
+        status: editingUser.status
+      });
+
+      if (updatedUser) {
+        setUsers(users.map(u => 
+          u.id === editingUser.id ? { ...u, ...editingUser } : u
+        ));
+        showSuccess("Spieler wurde erfolgreich aktualisiert");
+        setShowEditModal(false);
+        setEditingUser(null);
+      }
+    } catch (err) {
+      showError("Fehler beim Speichern: " + err.message);
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -99,49 +132,6 @@ export default function UserManager() {
     if (filter === "approved") return user.status === "approved";
     return true;
   });
-
-  const addTestUsers = async () => {
-    const testUsers = [
-      {
-        name: 'Max Mustermann',
-        username: 'max.mustermann',
-        email: 'max@ehcb.ch',
-        role: 'player',
-        teams: ['U18-Elit'],
-        active: true
-      },
-      {
-        name: 'Anna Schmidt',
-        username: 'anna.schmidt',
-        email: 'anna@ehcb.ch',
-        role: 'player',
-        teams: ['U16-Elit'],
-        active: true
-      },
-      {
-        name: 'Tom Weber',
-        username: 'tom.weber',
-        email: 'tom@ehcb.ch',
-        role: 'player',
-        teams: ['U21-Elit'],
-        active: false
-      }
-    ];
-
-    try {
-      setLoading(true);
-      for (const testUser of testUsers) {
-        await usersAPI.create(testUser);
-      }
-      await fetchUsers(); // Reload the user list
-      setError(""); // Clear any errors
-      alert('Testbenutzer wurden erfolgreich hinzugefügt!');
-    } catch (err) {
-      setError('Fehler beim Hinzufügen der Testbenutzer: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!user || !isCoach) {
     return (
@@ -153,7 +143,6 @@ export default function UserManager() {
             <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : ''}`}>Du musst als Coach angemeldet sein, um auf diese Seite zuzugreifen.</p>
           </div>
         </main>
-        
       </div>
     );
   }
@@ -165,226 +154,318 @@ export default function UserManager() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className={`shadow-md rounded-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between mb-6">
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-[#0a2240]'}`}>Benutzer-Verwaltung</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={addTestUsers}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
-              >
-                + Testdaten hinzufügen
-              </button>
-              <BackButton to="/coach/dashboard" />
+            <div>
+              <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-[#0a2240]'}`}>👥 Spielerverwaltung</h1>
+              <p className={`mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Verwalte Spieler, bearbeite Teams und kontrolliere den Zugang (ohne E-Mail)
+              </p>
             </div>
+            <BackButton to="/coach/dashboard" />
           </div>
+
+          {success && (
+            <div className={`border px-4 py-3 rounded mb-4 ${
+              isDarkMode ? 'bg-green-900 border-green-700 text-green-300' : 'bg-green-50 border-green-200 text-green-700'
+            }`}>
+              ✅ {success}
+            </div>
+          )}
 
           {error && (
             <div className={`border px-4 py-3 rounded mb-4 ${
               isDarkMode ? 'bg-red-900 border-red-700 text-red-300' : 'bg-red-50 border-red-200 text-red-700'
             }`}>
-              {error}
+              ❌ {error}
             </div>
           )}
 
-          {/* Filter */}
           <div className="mb-6">
-            <div className="flex flex-wrap space-x-2 gap-y-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setFilter("all")}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === "all" 
-                    ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white' 
                     : isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                Alle ({users.length})
-              </button>
-              <button
-                onClick={() => setFilter("pending")}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  filter === "pending" 
-                    ? isDarkMode ? 'bg-yellow-600 text-white' : 'bg-yellow-600 text-white'
-                    : isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Ausstehend ({users.filter(u => u.status === "pending").length})
-              </button>
-              <button
-                onClick={() => setFilter("approved")}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  filter === "approved" 
-                    ? isDarkMode ? 'bg-green-600 text-white' : 'bg-green-600 text-white'
-                    : isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Genehmigt ({users.filter(u => u.status === "approved").length})
+                🔵 Alle ({users.length})
               </button>
               <button
                 onClick={() => setFilter("active")}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === "active" 
-                    ? isDarkMode ? 'bg-green-600 text-white' : 'bg-green-600 text-white'
+                    ? 'bg-green-600 text-white' 
                     : isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                Aktiv ({users.filter(u => u.active && u.status === "approved").length})
+                ✅ Aktiv ({users.filter(u => u.active && u.status === "approved").length})
               </button>
               <button
                 onClick={() => setFilter("inactive")}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === "inactive" 
-                    ? isDarkMode ? 'bg-red-600 text-white' : 'bg-red-600 text-white'
+                    ? 'bg-red-600 text-white' 
                     : isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                Inaktiv ({users.filter(u => !u.active || u.status === "rejected").length})
+                ❌ Inaktiv ({users.filter(u => !u.active || u.status === "rejected").length})
+              </button>
+              <button
+                onClick={() => setFilter("pending")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === "pending" 
+                    ? 'bg-yellow-600 text-white' 
+                    : isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                ⏳ Wartend ({users.filter(u => u.status === "pending").length})
               </button>
             </div>
           </div>
 
           {loading ? (
-            <div className="text-center py-10">
-              <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto ${
-                isDarkMode ? 'border-blue-400' : 'border-[#0a2240]'
-              }`}></div>
-              <p className={`mt-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Lade Benutzer...</p>
+            <div className="text-center py-8">
+              <div className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Lade Spieler...
+              </div>
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-10">
-              <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Keine Benutzer gefunden.</p>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">👥</div>
+              <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                Keine Spieler gefunden
+              </h3>
+              <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {filter === "all" ? "Es sind noch keine Spieler registriert." : `Keine Spieler mit dem Filter "${filter}" gefunden.`}
+              </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className={`min-w-full divide-y ${
-                isDarkMode ? 'divide-gray-700' : 'divide-gray-200'
-              }`}>
-                <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                  <tr>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}>
-                      Name
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}>
-                      Passwort
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}>
-                      Teams
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}>
-                      Trikotnummer
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}>
-                      Registriert
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}>
-                      Status
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}>
-                      Aktionen
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${
-                  isDarkMode ? 'divide-gray-700' : 'divide-gray-200'
-                }`}>
-                  {filteredUsers.map((user) => {
-                    const rowColor = user.status === "pending" ? (isDarkMode ? "bg-yellow-900" : "bg-yellow-50") : 
-                                   user.status === "rejected" ? (isDarkMode ? "bg-red-900" : "bg-red-50") : 
-                                   !user.active ? (isDarkMode ? "bg-gray-700" : "bg-gray-50") : "";
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredUsers.map((player) => (
+                <div 
+                  key={player.id}
+                  className={`border rounded-lg p-6 hover:shadow-lg transition-shadow ${
+                    isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+                        player.active && player.status === "approved" ? 'bg-green-500' : 
+                        player.status === "pending" ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}>
+                        {player.name?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <div>
+                        <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {player.name}
+                        </h3>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          @{player.username}
+                        </p>
+                      </div>
+                    </div>
                     
-                    return (
-                      <tr key={user.id} className={rowColor}>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                          isDarkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          {user.name}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-mono ${
-                          isDarkMode ? 'text-blue-300' : 'text-blue-600'
-                        }`}>
-                          {user.password || "-"}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                        }`}>
-                          {getTeamNames(user.teams || user.team) || (user.status === "pending" ? "Noch nicht zugewiesen" : "-")}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                        }`}>
-                          {user.playerNumber || "-"}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                        }`}>
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.status === "pending" 
-                              ? isDarkMode ? "bg-yellow-800 text-yellow-200" : "bg-yellow-100 text-yellow-800"
-                              : user.status === "approved" && user.active
-                              ? isDarkMode ? "bg-green-800 text-green-200" : "bg-green-100 text-green-800"
-                              : user.status === "rejected"
-                              ? isDarkMode ? "bg-red-800 text-red-200" : "bg-red-100 text-red-800"
-                              : isDarkMode ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800"
-                          }`}>
-                            {user.status === "pending" ? "Ausstehend" : 
-                             user.status === "approved" && user.active ? "Aktiv" :
-                             user.status === "rejected" ? "Abgelehnt" :
-                             user.active ? "Aktiv" : "Deaktiviert"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {user.status === "pending" ? (
-                            <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Warten auf Genehmigung</span>
-                          ) : (
-                            <div className="flex flex-col space-y-1">
-                              <button
-                                onClick={() => toggleUserActive(user.id, user.active)}
-                                className={`${
-                                  user.active 
-                                    ? isDarkMode ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-900"
-                                    : isDarkMode ? "text-green-400 hover:text-green-300" : "text-green-600 hover:text-green-900"
-                                } hover:underline text-left`}
-                              >
-                                {user.active ? "Deaktivieren" : "Aktivieren"}
-                              </button>
-                              <button
-                                onClick={() => deleteUser(user.id, user.name)}
-                                className={`hover:underline font-medium text-left ${
-                                  isDarkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-900'
-                                }`}
-                                title="Benutzer dauerhaft löschen"
-                              >
-                                Löschen
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      player.active && player.status === "approved" 
+                        ? 'bg-green-100 text-green-800' 
+                        : player.status === "pending"
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {player.active && player.status === "approved" ? "Aktiv" : 
+                       player.status === "pending" ? "Wartend" : "Inaktiv"}
+                    </span>
+                  </div>
+
+                  <div className="mb-4">
+                    <h4 className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Teams:
+                    </h4>
+                    <div className="flex flex-wrap gap-1">
+                      {player.teams && player.teams.length > 0 ? (
+                        player.teams.map((teamId, index) => {
+                          const team = teams.find(t => t.id === teamId);
+                          return (
+                            <span 
+                              key={index}
+                              className={`px-2 py-1 rounded text-xs ${
+                                isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'
+                              }`}
+                            >
+                              {team?.name || teamId}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                          Kein Team zugewiesen
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => startEdit(player)}
+                      className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
+                    >
+                      ✏️ Bearbeiten
+                    </button>
+                    <button
+                      onClick={() => toggleUserActive(player.id, player.active)}
+                      className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                        player.active 
+                          ? 'bg-red-600 hover:bg-red-700 text-white' 
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      }`}
+                    >
+                      {player.active ? '⏸️' : '▶️'}
+                    </button>
+                    <button
+                      onClick={() => deleteUser(player.id, player.name)}
+                      className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm font-medium transition-colors"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
+
+        {showEditModal && editingUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className={`max-w-md w-full rounded-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <h2 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Spieler bearbeiten
+              </h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingUser.name}
+                    onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                    className={`w-full px-3 py-2 border rounded-lg ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Benutzername * (für Login, ohne E-Mail)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingUser.username}
+                    onChange={(e) => setEditingUser({...editingUser, username: e.target.value})}
+                    className={`w-full px-3 py-2 border rounded-lg ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                    placeholder="z.B. max.muster"
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Teams
+                  </label>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {teams.map((team) => (
+                      <label key={team.id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={editingUser.teams.includes(team.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditingUser({
+                                ...editingUser,
+                                teams: [...editingUser.teams, team.id]
+                              });
+                            } else {
+                              setEditingUser({
+                                ...editingUser,
+                                teams: editingUser.teams.filter(t => t !== team.id)
+                              });
+                            }
+                          }}
+                          className="mr-2"
+                        />
+                        <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                          {team.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Status
+                  </label>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={editingUser.active}
+                        onChange={(e) => setEditingUser({...editingUser, active: e.target.checked})}
+                        className="mr-2"
+                      />
+                      <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Aktiv</span>
+                    </label>
+                    <select
+                      value={editingUser.status}
+                      onChange={(e) => setEditingUser({...editingUser, status: e.target.value})}
+                      className={`px-3 py-1 border rounded ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="approved">Genehmigt</option>
+                      <option value="pending">Wartend</option>
+                      <option value="rejected">Abgelehnt</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingUser(null);
+                  }}
+                  className={`px-4 py-2 rounded transition-colors ${
+                    isDarkMode 
+                      ? 'bg-gray-600 hover:bg-gray-700 text-white' 
+                      : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+                  }`}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={saveUser}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                >
+                  Speichern
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
-      
-      
     </div>
   );
 }
