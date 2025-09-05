@@ -4,8 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-
 import BackButton from "../components/BackButton";
+import TranslationButton from "../components/TranslationButton";
 
 export default function UmfrageResults() {
   const { surveys, responses, questions, loading, error, fetchSurveys, fetchResponses, fetchQuestions, deleteResponse } = useUmfrage();
@@ -987,6 +987,8 @@ export default function UmfrageResults() {
         </div>
       </main>
       
+      {/* Translation Button */}
+      <TranslationButton position="bottom-right" />
       
     </div>
   );

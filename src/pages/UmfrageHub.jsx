@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
+import TranslationButton from "../components/TranslationButton";
 import { useNavigate } from "react-router-dom";
 
 // Status Badge Component
@@ -590,6 +591,10 @@ export default function UmfrageHub() {
           </div>
         )}
       </main>
+      
+      {/* Translation Button */}
+      <TranslationButton position="bottom-right" />
+      
     </div>
   );
 }

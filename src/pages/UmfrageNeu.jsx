@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
+import TranslationButton from '../components/TranslationButton';
 import { surveys as surveysAPI, questions as questionsAPI, responses as responsesAPI } from '../config/supabase-api';
-import { useLanguage } from '../context/LanguageContext';
 
 const UmfrageNeu = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const { isDarkMode } = useTheme();
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState(null);
@@ -135,47 +138,65 @@ const UmfrageNeu = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Header />
       <div className="px-4 py-4">
         <BackButton to="/" />
       </div>
       
       <main className="flex-1 flex flex-col items-center px-4 py-8">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('survey.title') || 'Umfragen'}</h1>
+        <div className={`w-full max-w-md rounded-2xl shadow-xl border p-6 transition-colors duration-300 ${
+          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
+          <h1 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            {t('survey.title') || 'Umfragen'}
+          </h1>
           
           {!selectedSurvey && (
             <div>
               {filteredSurveys.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-600">{t('survey.noneAvailable') || 'Keine Umfragen verfügbar.'}</p>
+                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {t('survey.noneAvailable') || 'Keine Umfragen verfügbar.'}
+                  </p>
                   {surveys && surveys.length > 0 && (
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {`Es gibt ${surveys.length} Umfragen, aber keine für Ihr Team.`}
                     </p>
                   )}
                   <button 
                     onClick={reload}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className={`mt-4 px-4 py-2 rounded-lg transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
                   >
                     ↻ {t('common.reload') || 'Neu laden'}
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <h2 className="text-lg font-medium text-gray-700 mb-4">
+                  <h2 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                     {`Verfügbare Umfragen (${filteredSurveys.length}):`}
                   </h2>
                   {filteredSurveys.map(survey => (
                     <div
                       key={survey.id}
                       onClick={() => selectSurvey(survey)}
-                      className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all"
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-300 ${
+                        isDarkMode 
+                          ? 'border-gray-600 hover:border-blue-400 hover:bg-blue-900/20' 
+                          : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+                      }`}
                     >
-                      <h3 className="font-semibold text-gray-900 mb-1">{survey.title}</h3>
-                      <p className="text-sm text-gray-600">{survey.description}</p>
-                      <div className="mt-2 text-xs text-gray-500">
+                      <h3 className={`font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {survey.title}
+                      </h3>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {survey.description}
+                      </p>
+                      <div className={`mt-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         📋 {survey.questions?.length || 0} {t('survey.questions') || 'Fragen'}
                         {survey.target_teams && survey.target_teams.length > 0 && (
                           <span className="ml-2">
@@ -279,6 +300,10 @@ const UmfrageNeu = () => {
           )}
         </div>
       </main>
+      
+      {/* Translation Button */}
+      <TranslationButton position="bottom-right" />
+      
     </div>
   );
 };
