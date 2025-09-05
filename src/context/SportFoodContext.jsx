@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
-import { sportFood } from "../config/supabase-api";
 
 // SportFood-Kontext erstellen
 const SportFoodContext = createContext();
@@ -13,25 +12,29 @@ export const SportFoodProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  // Daten aus der API abrufen
-  const fetchFoodItems = useCallback(async () => {
+  // Direkte API-Calls zu JSON Server
+  const loadSportFoodData = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      console.log('🍎 Loading sport food data...');
+      console.log('🍎 Loading sport food data from JSON Server...');
       
-      // Kategorien und Items getrennt abrufen
-      const categories = await sportFood.getAllCategories();
-      const items = await sportFood.getAllItems();
-      
-      console.log('📊 Loaded categories:', categories?.length || 0);
-      console.log('📊 Loaded items:', items?.length || 0);
-      
-      if (!categories || categories.length === 0) {
-        console.log('⚠️ No categories found, using default data');
-        setFoodItems(defaultFoodItems);
-        setError(null);
-        return;
+      // Kategorien laden
+      const categoriesResponse = await fetch('http://localhost:3001/sport-food-categories');
+      if (!categoriesResponse.ok) {
+        throw new Error('Failed to fetch categories');
       }
+      const categories = await categoriesResponse.json();
+      console.log('📊 Categories loaded:', categories?.length || 0);
+      
+      // Items laden  
+      const itemsResponse = await fetch('http://localhost:3001/sport-food-items');
+      if (!itemsResponse.ok) {
+        throw new Error('Failed to fetch items');
+      }
+      const items = await itemsResponse.json();
+      console.log('📊 Items loaded:', items?.length || 0);
       
       // Items nach Kategorie gruppieren
       const organizedData = categories.map(category => {
@@ -45,19 +48,19 @@ export const SportFoodProvider = ({ children }) => {
             name: item.name,
             description: item.description,
             benefits: item.benefits,
-            time: "30-60 Minuten" // Standard-Zeit, falls nicht definiert
+            time: "30-60 Minuten" // Standard-Zeit
           }))
         };
       });
       
       console.log('✅ Organized sport food data:', organizedData.length, 'categories');
       setFoodItems(organizedData);
-      setError(null);
+      
     } catch (err) {
       console.error("❌ Fehler beim Laden der Sport Food-Daten:", err);
       setError("Fehler beim Laden der Ernährungsempfehlungen.");
       
-      // Wenn noch keine Daten in der DB vorhanden sind, verwenden wir die Standarddaten
+      // Fallback zu Default-Daten
       console.log('🔄 Using fallback default data');
       setFoodItems(defaultFoodItems);
     } finally {
@@ -65,26 +68,41 @@ export const SportFoodProvider = ({ children }) => {
     }
   }, []);
 
-  // Beim Mounten der Komponente die Daten abrufen, aber nur einmal
+  // Beim ersten Laden die Daten abrufen
   useEffect(() => {
-    fetchFoodItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    loadSportFoodData();
+  }, [loadSportFoodData]);
 
   // Neue Kategorie hinzufügen
   const addCategory = async (categoryData) => {
     setLoading(true);
     try {
+      console.log("SportFoodContext: Füge neue Kategorie hinzu:", categoryData);
+      
       const newCategory = {
+        id: `cat${Date.now()}`, // Temporäre ID
         name: categoryData.category,
         description: categoryData.description || ""
       };
-      const response = await sportFood.createCategory(newCategory);
+      
+      // POST an JSON Server
+      const response = await fetch('http://localhost:3001/sport-food-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCategory)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const savedCategory = await response.json();
+      console.log("SportFoodContext: Kategorie gespeichert:", savedCategory);
       
       const newFormattedCategory = {
-        id: response.id,
-        category: response.name,
-        description: response.description,
+        id: savedCategory.id,
+        category: savedCategory.name,
+        description: savedCategory.description,
         items: []
       };
       
@@ -92,7 +110,7 @@ export const SportFoodProvider = ({ children }) => {
       setError(null);
       return newFormattedCategory;
     } catch (err) {
-      console.error("Fehler beim Hinzufügen der Kategorie:", err);
+      console.error("SportFoodContext: Fehler beim Hinzufügen der Kategorie:", err);
       setError("Fehler beim Speichern der neuen Kategorie.");
       return null;
     } finally {
@@ -104,27 +122,45 @@ export const SportFoodProvider = ({ children }) => {
   const updateCategory = async (id, categoryData) => {
     setLoading(true);
     try {
+      console.log("SportFoodContext: Aktualisiere Kategorie:", id, categoryData);
+      
       const existingCategory = foodItems.find(item => item.id === id);
-      if (!existingCategory) return null;
+      if (!existingCategory) {
+        console.warn("SportFoodContext: Kategorie nicht gefunden:", id);
+        return null;
+      }
       
       const updatedCategoryData = {
+        id: id,
         name: categoryData.category,
         description: categoryData.description || existingCategory.description
       };
       
-      const response = await sportFood.updateCategory(id, updatedCategoryData);
+      // PUT an JSON Server
+      const response = await fetch(`http://localhost:3001/sport-food-categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedCategoryData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const savedCategory = await response.json();
+      console.log("SportFoodContext: Kategorie aktualisiert:", savedCategory);
       
       const updatedCategory = {
         ...existingCategory,
-        category: response.name,
-        description: response.description
+        category: savedCategory.name,
+        description: savedCategory.description
       };
       
       setFoodItems(foodItems.map(item => item.id === id ? updatedCategory : item));
       setError(null);
       return updatedCategory;
     } catch (err) {
-      console.error("Fehler beim Aktualisieren der Kategorie:", err);
+      console.error("SportFoodContext: Fehler beim Aktualisieren der Kategorie:", err);
       setError("Fehler beim Aktualisieren der Kategorie.");
       return null;
     } finally {
@@ -136,20 +172,40 @@ export const SportFoodProvider = ({ children }) => {
   const deleteCategory = async (id) => {
     setLoading(true);
     try {
+      console.log("SportFoodContext: Lösche Kategorie:", id);
+      
       // Zuerst alle Items in dieser Kategorie löschen
-      const itemsToDelete = await sportFood.getItemsByCategory(id);
-      for (const item of itemsToDelete) {
-        await sportFood.deleteItem(item.id);
+      try {
+        const itemsResponse = await fetch(`http://localhost:3001/sport-food-items?categoryId=${id}`);
+        if (itemsResponse.ok) {
+          const itemsToDelete = await itemsResponse.json();
+          console.log("SportFoodContext: Items zum Löschen gefunden:", itemsToDelete.length);
+          
+          for (const item of itemsToDelete) {
+            await fetch(`http://localhost:3001/sport-food-items/${item.id}`, {
+              method: 'DELETE'
+            });
+          }
+        }
+      } catch (itemError) {
+        console.warn("SportFoodContext: Fehler beim Löschen der Items:", itemError);
       }
       
       // Dann die Kategorie löschen
-      await sportFood.deleteCategory(id);
+      const response = await fetch(`http://localhost:3001/sport-food-categories/${id}`, {
+        method: 'DELETE'
+      });
       
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      console.log("SportFoodContext: Kategorie gelöscht:", id);
       setFoodItems(foodItems.filter(item => item.id !== id));
       setError(null);
       return true;
     } catch (err) {
-      console.error("Fehler beim Löschen der Kategorie:", err);
+      console.error("SportFoodContext: Fehler beim Löschen der Kategorie:", err);
       setError("Fehler beim Löschen der Kategorie.");
       return false;
     } finally {
@@ -161,10 +217,16 @@ export const SportFoodProvider = ({ children }) => {
   const addFoodItem = async (categoryId, itemData) => {
     setLoading(true);
     try {
+      console.log("SportFoodContext: Füge Food Item hinzu:", categoryId, itemData);
+      
       const category = foodItems.find(item => item.id === categoryId);
-      if (!category) return null;
+      if (!category) {
+        console.warn("SportFoodContext: Kategorie nicht gefunden:", categoryId);
+        return null;
+      }
       
       const newItem = {
+        id: `item${Date.now()}`, // Temporäre ID
         categoryId: categoryId,
         name: itemData.name,
         description: itemData.description,
@@ -172,14 +234,26 @@ export const SportFoodProvider = ({ children }) => {
         time: itemData.time || "30-60 Minuten"
       };
       
-      const response = await sportFood.createItem(newItem);
+      // POST an JSON Server
+      const response = await fetch('http://localhost:3001/sport-food-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const savedItem = await response.json();
+      console.log("SportFoodContext: Food Item gespeichert:", savedItem);
       
       const formattedNewItem = {
-        id: response.id,
-        name: response.name,
-        description: response.description,
-        benefits: response.benefits,
-        time: response.time
+        id: savedItem.id,
+        name: savedItem.name,
+        description: savedItem.description,
+        benefits: savedItem.benefits,
+        time: savedItem.time
       };
       
       // Lokalen State aktualisieren
@@ -192,7 +266,7 @@ export const SportFoodProvider = ({ children }) => {
       setError(null);
       return updatedCategory;
     } catch (err) {
-      console.error("Fehler beim Hinzufügen der Empfehlung:", err);
+      console.error("SportFoodContext: Fehler beim Hinzufügen der Empfehlung:", err);
       setError("Fehler beim Speichern der neuen Empfehlung.");
       return null;
     } finally {
@@ -204,10 +278,16 @@ export const SportFoodProvider = ({ children }) => {
   const updateFoodItem = async (categoryId, itemId, itemData) => {
     setLoading(true);
     try {
+      console.log("SportFoodContext: Aktualisiere Food Item:", categoryId, itemId, itemData);
+      
       const category = foodItems.find(item => item.id === categoryId);
-      if (!category) return null;
+      if (!category) {
+        console.warn("SportFoodContext: Kategorie nicht gefunden:", categoryId);
+        return null;
+      }
       
       const updatedItemData = {
+        id: itemId,
         categoryId: categoryId,
         name: itemData.name,
         description: itemData.description,
@@ -215,19 +295,34 @@ export const SportFoodProvider = ({ children }) => {
         time: itemData.time || "30-60 Minuten"
       };
       
-      const response = await sportFood.updateItem(itemId, updatedItemData);
+      // PUT an JSON Server
+      const response = await fetch(`http://localhost:3001/sport-food-items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItemData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const savedItem = await response.json();
+      console.log("SportFoodContext: Food Item aktualisiert:", savedItem);
       
       // Lokalen State aktualisieren
       const itemIndex = category.items.findIndex(item => item.id === itemId);
-      if (itemIndex === -1) return null;
+      if (itemIndex === -1) {
+        console.warn("SportFoodContext: Item nicht in Kategorie gefunden:", itemId);
+        return null;
+      }
       
       const updatedItems = [...category.items];
       updatedItems[itemIndex] = {
-        id: response.id,
-        name: response.name,
-        description: response.description,
-        benefits: response.benefits,
-        time: response.data.time
+        id: savedItem.id,
+        name: savedItem.name,
+        description: savedItem.description,
+        benefits: savedItem.benefits,
+        time: savedItem.time
       };
       
       const updatedCategory = {
@@ -239,7 +334,7 @@ export const SportFoodProvider = ({ children }) => {
       setError(null);
       return updatedCategory;
     } catch (err) {
-      console.error("Fehler beim Aktualisieren der Empfehlung:", err);
+      console.error("SportFoodContext: Fehler beim Aktualisieren der Empfehlung:", err);
       setError("Fehler beim Aktualisieren der Empfehlung.");
       return null;
     } finally {
@@ -251,11 +346,24 @@ export const SportFoodProvider = ({ children }) => {
   const deleteFoodItem = async (categoryId, itemId) => {
     setLoading(true);
     try {
+      console.log("SportFoodContext: Lösche Food Item:", categoryId, itemId);
+      
       const category = foodItems.find(item => item.id === categoryId);
-      if (!category) return false;
+      if (!category) {
+        console.warn("SportFoodContext: Kategorie nicht gefunden:", categoryId);
+        return false;
+      }
       
       // Item aus der Datenbank löschen
-      await sportFood.deleteItem(itemId);
+      const response = await fetch(`http://localhost:3001/sport-food-items/${itemId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      console.log("SportFoodContext: Food Item gelöscht:", itemId);
       
       // Lokalen State aktualisieren
       const updatedItems = category.items.filter(item => item.id !== itemId);
@@ -268,7 +376,7 @@ export const SportFoodProvider = ({ children }) => {
       setError(null);
       return true;
     } catch (err) {
-      console.error("Fehler beim Löschen der Empfehlung:", err);
+      console.error("SportFoodContext: Fehler beim Löschen der Empfehlung:", err);
       setError("Fehler beim Löschen der Empfehlung.");
       return false;
     } finally {
@@ -343,37 +451,96 @@ export const SportFoodProvider = ({ children }) => {
   const initializeDefaultData = async () => {
     setLoading(true);
     try {
+      console.log("SportFoodContext: Initialisiere Standard-Daten");
+      
       // Prüfen, ob Kategorien existieren
-      const categories = await sportFood.getAllCategories();
+      const categoriesResponse = await fetch('http://localhost:3001/sport-food-categories');
+      if (!categoriesResponse.ok) {
+        throw new Error(`HTTP ${categoriesResponse.status}: ${categoriesResponse.statusText}`);
+      }
+      
+      const categories = await categoriesResponse.json();
+      console.log("SportFoodContext: Existierende Kategorien:", categories.length);
       
       if (categories.length === 0) {
+        console.log("SportFoodContext: Keine Kategorien vorhanden, erstelle Standard-Daten");
+        
         // Wenn keine Kategorien vorhanden sind, füge die Standarddaten hinzu
         for (const item of defaultFoodItems) {
           // Kategorie erstellen
-          const categoryResponse = await sportFood.createCategory({
+          const categoryData = {
+            id: `cat_${item.category.toLowerCase().replace(/\s+/g, '_')}`,
             name: item.category,
             description: item.category + " - Ernährungsempfehlungen"
+          };
+          
+          const categoryResponse = await fetch('http://localhost:3001/sport-food-categories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(categoryData)
           });
+          
+          if (!categoryResponse.ok) {
+            throw new Error(`Fehler beim Erstellen der Kategorie: ${categoryResponse.status}`);
+          }
+          
+          const savedCategory = await categoryResponse.json();
+          console.log("SportFoodContext: Kategorie erstellt:", savedCategory.name);
           
           // Items für diese Kategorie erstellen
           for (const foodItem of item.items) {
-            await sportFood.createItem({
-              categoryId: categoryResponse.id,
+            const itemData = {
+              id: `item_${savedCategory.id}_${foodItem.name.toLowerCase().replace(/\s+/g, '_')}`,
+              categoryId: savedCategory.id,
               name: foodItem.name,
               description: foodItem.description,
               benefits: foodItem.benefits || "",
               time: foodItem.time || "30-60 Minuten"
+            };
+            
+            const itemResponse = await fetch('http://localhost:3001/sport-food-items', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(itemData)
             });
+            
+            if (!itemResponse.ok) {
+              console.warn("SportFoodContext: Fehler beim Erstellen des Items:", itemResponse.status);
+            } else {
+              const savedItem = await itemResponse.json();
+              console.log("SportFoodContext: Item erstellt:", savedItem.name);
+            }
           }
         }
         
+        console.log("SportFoodContext: Standard-Daten erstellt, lade Daten neu");
         // Daten erneut abrufen
-        await fetchFoodItems();
+        await loadSportFoodData();
+      } else {
+        console.log("SportFoodContext: Kategorien bereits vorhanden, lade vorhandene Daten");
+        await loadSportFoodData();
       }
       setError(null);
     } catch (err) {
-      console.error("Fehler beim Initialisieren der Standarddaten:", err);
+      console.error("SportFoodContext: Fehler beim Initialisieren der Standarddaten:", err);
       setError("Fehler beim Initialisieren der Daten.");
+      
+      // Fallback zu lokalen Default-Daten
+      console.log("SportFoodContext: Verwende lokale Default-Daten als Fallback");
+      const formattedDefaultData = defaultFoodItems.map((category, index) => ({
+        id: `local_cat${index + 1}`,
+        category: category.category,
+        description: category.category + " - Ernährungsempfehlungen",
+        items: category.items.map((item, itemIndex) => ({
+          id: `local_item${index}_${itemIndex}`,
+          name: item.name,
+          description: item.description,
+          benefits: item.benefits || "",
+          time: item.time || "30-60 Minuten"
+        }))
+      }));
+      
+      setFoodItems(formattedDefaultData);
     } finally {
       setLoading(false);
     }
@@ -383,7 +550,8 @@ export const SportFoodProvider = ({ children }) => {
     foodItems,
     loading,
     error,
-    fetchFoodItems,
+    fetchFoodItems: loadSportFoodData, // Alias für Kompatibilität
+    loadSportFoodData,
     addCategory,
     updateCategory,
     deleteCategory,
