@@ -375,21 +375,32 @@ export default function UmfrageEditor() {
           if (currentSurvey) {
             // Nur hinzufügen, wenn die Frage noch nicht enthalten ist
             if (!currentSurvey.questions?.includes(result.id)) {
-              setCurrentSurvey({
+              const updatedSurvey = {
                 ...currentSurvey,
                 questions: [...(currentSurvey.questions || []), result.id]
-              });
+              };
+              setCurrentSurvey(updatedSurvey);
+              
+              // Umfrage automatisch speichern
+              try {
+                await updateSurvey(currentSurvey.id, updatedSurvey);
+                console.log("✅ Umfrage automatisch aktualisiert mit neuer Frage");
+              } catch (saveError) {
+                console.error("❌ Fehler beim automatischen Speichern der Umfrage:", saveError);
+              }
             }
           } else {
             // Neue Umfrage erstellen, falls noch keine existiert
-            setCurrentSurvey({
+            const newSurvey = {
               title: "Neue Umfrage",
               description: "",
               questions: [result.id],
               resultsVisibleToPlayers: false,
               active: true,
               anonymous: false
-            });
+            };
+            setCurrentSurvey(newSurvey);
+            console.log("⚠️ Neue Umfrage erstellt, muss manuell gespeichert werden");
           }
         }
         
@@ -1248,12 +1259,24 @@ export default function UmfrageEditor() {
                   {/* Fragen-Vorschau */}
                   <div className="p-6 bg-gray-50">
                     {(() => {
+                      // Debug-Logging
+                      console.log("🔍 VORSCHAU DEBUG:");
+                      console.log("- currentSurvey:", currentSurvey);
+                      console.log("- currentSurvey.questions:", currentSurvey?.questions);
+                      console.log("- questions (global):", questions);
+                      
                       // Hole die vollständigen Frage-Objekte basierend auf den IDs in currentSurvey.questions
                       const surveyQuestions = currentSurvey?.questions
                         ? currentSurvey.questions
-                            .map(questionId => questions.find(q => q.id === questionId))
+                            .map(questionId => {
+                              const found = questions.find(q => q.id === questionId);
+                              console.log(`- Suche Frage ${questionId}:`, found ? "✅ gefunden" : "❌ nicht gefunden");
+                              return found;
+                            })
                             .filter(Boolean) // Entferne undefined Einträge
                         : [];
+                      
+                      console.log("- surveyQuestions (resolved):", surveyQuestions);
 
                       if (surveyQuestions.length === 0) {
                         return (
