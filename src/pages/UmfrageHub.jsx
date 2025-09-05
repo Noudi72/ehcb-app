@@ -8,8 +8,9 @@ import { useNavigate } from "react-router-dom";
 
 // Status Badge Component
 const StatusBadge = ({ survey, isDarkMode }) => {
-  // Status bestimmen - entweder aus survey.status oder aus survey.active
-  const status = survey.status || (survey.active ? 'active' : 'inactive');
+  // Einheitliche Status-Bestimmung: Priorität auf 'active' Feld, da es das primäre Feld ist
+  // Falls 'status' explizit gesetzt ist, verwende es, ansonsten nutze 'active'
+  const status = survey.status || (survey.active === true ? 'active' : 'inactive');
   
   const statusConfig = {
     active: {
@@ -34,7 +35,7 @@ const StatusBadge = ({ survey, isDarkMode }) => {
     }
   };
 
-  const config = statusConfig[status] || statusConfig.draft;
+  const config = statusConfig[status] || statusConfig.inactive;
 
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${config.className}`}>
@@ -317,24 +318,56 @@ export default function UmfrageHub() {
     }
   };
 
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(new Set());
+
   const handleToggleStatus = async (survey) => {
+    // Verhindere mehrfache gleichzeitige Updates
+    if (isUpdatingStatus.has(survey.id)) {
+      console.log('Update already in progress for survey', survey.id);
+      return;
+    }
+
     try {
-      // Bestimme aktuellen Status
-      const currentStatus = survey.status || (survey.active ? 'active' : 'inactive');
+      setIsUpdatingStatus(prev => new Set(prev).add(survey.id));
+      
+      // Bestimme aktuellen Status konsistent
+      const currentStatus = survey.status || (survey.active === true ? 'active' : 'inactive');
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const newActive = newStatus === 'active';
+      
+      console.log(`Toggling survey ${survey.id} from ${currentStatus} to ${newStatus}`);
       
       // Update sowohl status als auch active für Kompatibilität
       const updatedSurvey = {
         ...survey,
         status: newStatus,
-        active: newStatus === 'active'
+        active: newActive
       };
       
+      // Optimistic update der lokalen State
+      setSurveys(prevSurveys => 
+        prevSurveys.map(s => 
+          s.id === survey.id 
+            ? { ...s, status: newStatus, active: newActive }
+            : s
+        )
+      );
+      
       await updateSurvey(survey.id, updatedSurvey);
+      
+      // Fetch fresh data nach dem Update
       await fetchSurveys();
     } catch (err) {
       setError("Fehler beim Ändern des Status");
-      console.error(err);
+      console.error("Toggle status error:", err);
+      // Bei Fehler, lade die Surveys neu um den korrekten State wiederherzustellen
+      await fetchSurveys();
+    } finally {
+      setIsUpdatingStatus(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(survey.id);
+        return newSet;
+      });
     }
   };
 
