@@ -117,6 +117,29 @@ export default function UmfrageEditor() {
     }
   }, [surveyId, surveys]);
 
+  // Auto-Save für currentSurvey Änderungen
+  useEffect(() => {
+    const saveCurrentSurvey = async () => {
+      if (!currentSurvey || !currentSurvey.id) {
+        // Noch keine ID = noch nicht gespeicherte Umfrage
+        return;
+      }
+
+      console.log("💾 Auto-Save: currentSurvey geändert, speichere...", currentSurvey);
+      
+      try {
+        await updateSurvey(currentSurvey.id, currentSurvey);
+        console.log("✅ Auto-Save erfolgreich");
+      } catch (error) {
+        console.error("❌ Auto-Save fehlgeschlagen:", error);
+      }
+    };
+
+    // Kleiner Timeout, um zu häufige API-Aufrufe zu vermeiden
+    const timeoutId = setTimeout(saveCurrentSurvey, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentSurvey]);
+
   // Optionen für Fragentypen
   const questionTypes = [
     { value: "options", label: "Optionen (Einmalauswahl)" },
@@ -427,28 +450,61 @@ export default function UmfrageEditor() {
   };
   
   // Frage zur aktuellen Umfrage hinzufügen
-  const handleAddToSurvey = (question) => {
+  const handleAddToSurvey = async (question) => {
     if (!currentSurvey) {
-      setCurrentSurvey({
-        title: "",
+      // Neue Umfrage erstellen und speichern
+      const newSurvey = {
+        title: "Neue Umfrage",
         description: "",
-        questions: [question.id],
+        target_teams: [],
         resultsVisibleToPlayers: false,
-        active: true
-      });
+        active: true,
+        anonymous: false
+      };
+      
+      try {
+        console.log("🔄 Erstelle neue Umfrage...");
+        const savedSurvey = await createSurvey(newSurvey);
+        if (savedSurvey) {
+          setCurrentSurvey(savedSurvey);
+          
+          // Jetzt die Frage mit der survey_id verknüpfen
+          console.log("🔄 Verknüpfe Frage mit Umfrage...");
+          await updateQuestion(question.id, {
+            ...question,
+            survey_id: savedSurvey.id
+          });
+          
+          await fetchSurveys(); // Listen aktualisieren
+          await fetchQuestions();
+          showSuccess(`Neue Umfrage erstellt und Frage "${question.question.substring(0, 30)}..." hinzugefügt`);
+        }
+      } catch (error) {
+        console.error("Fehler beim Erstellen der Umfrage:", error);
+        showError("Fehler beim Erstellen der Umfrage");
+        return;
+      }
     } else {
-      // Nur hinzufügen, wenn die Frage noch nicht enthalten ist
-      if (!currentSurvey.questions?.includes(question.id)) {
-        setCurrentSurvey({
-          ...currentSurvey,
-          questions: [...(currentSurvey.questions || []), question.id]
+      // Zu bestehender Umfrage hinzufügen
+      try {
+        console.log("🔄 Verknüpfe Frage mit bestehender Umfrage...");
+        await updateQuestion(question.id, {
+          ...question,
+          survey_id: currentSurvey.id
         });
+        
+        await fetchSurveys(); // Listen aktualisieren 
+        await fetchQuestions();
+        showSuccess(`Frage "${question.question.substring(0, 30)}..." zur Umfrage hinzugefügt`);
+      } catch (error) {
+        console.error("Fehler beim Hinzufügen der Frage:", error);
+        showError("Fehler beim Hinzufügen der Frage zur Umfrage");
+        return;
       }
     }
     
     // Zum Umfrage-Tab wechseln
     setActiveTab("surveys");
-    showSuccess(`Frage "${question.question.substring(0, 30)}..." zur Umfrage hinzugefügt`);
   };
 
   // Handler für das Speichern von Fragen (für Step 2)
@@ -1260,23 +1316,52 @@ export default function UmfrageEditor() {
                   <div className="p-6 bg-gray-50">
                     {(() => {
                       // Debug-Logging
-                      console.log("🔍 VORSCHAU DEBUG:");
+                      console.log("🔍 VORSCHAU DEBUG ERWEITERT:");
                       console.log("- currentSurvey:", currentSurvey);
                       console.log("- currentSurvey.questions:", currentSurvey?.questions);
                       console.log("- questions (global):", questions);
+                      console.log("- questions.length:", questions?.length);
                       
-                      // Hole die vollständigen Frage-Objekte basierend auf den IDs in currentSurvey.questions
-                      const surveyQuestions = currentSurvey?.questions
-                        ? currentSurvey.questions
+                      // NEUE LOGIK: Verwende currentSurvey.questions direkt (die sind bereits vollständige Objekte)
+                      // Fallback: Verwende questions Array mit survey_id Verknüpfung
+                      let surveyQuestions = [];
+                      
+                      if (currentSurvey?.questions && Array.isArray(currentSurvey.questions) && currentSurvey.questions.length > 0) {
+                        // Scenario 1: currentSurvey.questions enthält bereits vollständige Objekte (von Supabase geladen)
+                        if (typeof currentSurvey.questions[0] === 'object') {
+                          console.log("✅ Verwende currentSurvey.questions direkt (vollständige Objekte)");
+                          surveyQuestions = currentSurvey.questions;
+                        } else {
+                          // Scenario 2: currentSurvey.questions enthält nur IDs (Legacy/lokaler State)
+                          console.log("🔄 Löse Frage-IDs zu vollständigen Objekten auf");
+                          surveyQuestions = currentSurvey.questions
                             .map(questionId => {
-                              const found = questions.find(q => q.id === questionId);
-                              console.log(`- Suche Frage ${questionId}:`, found ? "✅ gefunden" : "❌ nicht gefunden");
-                              return found;
+                              const numericQuestionId = parseInt(questionId, 10);
+                              return questions.find(q => parseInt(q.id, 10) === numericQuestionId);
                             })
-                            .filter(Boolean) // Entferne undefined Einträge
-                        : [];
+                            .filter(Boolean);
+                        }
+                      } else if (currentSurvey?.id && questions?.length > 0) {
+                        // Scenario 3: Finde alle Fragen mit passender survey_id
+                        console.log("🔄 Suche Fragen mit survey_id:", currentSurvey.id);
+                        surveyQuestions = questions.filter(q => 
+                          parseInt(q.survey_id, 10) === parseInt(currentSurvey.id, 10)
+                        );
+                      }
                       
-                      console.log("- surveyQuestions (resolved):", surveyQuestions);
+                      console.log("- surveyQuestions (final):", surveyQuestions);
+                      
+                      if (!questions || questions.length === 0) {
+                        console.warn("❌ PROBLEM: questions Array ist leer oder undefined");
+                        fetchQuestions();
+                        return (
+                          <div className="text-center py-12">
+                            <div className="text-6xl mb-4">⏳</div>
+                            <h3 className="text-xl font-semibold text-gray-700 mb-2">Lade Fragen...</h3>
+                            <p className="text-gray-500">Einen Moment bitte, die Fragen werden geladen.</p>
+                          </div>
+                        );
+                      }
 
                       if (surveyQuestions.length === 0) {
                         return (

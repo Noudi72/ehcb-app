@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { translateText } from '../config/translationService';
 
 function Header() {
   const { currentLanguage, changeLanguage, t } = useLanguage();
   const { isAuthenticated, isCoach, logout, user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   // Responsive Banner Selection - mit stabilem Cache
   const getBannerImage = () => {
@@ -40,6 +42,62 @@ function Header() {
       clearTimeout(resizeTimer);
     };
   }, [bannerImage]);
+
+  // DeepL Übersetzung des Seiteninhalts
+  const translatePageContent = async (targetLang) => {
+    if (isTranslating) return;
+    
+    setIsTranslating(true);
+    try {
+      // Alle Textelemente der Seite sammeln
+      const textElements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, div, button, label, a, li');
+      const elementsToTranslate = [];
+      
+      textElements.forEach(element => {
+        // Nur direkte Texte übersetzen, keine verschachtelten Elemente
+        if (element.children.length === 0 && 
+            element.textContent.trim() !== '' && 
+            element.textContent.length > 1 &&
+            !element.classList.contains('no-translate') &&
+            !element.hasAttribute('data-translated')) {
+          elementsToTranslate.push(element);
+        }
+      });
+
+      console.log(`Übersetze ${elementsToTranslate.length} Textelemente nach ${targetLang}...`);
+
+      // Übersetzung in Batches
+      const batchSize = 5;
+      for (let i = 0; i < elementsToTranslate.length; i += batchSize) {
+        const batch = elementsToTranslate.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (element) => {
+          try {
+            const originalText = element.textContent.trim();
+            const translatedText = await translateText(originalText, targetLang, currentLanguage.code);
+            
+            if (translatedText && translatedText !== originalText) {
+              element.textContent = translatedText;
+              element.setAttribute('data-translated', 'true');
+              element.setAttribute('data-original', originalText);
+            }
+          } catch (error) {
+            console.error('Übersetzungsfehler für Element:', error);
+          }
+        }));
+        
+        // Kleine Pause zwischen Batches
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      console.log('Seitenübersetzung abgeschlossen');
+      
+    } catch (error) {
+      console.error('Fehler bei Seitenübersetzung:', error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   return (
     <>
@@ -83,19 +141,38 @@ function Header() {
                 )}
               </button>
               
-              {/* Language Toggle Button */}
+              {/* Language Toggle Button mit DeepL */}
               <button
                 onClick={() => {
                   const languages = ['de', 'fr', 'en'];
                   const currentIndex = languages.indexOf(currentLanguage.code);
                   const nextIndex = (currentIndex + 1) % languages.length;
-                  changeLanguage(languages[nextIndex]);
+                  const nextLang = languages[nextIndex];
+                  
+                  // Sprache wechseln
+                  changeLanguage(nextLang);
+                  
+                  // Seiteninhalt übersetzen
+                  setTimeout(() => translatePageContent(nextLang), 300);
                 }}
-                className="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg hover:bg-opacity-70 transition-all duration-300 font-medium text-sm"
+                className={`bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg hover:bg-opacity-70 transition-all duration-300 font-medium text-sm flex items-center space-x-1 ${isTranslating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isTranslating}
               >
-                {currentLanguage.code === 'de' && '🇫🇷 FR'}
-                {currentLanguage.code === 'fr' && '🇬🇧 EN'}
-                {currentLanguage.code === 'en' && '🇩🇪 DE'}
+                {isTranslating ? (
+                  <>
+                    <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>...</span>
+                  </>
+                ) : (
+                  <>
+                    {currentLanguage.code === 'de' && '🇫🇷 FR'}
+                    {currentLanguage.code === 'fr' && '🇬🇧 EN'}
+                    {currentLanguage.code === 'en' && '🇩🇪 DE'}
+                  </>
+                )}
               </button>
             </div>
 

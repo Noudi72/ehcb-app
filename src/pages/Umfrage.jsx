@@ -220,10 +220,10 @@ export default function Umfrage() {
             {question.options?.map((option, i) => (
               <div 
                 key={i} 
-                className={`p-3 rounded-lg border hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 ${
+                className={`p-4 rounded-lg border-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200 cursor-pointer ${
                   answers[question.id] === option 
-                    ? 'bg-[#0a2240] dark:bg-blue-600 text-white border-[#0a2240] dark:border-blue-600' 
-                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white'
+                    ? 'bg-[#0a2240] dark:bg-blue-600 text-white border-[#0a2240] dark:border-blue-500 shadow-md' 
+                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-gray-400'
                 }`}
                 onClick={() => handleInputChange(question.id, option)}
               >
@@ -264,10 +264,10 @@ export default function Umfrage() {
             {question.options?.map((option, i) => (
               <div 
                 key={i}
-                className={`p-3 rounded-lg border hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 ${
+                className={`p-4 rounded-lg border-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200 cursor-pointer ${
                   Array.isArray(answers[question.id]) && answers[question.id].includes(option)
-                    ? 'bg-[#0a2240] dark:bg-blue-600 text-white border-[#0a2240] dark:border-blue-600'
-                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white'
+                    ? 'bg-[#0a2240] dark:bg-blue-600 text-white border-[#0a2240] dark:border-blue-500 shadow-md'
+                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-gray-400'
                 }`}
                 onClick={() => handleInputChange(question.id, option, true)}
               >
@@ -310,7 +310,7 @@ export default function Umfrage() {
             placeholder={question.placeholder}
             value={answers[question.id] || ''}
             onChange={(e) => handleInputChange(question.id, e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a2240] dark:focus:ring-blue-500 focus:border-[#0a2240] dark:focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full p-4 border-2 border-gray-300 dark:border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a2240] dark:focus:ring-blue-500 focus:border-[#0a2240] dark:focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
             style={{fontSize: "16px"}}
           />
         );
@@ -321,7 +321,7 @@ export default function Umfrage() {
             placeholder={question.placeholder}
             value={answers[question.id] || ''}
             onChange={(e) => handleInputChange(question.id, e.target.value)}
-            className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#0a2240] dark:focus:ring-blue-500 focus:border-[#0a2240] dark:focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full p-4 border-2 border-gray-300 dark:border-gray-500 rounded-lg min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#0a2240] dark:focus:ring-blue-500 focus:border-[#0a2240] dark:focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
             style={{fontSize: "16px"}}
           ></textarea>
         );
@@ -420,20 +420,42 @@ export default function Umfrage() {
 
             {/* Wenn keine aktiven Umfragen vorhanden sind, zeige eine Info-Box statt Default-Fragen */}
             {activeSurveys.length === 0 && (
-              <div className="mb-6 p-4 rounded-lg border border-gray-200 bg-yellow-50 text-gray-800">
+              <div className={`mb-6 p-4 rounded-lg border transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'border-yellow-600 bg-yellow-900/20 text-yellow-200'
+                  : 'border-gray-200 bg-yellow-50 text-gray-800'
+              }`}>
                 <strong>Zurzeit sind keine Umfragen für dich verfügbar.</strong>
-                <p className="mt-2 text-sm text-gray-700">
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-700'}`}>
                   {!isCoach && user && !user.teams 
                     ? "Du bist noch keinem Team zugewiesen. Wende dich an deinen Coach."
                     : "Umfragen werden vom Coach aktiviert und gezielt an Teams versendet."
                   }
                 </p>
-                <div className="mt-3 text-xs text-gray-600">
+                <div className={`mt-3 text-xs ${isDarkMode ? 'text-yellow-400' : 'text-gray-600'}`}>
                   Debug: User={user?.name}, Teams={JSON.stringify(user?.teams)}, isCoach={isCoach}
                 </div>
                 <div className="mt-3 flex space-x-2">
-                  <button onClick={() => window.location.href = '/'} className="px-4 py-2 bg-[#0a2240] text-white rounded">Zur Startseite</button>
-                  <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-100 text-blue-800 rounded">Neu laden</button>
+                  <button 
+                    onClick={() => window.location.href = '/'} 
+                    className={`px-4 py-2 rounded transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'bg-[#0a2240] text-white hover:bg-blue-900'
+                    }`}
+                  >
+                    Zur Startseite
+                  </button>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className={`px-4 py-2 rounded transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                        : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                    }`}
+                  >
+                    Neu laden
+                  </button>
                 </div>
               </div>
             )}
@@ -533,11 +555,19 @@ export default function Umfrage() {
             <div className="mb-8">
               {selectedSurvey && currentQuestions.length > 0 && (
                 <>
-                  <div className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                    {t('survey.questionOf')} {activeQuestion + 1} {t('survey.of')} {currentQuestions.length}
+                  <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                      {t('survey.questionOf')} {activeQuestion + 1} {t('survey.of')} {currentQuestions.length}
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                      <div 
+                        className="bg-[#0a2240] dark:bg-blue-500 h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${((activeQuestion + 1) / currentQuestions.length) * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
                   
-                  <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                  <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm">
                     {currentQuestions[activeQuestion] ? 
                       currentQuestions[activeQuestion].question : 
                       "Frage konnte nicht geladen werden"}
@@ -597,7 +627,7 @@ export default function Umfrage() {
       </main>
       
       {/* Translation Button */}
-      <TranslationButton position="bottom-right" />
+      <TranslationButton position="bottom-right" size="large" />
       
     </div>
   );

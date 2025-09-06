@@ -87,7 +87,7 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, onViewResults, i
             </p>
           )}
 
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className={`flex items-center gap-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             <span>📊 {survey.questions?.length || 0} Fragen</span>
             <span>👥 {survey.responses?.length || 0} Antworten</span>
             <span>📅 {new Date(survey.createdAt || Date.now()).toLocaleDateString('de-DE')}</span>
