@@ -3,6 +3,15 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+
+function Header() {
+  // Hier ggf. States, Contexts, Variablen deklarieren
+  // Beispiel:
+  // const { ... } = useLanguage();
+  // const { ... } = useAuth();
+  // const { ... } = useTheme();
+
+  // ...existing code...
   return (
     <>
       <header 
