@@ -1,42 +1,45 @@
+—
+
 # EHC Biel-Bienne Spirit Team-App
 
-Kurze Übersicht und Betriebsanleitung (Deutsch).
+Kurze Übersicht und Betriebsanleitung (Stand: 09/2025)
 
 ## Live
-- Frontend (GitHub Pages): https://noudi72.github.io/ehcb-app/
-- Backend (Railway): https://ehcb-app-production.up.railway.app/
+- Frontend: https://noudi72.github.io/ehcb-app/
+- Backend/API: Supabase (Cloud Backend, kein Railway/MongoDB mehr)
 
 ## Entwicklung (Lokal)
-- Frontend starten: npm run dev
-- Backend starten: npm run backend
-- Production Build: npm run build
+- Frontend starten: `npm run dev`
+- Production Build: `npm run build`
 
 ## Deployment
 - Frontend wird automatisch via GitHub Actions nach main → GitHub Pages deployed.
 - Vite-Base ist auf /ehcb-app/ gesetzt (Projektseite). Service Worker und Router nutzen BASE_URL korrekt.
-- Backend läuft auf Railway (Node 20), bindet 0.0.0.0 und hat Health-Endpoints (/healthz, /api/health).
+- Backend: Supabase (Datenbank, Auth, Storage, API)
 
 ## API-Basis (Frontend)
-- Automatik: In Produktion auf github.io wird die Railway-URL genutzt.
+- Automatik: In Produktion wird die Supabase-URL genutzt.
 - Override (ohne Rebuild):
-	- Setzen: localStorage.setItem('API_BASE_URL', 'https://deine-api.example.com')
-	- Entfernen: localStorage.removeItem('API_BASE_URL')
+	- Setzen: `localStorage.setItem('API_BASE_URL', 'https://deine-api.example.com')`
+	- Entfernen: `localStorage.removeItem('API_BASE_URL')`
 
-## Übersetzung (DeepL)
-- Client nutzt DeepL via Backend-Proxy (/api/translate). Bei Fehlern automatischer Mock-Fallback.
-- Client-Seite: Throttling (max. 2 parallele Requests, kleiner Jitter) + In-Flight-Dedupe.
-- Server-Seite: In-Memory LRU-Cache (TTL 7 Tage, Standard max. 3000 Einträge) + Dedupe + Retry bei 429/5xx.
-- Railway-Variable: DEEPL_API_KEY (Free-Key → api-free.deepl.com, Pro-Key → api.deepl.com wird automatisch erkannt).
-- Optional anpassbar (Env): TRANSLATION_CACHE_TTL_MS, TRANSLATION_CACHE_MAX.
+## Übersetzung (DeepL & i18next)
+- UI-Übersetzungen: i18next (Sprachumschaltung, Lokalisierung, statische Texte)
+- Dynamische Inhalte: DeepL API via Backend-Proxy (`/api/translate`), Ergebnisse werden in Supabase gespeichert.
+- Railway/Backend-Proxy entfällt, alles läuft über Supabase und Client.
 
 ## PWA
-- Service Worker unter /ehcb-app/sw.js, automatische Registrierung.
+- Service Worker unter `/ehcb-app/sw.js`, automatische Registrierung.
 - Installierbar über Browser (Install-Prompt) und Homescreen.
 
 ## Tech-Stack
-- Frontend: React, Vite, Tailwind CSS
-- Backend: Node.js (Express + JSON Server)
-- Deployment: GitHub Pages, Railway
+- Frontend: React, Vite, Tailwind CSS, i18next
+- Backend: Supabase (Postgres, Auth, Storage)
+- Deployment: GitHub Pages, Supabase
+
+## Altlasten entfernt
+- MongoDB, Cloudinary, Railway, JSON Server, server.js/cjs, test- und Backup-Dateien
+- Nur noch moderne Komponenten und Supabase-Integration
 
 ## Support
 Fragen/Probleme: nguyaz@ehcb.ch
