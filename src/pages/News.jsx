@@ -3,7 +3,6 @@ import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import KeyboardShortcuts from "../components/KeyboardShortcuts";
-import TranslationButton from "../components/TranslationButton";
 import { useAuth } from "../context/AuthContext";
 import { useNews } from "../context/NewsContext";
 import { useToast } from "../context/ToastContext";
@@ -465,9 +464,6 @@ export default function News() {
           </div>
         </div>
       </main>
-
-      {/* Translation Button */}
-      <TranslationButton position="bottom-right" />
 
       {/* Keyboard shortcuts help */}
       <KeyboardShortcuts />

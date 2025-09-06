@@ -4,7 +4,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
-import TranslationButton from '../components/TranslationButton';
 import { surveys as surveysAPI, questions as questionsAPI, responses as responsesAPI } from '../config/supabase-api';
 
 const UmfrageNeu = () => {
@@ -300,10 +299,6 @@ const UmfrageNeu = () => {
           )}
         </div>
       </main>
-      
-      {/* Translation Button */}
-      <TranslationButton position="bottom-right" />
-      
     </div>
   );
 };

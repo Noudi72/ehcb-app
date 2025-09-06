@@ -6,7 +6,6 @@ import { useLanguage } from "../context/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import TranslationButton from "../components/TranslationButton";
 
 
 export default function SportFood() {
@@ -90,10 +89,6 @@ export default function SportFood() {
           </div>
         </div>
       </main>
-
-      {/* Translation Button - außer auf externen Seiten */}
-      <TranslationButton position="bottom-right" />
-      
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { useLanguage } from "../context/LanguageContext";
 import TabataTimer from "../components/TabataTimer";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import TranslationButton from "../components/TranslationButton";
 import { cardio } from "../config/supabase-api";
 
 import jsPDF from "jspdf";
@@ -591,9 +590,6 @@ export default function CardioProgram() {
         </div>
       </main>
 
-      {/* Translation Button */}
-      <TranslationButton position="bottom-right" />
-      
       {showTimer && selectedWorkout && (
         <TabataTimer 
           workout={selectedWorkout} 

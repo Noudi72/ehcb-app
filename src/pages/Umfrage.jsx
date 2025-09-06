@@ -5,7 +5,6 @@ import { useAuth } from "../context/AuthContext";
 import { useUmfrage } from "../context/UmfrageContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import TranslationButton from "../components/TranslationButton";
 
 export default function Umfrage() {
   const { t } = useLanguage();
@@ -625,9 +624,6 @@ export default function Umfrage() {
           </div>
         )}
       </main>
-      
-      {/* Translation Button */}
-      <TranslationButton position="bottom-right" size="large" />
       
     </div>
   );

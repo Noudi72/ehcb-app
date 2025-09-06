@@ -4,7 +4,6 @@ import { useReflexion } from "../context/ReflexionContext";
 import { useLanguage } from "../context/LanguageContext";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
-import TranslationButton from "../components/TranslationButton";
 
 
 export default function Reflexion() {
@@ -333,10 +332,6 @@ export default function Reflexion() {
           )}
         </div>
       </main>
-
-      {/* Translation Button */}
-      <TranslationButton position="bottom-right" />
-      
     </div>
   );
 }
