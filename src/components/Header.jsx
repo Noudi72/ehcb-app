@@ -11,6 +11,7 @@ function Header() {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
 
   // Responsive Banner Selection - mit stabilem Cache
   const getBannerImage = () => {
@@ -49,55 +50,108 @@ function Header() {
     
     setIsTranslating(true);
     try {
-      // Alle Textelemente der Seite sammeln
-      const textElements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, div, button, label, a, li');
+      console.log(`🌐 Übersetze Seiteninhalt nach ${targetLang}...`);
+      
+      // Alle Textelemente der Seite sammeln, aber nur echte Inhaltstexte
+      const textElements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span:not(.no-translate), div:not(.no-translate), button:not(.no-translate), label, a:not(.no-translate)');
       const elementsToTranslate = [];
       
       textElements.forEach(element => {
-        // Nur direkte Texte übersetzen, keine verschachtelten Elemente
+        const text = element.textContent.trim();
+        // Nur übersetzen wenn: direkter Text, mehr als 2 Zeichen, nicht bereits übersetzt
         if (element.children.length === 0 && 
-            element.textContent.trim() !== '' && 
-            element.textContent.length > 1 &&
+            text.length > 2 &&
+            !text.match(/^[🇩🇪🇫🇷🇬🇧🇺🇸]/) && // Keine Flags
+            !text.match(/^\d+$/) && // Keine reinen Zahlen
             !element.classList.contains('no-translate') &&
-            !element.hasAttribute('data-translated')) {
+            !element.hasAttribute('data-translated') &&
+            !element.closest('.no-translate')) {
           elementsToTranslate.push(element);
         }
       });
 
-      console.log(`Übersetze ${elementsToTranslate.length} Textelemente nach ${targetLang}...`);
+      console.log(`📝 Gefunden: ${elementsToTranslate.length} Textelemente zum Übersetzen`);
 
-      // Übersetzung in Batches
-      const batchSize = 5;
+      // API-Endpunkt für DeepL verwenden
+      const API_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+      
+      // Übersetzung in kleinen Batches
+      const batchSize = 3;
+      let translated = 0;
+      
       for (let i = 0; i < elementsToTranslate.length; i += batchSize) {
         const batch = elementsToTranslate.slice(i, i + batchSize);
         
         await Promise.all(batch.map(async (element) => {
           try {
             const originalText = element.textContent.trim();
-            const translatedText = await translateText(originalText, targetLang, currentLanguage.code);
             
-            if (translatedText && translatedText !== originalText) {
-              element.textContent = translatedText;
-              element.setAttribute('data-translated', 'true');
-              element.setAttribute('data-original', originalText);
+            const response = await fetch(`${API_URL}/translate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                text: originalText,
+                targetLanguage: targetLang,
+                sourceLanguage: currentLanguage.code
+              })
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data.translatedText && data.translatedText !== originalText) {
+                element.textContent = data.translatedText;
+                element.setAttribute('data-translated', 'true');
+                element.setAttribute('data-original', originalText);
+                translated++;
+              }
+            } else {
+              // Fallback auf Mock-Übersetzung
+              const translatedText = await translateText(originalText, targetLang, currentLanguage.code);
+              if (translatedText && translatedText !== originalText) {
+                element.textContent = translatedText;
+                element.setAttribute('data-translated', 'true');
+                element.setAttribute('data-original', originalText);
+                translated++;
+              }
             }
           } catch (error) {
-            console.error('Übersetzungsfehler für Element:', error);
+            console.error('Übersetzungsfehler:', error);
+            // Fallback auf Mock-Übersetzung
+            try {
+              const originalText = element.textContent.trim();
+              const translatedText = await translateText(originalText, targetLang, currentLanguage.code);
+              if (translatedText && translatedText !== originalText) {
+                element.textContent = translatedText;
+                element.setAttribute('data-translated', 'true');
+                element.setAttribute('data-original', originalText);
+                translated++;
+              }
+            } catch (fallbackError) {
+              console.error('Auch Fallback-Übersetzung fehlgeschlagen:', fallbackError);
+            }
           }
         }));
         
-        // Kleine Pause zwischen Batches
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Pause zwischen Batches
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
       
-      console.log('Seitenübersetzung abgeschlossen');
+      console.log(`✅ Übersetzung abgeschlossen: ${translated} Texte übersetzt`);
       
     } catch (error) {
-      console.error('Fehler bei Seitenübersetzung:', error);
+      console.error('❌ Fehler bei Seitenübersetzung:', error);
     } finally {
       setIsTranslating(false);
     }
   };
+
+  const languages = [
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'en', name: 'English', flag: '🇬🇧' }
+  ];
 
   return (
     <>
@@ -142,38 +196,68 @@ function Header() {
               </button>
               
               {/* Language Toggle Button mit DeepL */}
-              <button
-                onClick={() => {
-                  const languages = ['de', 'fr', 'en'];
-                  const currentIndex = languages.indexOf(currentLanguage.code);
-                  const nextIndex = (currentIndex + 1) % languages.length;
-                  const nextLang = languages[nextIndex];
-                  
-                  // Sprache wechseln
-                  changeLanguage(nextLang);
-                  
-                  // Seiteninhalt übersetzen
-                  setTimeout(() => translatePageContent(nextLang), 300);
-                }}
-                className={`bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg hover:bg-opacity-70 transition-all duration-300 font-medium text-sm flex items-center space-x-1 ${isTranslating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={isTranslating}
-              >
-                {isTranslating ? (
-                  <>
-                    <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>...</span>
-                  </>
-                ) : (
-                  <>
-                    {currentLanguage.code === 'de' && '🇫🇷 FR'}
-                    {currentLanguage.code === 'fr' && '🇬🇧 EN'}
-                    {currentLanguage.code === 'en' && '🇩🇪 DE'}
-                  </>
+              <div className="relative">
+                <button
+                  onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
+                  className="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg hover:bg-opacity-70 transition-all duration-300 font-medium text-sm flex items-center space-x-1"
+                  disabled={isTranslating}
+                >
+                  {isTranslating ? (
+                    <>
+                      <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{currentLanguage.flag || '🇩🇪'}</span>
+                      <span>{currentLanguage.code.toUpperCase()}</span>
+                      <svg className={`w-3 h-3 transition-transform ${languageMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+
+                {/* Language Dropdown */}
+                {languageMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-50">
+                    {languages.map((language) => (
+                      <button
+                        key={language.code}
+                        onClick={() => {
+                          changeLanguage(language.code);
+                          setLanguageMenuOpen(false);
+                          setTimeout(() => translatePageContent(language.code), 300);
+                        }}
+                        className={`w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2 text-sm ${
+                          language.code === currentLanguage.code 
+                            ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                            : 'text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        <span>{language.flag}</span>
+                        <span>{language.name}</span>
+                        {currentLanguage.code === language.code && (
+                          <svg className="w-3 h-3 ml-auto text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 )}
-              </button>
+
+                {/* Overlay zum Schließen des Dropdowns */}
+                {languageMenuOpen && (
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setLanguageMenuOpen(false)}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Hamburger Menu Button darunter */}

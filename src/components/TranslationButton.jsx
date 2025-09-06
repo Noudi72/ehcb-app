@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { translateText } from '../config/translationService';
 
 const TranslationButton = ({ 
   position = 'bottom-right', 
@@ -10,6 +11,7 @@ const TranslationButton = ({
   const { language, changeLanguage, currentLanguage } = useLanguage();
   const { isDarkMode } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const languages = [
     { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
@@ -17,9 +19,77 @@ const TranslationButton = ({
     { code: 'en', name: 'English', flag: '🇺🇸' }
   ];
 
-  const handleLanguageChange = (langCode) => {
+  const handleLanguageChange = async (langCode) => {
+    if (isTranslating) return;
+    
+    setIsTranslating(true);
     changeLanguage(langCode);
     setIsOpen(false);
+    
+    // Seiteninhalt übersetzen
+    try {
+      console.log(`🌐 TranslationButton: Übersetze nach ${langCode}...`);
+      
+      // Warte kurz damit der Language Context aktualisiert wird
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Alle Textelemente sammeln (ausgenommen Navigation und Buttons)
+      const textElements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span:not(.no-translate), div:not(.no-translate):not([role="button"]), label');
+      const elementsToTranslate = [];
+      
+      textElements.forEach(element => {
+        const text = element.textContent.trim();
+        // Nur übersetzen wenn: direkter Text, mehr als 2 Zeichen, nicht bereits übersetzt
+        if (element.children.length === 0 && 
+            text.length > 2 &&
+            !text.match(/^[🇩🇪🇫🇷🇬🇧🇺🇸]/) && // Keine Flags
+            !text.match(/^\d+$/) && // Keine reinen Zahlen
+            !element.classList.contains('no-translate') &&
+            !element.hasAttribute('data-translated') &&
+            !element.closest('.no-translate') &&
+            !element.closest('button') &&
+            !element.closest('[role="button"]') &&
+            !element.closest('nav')) {
+          elementsToTranslate.push(element);
+        }
+      });
+
+      console.log(`📝 TranslationButton: ${elementsToTranslate.length} Elemente zu übersetzen`);
+      
+      // Übersetzung in kleinen Batches
+      const batchSize = 3;
+      let translated = 0;
+      
+      for (let i = 0; i < elementsToTranslate.length; i += batchSize) {
+        const batch = elementsToTranslate.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (element) => {
+          try {
+            const originalText = element.textContent.trim();
+            const translatedText = await translateText(originalText, langCode, currentLanguage.code);
+            
+            if (translatedText && translatedText !== originalText) {
+              element.textContent = translatedText;
+              element.setAttribute('data-translated', 'true');
+              element.setAttribute('data-original', originalText);
+              translated++;
+            }
+          } catch (error) {
+            console.error('TranslationButton: Übersetzungsfehler:', error);
+          }
+        }));
+        
+        // Pause zwischen Batches
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      console.log(`✅ TranslationButton: ${translated} Texte übersetzt`);
+      
+    } catch (error) {
+      console.error('❌ TranslationButton: Fehler bei Übersetzung:', error);
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   // Position styles
@@ -56,11 +126,13 @@ const TranslationButton = ({
       {/* Translation Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        disabled={isTranslating}
         className={`
           ${currentSize.button}
           flex items-center justify-center
           rounded-full shadow-lg
           transition-all duration-300 hover:scale-110
+          ${isTranslating ? 'opacity-50 cursor-not-allowed' : ''}
           ${isDarkMode 
             ? 'bg-gray-800 hover:bg-gray-700 text-white border-2 border-gray-600' 
             : 'bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200'
@@ -68,7 +140,14 @@ const TranslationButton = ({
         `}
         title="Sprache wählen / Choisir langue / Choose language"
       >
-        <span className="text-lg">{currentLanguage.flag}</span>
+        {isTranslating ? (
+          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        ) : (
+          <span className="text-lg">{currentLanguage.flag}</span>
+        )}
       </button>
 
       {/* Dropdown Menu */}

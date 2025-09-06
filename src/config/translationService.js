@@ -203,8 +203,8 @@ const mockTranslations = {
   }
 };
 
-// Feature-Flag: DeepL-Proxy im Frontend verwenden? Standard: aus in PROD
-const USE_DEEPL_PROXY = (import.meta.env?.VITE_USE_DEEPL_PROXY === 'true');
+// Feature-Flag: DeepL-Proxy im Frontend verwenden? Standard: aktiviert wenn API Key vorhanden
+const USE_DEEPL_PROXY = (import.meta.env?.VITE_USE_DEEPL_PROXY === 'true') || !!import.meta.env?.VITE_DEEPL_API_KEY;
 
 /**
  * Übersetzt Text mit Mock-Translation oder Backend-Proxy (DeepL API)
@@ -239,6 +239,40 @@ export const translateText = async (text, targetLanguage, sourceLanguage = 'de')
     // Nur wenn explizit erlaubt, Backend-Proxy versuchen
     if (USE_DEEPL_PROXY) {
       try {
+        console.log(`🌐 Versuche DeepL API für: "${text}" (${sourceLanguage} → ${targetLanguage})`);
+        
+        // Direkte DeepL API Verwendung wenn API Key verfügbar
+        const deeplApiKey = import.meta.env.VITE_DEEPL_API_KEY;
+        if (deeplApiKey) {
+          const deeplLanguages = { de: 'DE', en: 'EN', fr: 'FR' };
+          const formData = new URLSearchParams();
+          formData.append('text', text);
+          formData.append('source_lang', deeplLanguages[sourceLanguage] || 'DE');
+          formData.append('target_lang', deeplLanguages[targetLanguage] || 'EN');
+          formData.append('auth_key', deeplApiKey);
+
+          const response = await fetch('https://api-free.deepl.com/v2/translate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString()
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.translations && data.translations[0] && data.translations[0].text) {
+              const translatedText = data.translations[0].text;
+              console.log(`✅ DeepL: "${text}" → "${translatedText}"`);
+              translationCache.set(cacheKey, translatedText);
+              return translatedText;
+            }
+          } else {
+            console.warn('❌ DeepL API Fehler:', response.status, response.statusText);
+          }
+        }
+
+        // Fallback: Backend-Proxy versuchen
         const base = API_BASE_URL || '';
         const key = `${text}__${sourceLanguage}->${targetLanguage}`;
         const doRequest = () => fetch(`${base}/api/translate`, {
@@ -262,11 +296,13 @@ export const translateText = async (text, targetLanguage, sourceLanguage = 'de')
           const data = await response.json();
           if (data.translatedText) {
             const translatedText = data.translatedText;
+            console.log(`✅ Backend: "${text}" → "${translatedText}"`);
             translationCache.set(cacheKey, translatedText);
             return translatedText;
           }
         }
       } catch (backendError) {
+        console.warn('🔄 Backend/API Fehler, nutze Mock:', backendError.message);
         // Ignoriere und fallback
       }
     }
