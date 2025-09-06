@@ -41,6 +41,9 @@ Kurze Übersicht und Betriebsanleitung (Stand: 09/2025)
 - MongoDB, Cloudinary, Railway, JSON Server, server.js/cjs, test- und Backup-Dateien
 - Nur noch moderne Komponenten und Supabase-Integration
 
+## iOS & Xcode Setup 🍎
+Für iOS-Entwicklung und Xcode-Tokens: siehe [IOS_XCODE_SETUP.md](./IOS_XCODE_SETUP.md)
+
 ## Support
 Fragen/Probleme: nguyaz@ehcb.ch
 
