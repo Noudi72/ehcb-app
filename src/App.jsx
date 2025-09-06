@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./context/LanguageContext";
 import Home from "./pages/Home";
 import Reflexion from "./pages/Reflexion";
-import UmfrageNeu from "./pages/UmfrageNeu";
+// import UmfrageNeu from "./pages/UmfrageNeu";
 import UmfrageResults from "./pages/UmfrageResults";
 import SportFood from "./pages/SportFood";
 import SportFoodManager from "./pages/SportFoodManager";
@@ -52,7 +52,7 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/reflexion" element={<Reflexion />} />
-                  <Route path="/umfrage" element={<UmfrageNeu />} />
+                  {/* <Route path="/umfrage" element={<UmfrageNeu />} /> */}
                   <Route path="/umfrage-results" element={
                     <ProtectedRoute>
                       <UmfrageResults />
