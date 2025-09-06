@@ -335,7 +335,7 @@ export default function UmfrageResults() {
       <div className="mt-4">
         <div className="flex justify-between items-center mb-2">
           <div className="text-sm font-medium">Verteilung der Werte</div>
-          <div className="text-xs text-gray-500">Min: {min.toFixed(1)}, Max: {max.toFixed(1)}, Durchschnitt: {data.average.toFixed(1)}</div>
+          <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Min: {min.toFixed(1)}, Max: {max.toFixed(1)}, Durchschnitt: {data.average.toFixed(1)}</div>
         </div>
         
         <div className="h-48 flex items-end">
@@ -350,7 +350,7 @@ export default function UmfrageResults() {
                   className="w-full bg-blue-500 opacity-80 rounded-t"
                   style={{ height: `${height}%` }}
                 ></div>
-                <div className="absolute bottom-0 transform translate-y-full mt-1 text-xs text-gray-600 rotate-45 origin-top-left">
+                <div className={`absolute bottom-0 transform translate-y-full mt-1 text-xs rotate-45 origin-top-left ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}> 
                   {bucketMin.toFixed(1)}
                 </div>
               </div>
@@ -362,15 +362,15 @@ export default function UmfrageResults() {
           <div className="font-medium text-blue-800 mb-1">Zusammenfassung</div>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <div className="text-xs text-gray-500">Min</div>
+              <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Min</div>
               <div className="text-xl font-bold text-blue-700">{data.min.toFixed(1)}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-500">Durchschnitt</div>
+              <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Durchschnitt</div>
               <div className="text-xl font-bold text-blue-700">{data.average.toFixed(1)}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-500">Max</div>
+              <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Max</div>
               <div className="text-xl font-bold text-blue-700">{data.max.toFixed(1)}</div>
             </div>
           </div>
@@ -424,7 +424,7 @@ export default function UmfrageResults() {
               <div key={index} className={`border-l-4 ${color} p-4 rounded-r-lg shadow-sm`}>
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-800 mb-1">{option}</h4>
+                    <h4 className={`font-semibold mb-1 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{option}</h4>
                     <div className="flex items-center gap-4">
                       <span className="text-xl font-bold text-gray-900">{count}</span>
                       <span className="text-sm text-gray-600">von {data.total} ({percentage.toFixed(0)}%)</span>

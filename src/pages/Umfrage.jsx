@@ -519,7 +519,7 @@ export default function Umfrage() {
             {/* FRAGEN SOFORT ANZEIGEN - OHNE NAMENSEINGABE */}
             {selectedSurvey && currentQuestions.length > 0 && (
               <div className="mb-6">
-                <label htmlFor="playerName" className="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="playerName" className="block text-lg font-medium text-gray-700 dark:text-gray-200 mb-2">
                   {t('survey.yourName')}
                 </label>
                 <input
@@ -528,11 +528,11 @@ export default function Umfrage() {
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
                   placeholder={t('survey.enterName')}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
                 
                 {selectedSurvey && selectedSurvey.anonymous && (
-                  <div className="mt-3 flex items-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-green-800 dark:text-green-300 border border-green-200 dark:border-green-700">
+                  <div className="mt-3 flex items-center bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-green-800 dark:text-green-200 border border-green-200 dark:border-green-700">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLanguage } from "../context/LanguageContext";
 import { useUmfrage } from "../context/UmfrageContext";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -6,6 +7,7 @@ import BackButton from "../components/BackButton";
 
 
 export default function UmfrageEditor() {
+  const { t } = useLanguage();
   const { surveyId } = useParams(); // Verwende useParams statt Query-Parameter
   const navigate = useNavigate();
   const { 
@@ -274,17 +276,17 @@ export default function UmfrageEditor() {
     e.preventDefault();
     
     if (!currentSurvey) {
-      alert("Keine Umfragedaten vorhanden.");
+  alert(t('editor.noSurveyData') || "Keine Umfragedaten vorhanden.");
       return;
     }
     
     if (!currentSurvey.title.trim()) {
-      alert("Bitte geben Sie einen Titel für die Umfrage ein.");
+  alert(t('editor.enterTitle') || "Bitte geben Sie einen Titel für die Umfrage ein.");
       return;
     }
     
     if (!currentSurvey.questions || currentSurvey.questions.length === 0) {
-      alert("Bitte wählen Sie mindestens eine Frage für die Umfrage aus.");
+  alert(t('editor.selectQuestions') || "Bitte wählen Sie mindestens eine Frage für die Umfrage aus.");
       return;
     }
     
@@ -323,7 +325,7 @@ export default function UmfrageEditor() {
       }
     } catch (err) {
       console.error("Fehler beim Speichern der Umfrage:", err);
-      alert("Fehler beim Speichern der Umfrage. Bitte versuche es erneut.");
+  alert(t('editor.saveError') || "Fehler beim Speichern der Umfrage. Bitte versuche es erneut.");
     }
   };
 
@@ -347,7 +349,7 @@ export default function UmfrageEditor() {
 
     // Validierung
     if (!newQuestion.question?.trim()) {
-      alert("Bitte gib eine Frage ein");
+  alert(t('editor.enterQuestion') || "Bitte gib eine Frage ein");
       return;
     }
 
@@ -357,7 +359,7 @@ export default function UmfrageEditor() {
       
       // Überprüfe, ob es mindestens zwei Optionen gibt
       if (filteredOptions.length < 2) {
-        alert("Bitte füge mindestens zwei Optionen hinzu");
+  alert(t('editor.addOptions') || "Bitte füge mindestens zwei Optionen hinzu");
         return;
       }
       
@@ -435,7 +437,7 @@ export default function UmfrageEditor() {
       }
     } catch (err) {
       console.error("Fehler beim Speichern der Frage:", err);
-      alert("Fehler beim Speichern der Frage. Bitte versuche es erneut.");
+  alert(t('editor.saveQuestionError') || "Fehler beim Speichern der Frage. Bitte versuche es erneut.");
     }
   };
 
@@ -669,12 +671,12 @@ export default function UmfrageEditor() {
         <div className="bg-[#2a3441] rounded-xl shadow-xl p-6 mb-8 border border-gray-700">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-white flex items-center">
+              <h1 className="text-3xl font-bold text-gray-100 flex items-center">
                 📋 Umfrage-Editor
               </h1>
               {surveyId && currentSurvey && (
                 <>
-                  <div className="text-gray-400 text-sm mt-1 p-2 bg-gray-800 rounded">
+                  <div className="text-gray-300 text-sm mt-1 p-2 bg-gray-800 rounded">
                     <p>Bearbeite: "<strong>{currentSurvey.title || "⚠️ Kein Titel geladen"}</strong>"</p>
                     <p className="text-xs">Survey ID: {surveyId} | Loaded ID: {currentSurvey.id} | Active: {currentSurvey.active ? "✅" : "❌"}</p>
                   </div>
@@ -697,7 +699,7 @@ export default function UmfrageEditor() {
                     className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 ${
                       currentStep === item.step
                         ? "bg-blue-600 text-white shadow-lg"
-                        : "bg-gray-600 text-gray-300 hover:bg-gray-500"
+                        : "bg-gray-600 text-gray-200 hover:bg-gray-500"
                     }`}
                   >
                     <span>{item.icon}</span>
@@ -715,7 +717,7 @@ export default function UmfrageEditor() {
           )}
 
           {successMessage && (
-            <div className="mb-6 bg-green-900/20 border border-green-600/50 text-green-300 px-4 py-3 rounded-lg">
+            <div className="mb-6 bg-green-900/20 border border-green-600/50 text-green-200 px-4 py-3 rounded-lg">
               {successMessage}
             </div>
           )}
@@ -763,17 +765,17 @@ export default function UmfrageEditor() {
           {currentStep === 1 && (
             <div>
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">⚙️ Schritt 1: Umfrage-Einstellungen</h2>
-                <p className="text-gray-400">Lege die grundlegenden Einstellungen für deine Umfrage fest.</p>
+                <h2 className="text-2xl font-bold text-gray-100 mb-2">⚙️ Schritt 1: Umfrage-Einstellungen</h2>
+                <p className="text-gray-300">Lege die grundlegenden Einstellungen für deine Umfrage fest.</p>
               </div>
               
               <form onSubmit={handleSaveSurvey} className="space-y-8">
                 {/* Grundeinstellungen */}
                 <div className="bg-[#1e2532] rounded-lg p-6 border border-gray-600">
-                  <h3 className="text-xl font-semibold mb-4 text-white">Grundeinstellungen</h3>
+                  <h3 className="text-xl font-semibold mb-4 text-gray-100">Grundeinstellungen</h3>
                   
                   <div className="mb-6">
-                    <label htmlFor="surveyTitle" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="surveyTitle" className="block text-sm font-medium text-gray-200 mb-2">
                       Umfragetitel <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -783,13 +785,13 @@ export default function UmfrageEditor() {
                       value={currentSurvey?.title || ""}
                       onChange={(e) => setCurrentSurvey({...currentSurvey || {}, title: e.target.value})}
                       placeholder="Gib den Titel der Umfrage ein..."
-                      className="w-full px-4 py-3 bg-[#2a3441] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 bg-[#2a3441] border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
                   </div>
                   
                   <div className="mb-6">
-                    <label htmlFor="surveyDescription" className="block text-sm font-medium text-gray-300 mb-2">
+                    <label htmlFor="surveyDescription" className="block text-sm font-medium text-gray-200 mb-2">
                       Umfragebeschreibung (Optional)
                     </label>
                     <textarea
@@ -798,15 +800,15 @@ export default function UmfrageEditor() {
                       value={currentSurvey?.description || ""}
                       onChange={(e) => setCurrentSurvey({...currentSurvey || {}, description: e.target.value})}
                       placeholder="Kurze Beschreibung des Zwecks der Umfrage..."
-                      className="w-full px-4 py-3 bg-[#2a3441] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px]"
+                      className="w-full px-4 py-3 bg-[#2a3441] border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px]"
                     />
                   </div>
                 </div>
 
                 {/* Team-Auswahl */}
                 <div className="bg-[#1e2532] rounded-lg p-6 border border-gray-600">
-                  <h3 className="text-xl font-semibold mb-4 text-white">Team-Zuordnung</h3>
-                  <p className="text-gray-400 text-sm mb-4">
+                  <h3 className="text-xl font-semibold mb-4 text-gray-100">Team-Zuordnung</h3>
+                  <p className="text-gray-300 text-sm mb-4">
                     Wähle die Teams aus, die diese Umfrage sehen sollen.
                   </p>
                   
@@ -823,8 +825,8 @@ export default function UmfrageEditor() {
                           className="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-500 rounded bg-[#2a3441]"
                         />
                         <div>
-                          <div className="text-white font-medium">Alle Teams</div>
-                          <div className="text-gray-400 text-xs">Keine Einschränkung</div>
+                          <div className="text-gray-100 font-medium">Alle Teams</div>
+                          <div className="text-gray-300 text-xs">Keine Einschränkung</div>
                         </div>
                       </label>
                     </div>
@@ -848,8 +850,8 @@ export default function UmfrageEditor() {
                             className="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-500 rounded bg-[#2a3441]"
                           />
                           <div>
-                            <div className="text-white font-medium">{team.toUpperCase()}</div>
-                            <div className="text-gray-400 text-xs">Spezifisches Team</div>
+                            <div className="text-gray-100 font-medium">{team.toUpperCase()}</div>
+                            <div className="text-gray-300 text-xs">Spezifisches Team</div>
                           </div>
                         </label>
                       </div>
@@ -859,7 +861,7 @@ export default function UmfrageEditor() {
 
                 {/* Erweiterte Einstellungen */}
                 <div className="bg-[#1e2532] rounded-lg p-6 border border-gray-600">
-                  <h3 className="text-xl font-semibold mb-4 text-white">Datenschutz & Sichtbarkeit</h3>
+                  <h3 className="text-xl font-semibold mb-4 text-gray-100">Datenschutz & Sichtbarkeit</h3>
                   
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-[#2a3441] rounded-lg">

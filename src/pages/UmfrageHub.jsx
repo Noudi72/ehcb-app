@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLanguage } from "../context/LanguageContext";
 import { useUmfrage } from "../context/UmfrageContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -76,17 +77,17 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, onViewResults, i
             )}
           </div>
           
-          <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             {survey.title || 'Unbenannte Umfrage'}
           </h3>
           
           {survey.description && (
-            <p className={`text-sm mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-sm mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-600'}`}>
               {survey.description}
             </p>
           )}
 
-          <div className={`flex items-center gap-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className={`flex items-center gap-4 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
             <span>📊 {survey.questions?.length || 0} Fragen</span>
             <span>👥 {survey.responses?.length || 0} Antworten</span>
             <span>📅 {new Date(survey.createdAt || Date.now()).toLocaleDateString('de-DE')}</span>
@@ -159,7 +160,7 @@ function SurveyCard({ survey, onEdit, onDelete, onToggleStatus, onViewResults, i
               </p>
             ))}
             {survey.questions.length > 2 && (
-              <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                 +{survey.questions.length - 2} weitere Fragen...
               </p>
             )}
@@ -237,6 +238,7 @@ function QuickActions({ onCreate, onManageQuestions, isDarkMode }) {
 }
 
 export default function UmfrageHub() {
+  const { t } = useLanguage();
   const { surveys = [], fetchSurveys, deleteSurvey, updateSurvey } = useUmfrage();
   const { user, isCoach } = useAuth();
   const { isDarkMode } = useTheme();
@@ -416,10 +418,10 @@ export default function UmfrageHub() {
                 📊
               </div>
               <div>
-                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                   {surveys.length}
                 </p>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-600'}`}>
                   Umfragen gesamt
                 </p>
               </div>

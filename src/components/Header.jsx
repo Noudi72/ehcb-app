@@ -3,217 +3,119 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { translateText } from '../config/translationService';
-
-function Header() {
-  const { currentLanguage, changeLanguage, t } = useLanguage();
-  const { isAuthenticated, isCoach, logout, user } = useAuth();
-  const { isDarkMode, toggleDarkMode } = useTheme();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
-
-  // Responsive Banner Selection - mit stabilem Cache
-  const getBannerImage = () => {
-    if (typeof window !== 'undefined') {
-      const base = import.meta.env.BASE_URL || '/';
-      return window.innerWidth >= 768 ? `${base}banner_ehcb_desktop.png` : `${base}banner_ehcb_spirit.png`;
-    }
-    return '/banner_ehcb_spirit.png'; // fallback
-  };
-
-  const [bannerImage, setBannerImage] = useState(getBannerImage());
-
-  // Update banner on window resize - mit Debouncing um Flackern zu verhindern
-  useEffect(() => {
-    let resizeTimer;
-    const handleResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        const newImage = getBannerImage();
-        if (newImage !== bannerImage) {
-          setBannerImage(newImage);
-        }
-      }, 100); // 100ms debounce
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimer);
-    };
-  }, [bannerImage]);
-
-  // DeepL Übersetzung des Seiteninhalts
-  const translatePageContent = async (targetLang) => {
-    if (isTranslating) return;
-    
-    setIsTranslating(true);
-    try {
-      console.log(`🌐 Übersetze Seiteninhalt nach ${targetLang}...`);
-      
-      // Alle Textelemente der Seite sammeln, aber nur echte Inhaltstexte
-      const textElements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span:not(.no-translate), div:not(.no-translate), button:not(.no-translate), label, a:not(.no-translate)');
-      const elementsToTranslate = [];
-      
-      textElements.forEach(element => {
-        const text = element.textContent.trim();
-        // Nur übersetzen wenn: direkter Text, mehr als 2 Zeichen, nicht bereits übersetzt
-        if (element.children.length === 0 && 
-            text.length > 2 &&
-            !text.match(/^[🇩🇪🇫🇷🇬🇧🇺🇸]/) && // Keine Flags
-            !text.match(/^\d+$/) && // Keine reinen Zahlen
-            !element.classList.contains('no-translate') &&
-            !element.hasAttribute('data-translated') &&
-            !element.closest('.no-translate')) {
-          elementsToTranslate.push(element);
-        }
-      });
-
-      console.log(`📝 Gefunden: ${elementsToTranslate.length} Textelemente zum Übersetzen`);
-
-      // API-Endpunkt für DeepL verwenden
-      const API_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-      
-      // Übersetzung in kleinen Batches
-      const batchSize = 3;
-      let translated = 0;
-      
-      for (let i = 0; i < elementsToTranslate.length; i += batchSize) {
-        const batch = elementsToTranslate.slice(i, i + batchSize);
-        
-        await Promise.all(batch.map(async (element) => {
-          try {
-            const originalText = element.textContent.trim();
-            
-            const response = await fetch(`${API_URL}/translate`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                text: originalText,
-                targetLanguage: targetLang,
-                sourceLanguage: currentLanguage.code
-              })
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              if (data.translatedText && data.translatedText !== originalText) {
-                element.textContent = data.translatedText;
-                element.setAttribute('data-translated', 'true');
-                element.setAttribute('data-original', originalText);
-                translated++;
-              }
-            } else {
-              // Fallback auf Mock-Übersetzung
-              const translatedText = await translateText(originalText, targetLang, currentLanguage.code);
-              if (translatedText && translatedText !== originalText) {
-                element.textContent = translatedText;
-                element.setAttribute('data-translated', 'true');
-                element.setAttribute('data-original', originalText);
-                translated++;
-              }
-            }
-          } catch (error) {
-            console.error('Übersetzungsfehler:', error);
-            // Fallback auf Mock-Übersetzung
-            try {
-              const originalText = element.textContent.trim();
-              const translatedText = await translateText(originalText, targetLang, currentLanguage.code);
-              if (translatedText && translatedText !== originalText) {
-                element.textContent = translatedText;
-                element.setAttribute('data-translated', 'true');
-                element.setAttribute('data-original', originalText);
-                translated++;
-              }
-            } catch (fallbackError) {
-              console.error('Auch Fallback-Übersetzung fehlgeschlagen:', fallbackError);
-            }
-          }
-        }));
-        
-        // Pause zwischen Batches
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-      
-      console.log(`✅ Übersetzung abgeschlossen: ${translated} Texte übersetzt`);
-      
-    } catch (error) {
-      console.error('❌ Fehler bei Seitenübersetzung:', error);
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
-  const languages = [
-    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-    { code: 'en', name: 'English', flag: '🇬🇧' }
-  ];
-
   return (
     <>
-      {/* Fixed Language Switcher - positioned below header */}
-      <div className="fixed top-16 right-4 z-40">
-        <div className="relative">
-          <button
-            onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
-            className="bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-300 font-medium text-sm flex items-center space-x-2 shadow-lg border border-white border-opacity-20"
-            disabled={isTranslating}
-          >
-            {isTranslating ? (
-              <>
-                <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>...</span>
-              </>
-            ) : (
-              <>
-                <span>{currentLanguage.flag || '🇩🇪'}</span>
-                <span>{currentLanguage.code.toUpperCase()}</span>
-                <svg className={`w-3 h-3 transition-transform ${languageMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </>
-            )}
-          </button>
+      <header 
+        className="relative bg-cover bg-center text-white"
+        style={{
+          backgroundImage: `url('${bannerImage}')`,
+          backgroundSize: 'cover',
+          backgroundPosition: window.innerWidth >= 768 ? 'center' : 'center',
+          // Optimiert für angepasstes Desktop Banner
+          height: 'clamp(140px, 15vw, 200px)'
+        }}
+      >
+        {/* Top Navigation Bar - minimaler Hintergrund nur für Buttons */}
+        <div className="relative z-10 h-full flex items-start justify-end p-4">
+          <div className="flex flex-col items-end space-y-2">
+            {/* User Info und Language Toggle in einer Reihe */}
+            <div className="flex items-center space-x-2">
+              {/* User Info */}
+              {isAuthenticated && (
+                <div className="hidden sm:block text-sm flex items-center space-x-2">
+                  {user?.name && <span className="text-white bg-black bg-opacity-50 px-2 py-1 rounded">{user.name}</span>}
+                  {isCoach && <span className="bg-black bg-opacity-50 text-white px-2 py-1 rounded font-medium text-xs" style={{boxShadow: 'none'}}>Coach</span>}
+                </div>
+              )}
 
-          {/* Language Dropdown */}
-          {languageMenuOpen && (
-            <div className="absolute top-full right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 py-1 z-50">
-              {languages.map((language) => (
-                <button
-                  key={language.code}
-                  onClick={() => {
-                    setLanguageMenuOpen(false);
-                    changeLanguage(language.code);
-                    translatePageContent(language.code);
-                  }}
-                  className={`w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2 ${
-                    currentLanguage.code === language.code ? 'bg-blue-50 dark:bg-blue-900' : ''
-                  }`}
-                >
-                  <span>{language.flag}</span>
-                  <span className="text-gray-700 dark:text-gray-300">{language.name}</span>
-                </button>
-              ))}
+              {/* Dark Mode Toggle Button */}
+              <button
+                onClick={toggleDarkMode}
+                className="bg-black bg-opacity-50 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-opacity-70 transition-all duration-300"
+                aria-label={isDarkMode ? 'Light Mode aktivieren' : 'Dark Mode aktivieren'}
+              >
+                {isDarkMode ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
             </div>
-          )}
 
-          {/* Click outside overlay */}
-          {languageMenuOpen && (
-            <div 
-              className="fixed inset-0 z-30" 
-              onClick={() => setLanguageMenuOpen(false)}
-            />
-          )}
+            {/* Hamburger Menu Button darunter */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="bg-black bg-opacity-50 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-opacity-70 transition-all duration-300"
+              aria-label="Menü öffnen"
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" className="text-white">
+                <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            {/* Sprachumschalter direkt unter dem Burger-Menü */}
+            <div className="relative mt-2">
+              <button
+                onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
+                className="bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-2 rounded-lg hover:bg-opacity-90 transition-all duration-300 font-medium text-sm flex items-center space-x-2 shadow-lg border border-white border-opacity-20"
+                disabled={isTranslating}
+              >
+                {isTranslating ? (
+                  <>
+                    <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{currentLanguage.flag || '🇩🇪'}</span>
+                    <span>{currentLanguage.code.toUpperCase()}</span>
+                    <svg className={`w-3 h-3 transition-transform ${languageMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </>
+                )}
+              </button>
+
+              {/* Language Dropdown */}
+              {languageMenuOpen && (
+                <div className="absolute top-full right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 py-1 z-50">
+                  {languages.map((language) => (
+                    <button
+                      key={language.code}
+                      onClick={() => {
+                        setLanguageMenuOpen(false);
+                        changeLanguage(language.code);
+                        translatePageContent(language.code);
+                      }}
+                      className={`w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2 ${
+                        currentLanguage.code === language.code ? 'bg-blue-50 dark:bg-blue-900' : ''
+                      }`}
+                    >
+                      <span>{language.flag}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{language.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Click outside overlay */}
+              {languageMenuOpen && (
+                <div 
+                  className="fixed inset-0 z-30" 
+                  onClick={() => setLanguageMenuOpen(false)}
+                />
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-
+      </header>
       <header 
         className="relative bg-cover bg-center text-white"
         style={{

@@ -8,7 +8,9 @@ import { surveys as surveysAPI, questions as questionsAPI, responses as response
 
 const UmfrageNeu = () => {
   const { user } = useAuth();
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
+  const { t } = useLanguage(); // Ensure t() is available for alerts and static texts
+  
   const { isDarkMode } = useTheme();
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -147,7 +149,7 @@ const UmfrageNeu = () => {
         <div className={`w-full max-w-md rounded-2xl shadow-xl border p-6 transition-colors duration-300 ${
           isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         }`}>
-          <h1 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h1 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             {t('survey.title') || 'Umfragen'}
           </h1>
           
@@ -155,11 +157,11 @@ const UmfrageNeu = () => {
             <div>
               {filteredSurveys.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-600'}`}>
                     {t('survey.noneAvailable') || 'Keine Umfragen verfügbar.'}
                   </p>
                   {surveys && surveys.length > 0 && (
-                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                       {`Es gibt ${surveys.length} Umfragen, aber keine für Ihr Team.`}
                     </p>
                   )}
@@ -176,7 +178,7 @@ const UmfrageNeu = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <h2 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                  <h2 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
                     {`Verfügbare Umfragen (${filteredSurveys.length}):`}
                   </h2>
                   {filteredSurveys.map(survey => (
